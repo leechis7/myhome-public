@@ -3,6 +3,15 @@
 판을 올릴 때마다 여기에 적는다. 최신이 위에 온다. 새 판으로 올리는 방법은
 [README](README.md#새-판으로-올리기).
 
+## v1.0.1 — 2026-10-08
+
+### 보안
+
+- 의존성 취약점을 고쳤다: sharp 0.35.5, source-map-js 1.2.2, dompurify 3.4.16
+  (Toast UI 편집기 안의 옛 판 포함), katex 0.18. 운영 의존성 `npm audit` 0건.
+
+올리는 법: `docker compose pull && docker compose up -d`
+
 ## v1.0.0 — 2026-10-06
 
 공개 첫 판. 라이선스는 AGPL-3.0.
