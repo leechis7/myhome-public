@@ -209,17 +209,19 @@ fi
 # --- 4. 띄우기 ---------------------------------------------------------
 say "이미지를 받고 띄웁니다. 처음에는 몇 분 걸립니다"
 # MYHOME_IMAGE 를 주면 이미 가진 이미지로(시험) - 받지 않는다
-[ -n "${MYHOME_IMAGE:-}" ] || docker compose pull --ignore-buildable
+[ -n "${MYHOME_IMAGE:-}" ] || docker compose pull --ignore-buildable </dev/null
 
 # 앱은 컨테이너 안에서 node 사용자로 돈다. 설치 폴더의 data/uploads ·
 # data/secrets 는 이 계정 것이라, 그대로면 첨부파일을 올릴 수 없다. 이미지로
 # 한 번 주인을 넘긴다(sudo 없이). DB 폴더는 postgres 가 스스로 맞춘다
+# curl | bash 로 오면 표준 입력이 이 스크립트다. compose run 이 그것을 읽으면
+# 남은 스크립트를 삼켜 설치가 말없이 끝난다 - 터미널을 붙이지 않고(-T) 입력을 막는다
 if [ -f compose.override.yaml ] && [ -d data/uploads ]; then
-  docker compose run --rm --no-deps --pull never --user root --entrypoint chown app \
-    -R node:node /app/storage/uploads /app/storage/secrets
+  docker compose run --rm -T --no-deps --pull never --user root --entrypoint chown app \
+    -R node:node /app/storage/uploads /app/storage/secrets </dev/null
 fi
 
-docker compose up -d --no-build --pull never
+docker compose up -d --no-build --pull never </dev/null
 
 say "앱이 뜨기를 기다립니다"
 ok=0
