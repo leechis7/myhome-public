@@ -1,0 +1,63 @@
+/*
+ * Crepe(frame 테마)를 관리 화면에 맞춘다. 기본은 제목이 명조체이고 좌우 여백이
+ * 120px 이라 좁은 칸에서 글이 한 줄에 몇 자 못 들어간다. 테마의 규칙은 layer
+ * 안에 있어 여기(바깥)에 적은 것이 이긴다.
+ */
+[data-editor="milkdown"] .milkdown {
+  --crepe-font-title: var(--font-sans);
+  --crepe-font-default: var(--font-sans);
+  --crepe-font-code: var(--font-mono);
+  /* 글자는 사이트 본문 색. 테마 기본값(밝을 때 #000, 어두울 때 #e6e6e6)은
+     사이트 글자와 달라 어두운 테마에서 흐리게 보였다 */
+  --crepe-color-on-background: var(--foreground);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+/* 왼쪽은 블록 손잡이(+ · ⋮⋮) 자리만 남긴다 */
+[data-editor="milkdown"] .milkdown .ProseMirror {
+  padding: 16px 16px 16px 56px;
+}
+
+/*
+ * 어두운 테마. Crepe 의 frame-dark 색을 쓰되 바탕은 사이트 바탕에 맞춘다.
+ * 사이트와 같은 두 경우에 켠다(app/globals.css): OS 가 어둡고 밝게 고정하지
+ * 않았을 때, 그리고 사람이 어둡게 골랐을 때.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-editor="milkdown"] .milkdown {
+    --crepe-color-background: var(--background);
+    --crepe-color-surface: #121212;
+    --crepe-color-surface-low: #1c1c1c;
+    --crepe-color-on-surface: #d1d1d1;
+    --crepe-color-on-surface-variant: #a9a9a9;
+    --crepe-color-outline: #757575;
+    --crepe-color-primary: #b5b5b5;
+    --crepe-color-secondary: #4d4d4d;
+    --crepe-color-on-secondary: #d6d6d6;
+    --crepe-color-inverse: #e5e5e5;
+    --crepe-color-on-inverse: #2a2a2a;
+    --crepe-color-inline-code: #ff6666;
+    --crepe-color-error: #ff6666;
+    --crepe-color-hover: #232323;
+    --crepe-color-selected: #2f2f2f;
+  }
+}
+
+:root[data-theme="dark"] [data-editor="milkdown"] .milkdown {
+  --crepe-color-background: var(--background);
+  --crepe-color-surface: #121212;
+  --crepe-color-surface-low: #1c1c1c;
+  --crepe-color-on-surface: #d1d1d1;
+  --crepe-color-on-surface-variant: #a9a9a9;
+  --crepe-color-outline: #757575;
+  --crepe-color-primary: #b5b5b5;
+  --crepe-color-secondary: #4d4d4d;
+  --crepe-color-on-secondary: #d6d6d6;
+  --crepe-color-inverse: #e5e5e5;
+  --crepe-color-on-inverse: #2a2a2a;
+  --crepe-color-inline-code: #ff6666;
+  --crepe-color-error: #ff6666;
+  --crepe-color-hover: #232323;
+  --crepe-color-selected: #2f2f2f;
+}

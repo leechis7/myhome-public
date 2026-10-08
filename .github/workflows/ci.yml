@@ -1,0 +1,223 @@
+# 공개 저장소(leechis7/myhome-public)의 검사와 릴리스.
+#
+# 이 파일은 비공개 원본의 export/overlay/ 에 있고 내보낼 때 .github/ 로
+# 놓인다. 공개 쪽에서 직접 고치지 않는다.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # 바뀐 파일이 전부 여기 해당하면 검사를 건너뛴다.
+    # 코드가 한 줄이라도 섞여 있으면 평소대로 돈다.
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".gitignore"
+      - "LICENSE"
+    # 버전 태그를 올리면 검사 후 이미지를 만들어 GHCR 에 올린다
+    tags:
+      - "v*"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".gitignore"
+      - "LICENSE"
+  workflow_dispatch:
+
+# 릴리스를 만들고(contents) 이미지를 올리려면(packages) 쓸 수 있어야 한다
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  check:
+    name: 검사
+    runs-on: ubuntu-latest
+
+    # 브라우저 테스트가 실제 DB를 쓰므로 서비스로 띄운다
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: myhome
+          POSTGRES_USER: myhome
+          POSTGRES_PASSWORD: ci-postgres-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U myhome -d myhome"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://myhome:ci-postgres-password@127.0.0.1:5432/myhome
+      ADMIN_PASSWORD: ci-admin-password
+      # 32자 이상이어야 한다
+      SESSION_SECRET: ci-session-secret-ci-session-secret-0123
+      # 비밀글 열쇠. 32바이트 base64 라야 한다 — 없으면 비밀글 화면이 404 라
+      # 시험이 통째로 깨진다. 검사용 값이므로 감출 것이 없다.
+      SECRETS_KEY: Y2ktc2VjcmV0cy1rZXktZm9yLXRlc3RzLTMyYnl0ZXM= # gitleaks:allow
+      # localhost 로 연다. 127.0.0.1 이 아니다 — WebAuthn 은 rpID 로 도메인만
+      # 받고 IP 는 거절해서, 그러면 패스키 시험이 등록 단계에서 깨진다
+      # 서버는 -H 127.0.0.1 로 뜨지만 같은 자리다.
+      SITE_URL: http://localhost:40002
+      # 감시 화면이 대시보드 자리를 그리게 한다(monitoring.spec.ts 가 본다).
+      # 비우면 「감시가 설정되지 않았습니다」 가 뜬다
+      MONITORING_DASHBOARD: /grafana/d/myhome/myhome
+      E2E_BASE_URL: http://localhost:40002
+      E2E_ADMIN_PASSWORD: ci-admin-password
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: 의존성 설치
+        run: npm ci
+
+      - name: 린트
+        run: npm run lint
+
+      # Next가 만들어 주는 라우트 타입(PageProps 등)이 있어야 통과한다
+      - name: 라우트 타입 생성
+        run: npx next typegen
+
+      - name: 타입 검사
+        run: npx tsc --noEmit
+
+      - name: 단위 테스트
+        run: npm test
+
+      - name: DB 확장 설치
+        run: |
+          PGPASSWORD=ci-postgres-password psql -h 127.0.0.1 -U myhome -d myhome \
+            -c "create extension if not exists pg_trgm; create extension if not exists citext;"
+
+      - name: 마이그레이션
+        run: npm run db:migrate
+
+      # 소개 페이지가 DB에서 내용을 읽으므로 기본 데이터가 있어야 한다
+      - name: 초기 데이터
+        run: npm run db:seed
+
+      - name: 빌드
+        run: npm run build
+
+      - name: 브라우저 설치
+        run: npx playwright install --with-deps chromium
+
+      # 빌드해 둔 것을 띄운다. 전에는 여기서 `npm run dev` 를 새로 띄웠는데,
+      # 개발 서버는 어느 길을 처음 밟는 순간 그 자리에서 컴파일한다. 평소엔
+      # 1~2초지만 기계가 바쁘면 Playwright 가 기다리는 10초를 넘겨서, 코드와
+      # 상관없이 "눌렀는데 아직 안 왔다" 로 깨졌다(MYH-165).
+      #
+      # 더 큰 이유가 있다. **시험하는 물건이 운영에 나가는 물건이어야 한다.**
+      # 개발 빌드와 운영 빌드는 다르게 움직인다 — 없는 글 주소의 제목이
+      # 서로 다른 것을 2026-09-20 에 겪었다.
+      #
+      # next.config.ts 가 output: "standalone" 이라 `next start` 는 안 된다.
+      # standalone 은 public/ 과 .next/static 을 제 안에 담지 않으므로
+      # 옮겨 줘야 글꼴과 그림이 나온다.
+      - name: 서버 기동
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          PORT=40002 HOSTNAME=127.0.0.1 node .next/standalone/server.js &
+          npx wait-on -t 120000 http://127.0.0.1:40002
+
+      - name: 브라우저 테스트
+        run: npm run test:e2e
+
+      - name: 실패 기록 보관
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # 버전 태그일 때만. 검사가 통과해야 이미지를 만든다.
+  #
+  # amd64 · arm64 를 저마다의 기계에서 따로 빌드하고(에뮬레이션은 Next 빌드가
+  # 몇 배 느리다), 이름표(manifest) 하나로 묶는다.
+  image:
+    name: 이미지 (${{ matrix.arch }})
+    needs: check
+    if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 빌드하고 올리기(이름 없이, 이름표는 다음 단계)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/${{ matrix.arch }}
+          outputs: type=image,name=ghcr.io/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.licenses=AGPL-3.0-only
+      - name: 해시 남기기
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.arch }}
+          path: /tmp/digests/*
+          retention-days: 1
+
+  publish:
+    name: 이름표 붙이기 · 릴리스
+    needs: image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digest-*
+          merge-multiple: true
+          path: /tmp/digests
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # v1.2.3 → 1.2.3 · 1.2 · 1 · latest
+      - name: 이름표 만들기
+        working-directory: /tmp/digests
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          v="${GITHUB_REF_NAME#v}"
+          docker buildx imagetools create \
+            -t "$image:$v" -t "$image:${v%.*}" -t "$image:${v%%.*}" -t "$image:latest" \
+            $(printf "$image@sha256:%s " *)
+          docker buildx imagetools inspect "$image:$v"
+      - name: 릴리스 만들기
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/github-release.mjs "${{ github.ref_name }}"

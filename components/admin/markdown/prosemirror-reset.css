@@ -1,0 +1,23 @@
+/*
+ * Toast UI 의 CSS 는 모든 `.ProseMirror` 에 글꼴 · 글자색(#222) · 글자 크기
+ * (13px) · 높이 · 넘침을 건다(toastui-editor.css). 한 번 불러오면 페이지에
+ * 남아, 같은 ProseMirror 로 만든 TipTap · Milkdown 까지 바뀌었다 - 어두운
+ * 테마에서 글자가 거의 안 보였다. 두 편집기에서 그 규칙을 되돌린다.
+ *
+ * 선택자를 Toast UI 의 `.ProseMirror` 보다 무겁게 해 layer 밖에서 이긴다.
+ */
+[data-editor="tiptap"].ProseMirror {
+  font-family: inherit;
+  color: var(--foreground);
+  font-size: inherit;
+  overflow: visible;
+  height: auto;
+}
+
+[data-editor="milkdown"] .milkdown .ProseMirror {
+  font-family: var(--crepe-font-default);
+  color: var(--crepe-color-on-background);
+  font-size: var(--crepe-base-font-size, 16px);
+  overflow: visible;
+  height: auto;
+}

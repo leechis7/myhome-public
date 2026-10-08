@@ -1,0 +1,20 @@
+name: 기능 제안 (Feature request)
+description: 있으면 좋겠는 것을 알려 주세요.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: 어떤 일을 하려는데 불편한가요
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: 생각한 방법
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: 직접 만들어 볼 생각
+      options:
+        - label: PR 을 보내 보겠습니다(CONTRIBUTING.md 를 읽었습니다)

@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/* 라이트 테마 (기본) */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --border: rgb(0 0 0 / 0.1);
+  /* 본문보다 흐린 글자. 투명도로 흐리게 하면 라이트 모드에서 대비가
+     4.5:1 아래로 내려간다(WCAG AA 미달). 테마마다 값을 따로 준다.
+     muted 5.33:1, faint 4.54:1 — 둘 다 통과하면서 단계는 남는다. */
+  --muted: #6b6b6b;
+  --faint: #767676;
+}
+
+/* OS가 다크이고 사용자가 라이트를 고정하지 않은 경우 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --border: rgb(255 255 255 / 0.12);
+    --muted: #a3a3a3;
+    --faint: #949494;
+  }
+}
+
+/* 사용자가 다크를 직접 선택한 경우 (OS 설정보다 우선) */
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --border: rgb(255 255 255 / 0.12);
+  --muted: #a3a3a3;
+  --faint: #949494;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --font-sans: "Pretendard Variable", Pretendard, var(--font-geist-sans),
+    -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo",
+    "Malgun Gothic", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* 코드 하이라이팅 (rehype-highlight가 붙이는 hljs-* 클래스).
+   테마 CSS 파일을 가져오는 대신 라이트/다크에 맞춘 색을 직접 정의한다. */
+:root {
+  --hl-comment: #6b7280;
+  --hl-keyword: #7c3aed;
+  --hl-string: #15803d;
+  --hl-number: #b45309;
+  --hl-title: #1d4ed8;
+  --hl-attr: #0e7490;
+  --hl-deleted: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --hl-comment: #8b949e;
+    --hl-keyword: #c4a7f7;
+    --hl-string: #7ee787;
+    --hl-number: #ffab70;
+    --hl-title: #79c0ff;
+    --hl-attr: #7dd3fc;
+    --hl-deleted: #ff7b72;
+  }
+}
+
+:root[data-theme="dark"] {
+  --hl-comment: #8b949e;
+  --hl-keyword: #c4a7f7;
+  --hl-string: #7ee787;
+  --hl-number: #ffab70;
+  --hl-title: #79c0ff;
+  --hl-attr: #7dd3fc;
+  --hl-deleted: #ff7b72;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-built_in,
+.hljs-type {
+  color: var(--hl-keyword);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: var(--hl-string);
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-meta {
+  color: var(--hl-number);
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: var(--hl-title);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-property {
+  color: var(--hl-attr);
+}
+
+.hljs-deletion {
+  color: var(--hl-deleted);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 600;
+}
+
+/* 인쇄(MYH-195). 이력서를 브라우저 인쇄로 PDF 로 저장한다. 어느 화면이든
+   위쪽 메뉴 · 아래 꼬리 · 화면에서만 쓰는 단추는 빼고, 어두운 테마여도
+   흰 바탕 검은 글자로 찍는다 */
+@media print {
+  :root,
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]) {
+    --background: #ffffff;
+    --foreground: #171717;
+    --border: rgb(0 0 0 / 0.15);
+    --muted: #555555;
+    --faint: #666666;
+  }
+  body > header,
+  body > footer,
+  [data-print-hide] {
+    display: none !important;
+  }
+  body > main {
+    padding: 0;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  @page {
+    size: A4;
+    margin: 14mm 16mm;
+  }
+  /* 한 덩어리가 쪽 사이에서 갈리지 않게 */
+  [data-print-keep] {
+    break-inside: avoid;
+  }
+}

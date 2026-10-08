@@ -1,0 +1,24 @@
+# 빌드 컨텍스트에서 제외 — 이미지 크기와 캐시 무효화를 줄인다
+node_modules
+.next
+.git
+.gitignore
+
+# 비밀값이 이미지에 들어가지 않게 한다
+.env
+.env.*
+!.env.example
+
+# 런타임에 필요 없는 것들
+infra
+docs
+tests
+README.md
+AGENTS.md
+CLAUDE.md
+Dockerfile
+.dockerignore
+npm-debug.log*
+
+# scripts 중 마이그레이션 실행기만 이미지에 들어간다 (Dockerfile 참고)
+scripts/seed.ts

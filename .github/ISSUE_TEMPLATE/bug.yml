@@ -1,0 +1,44 @@
+name: 버그 알리기 (Bug report)
+description: 잘못 도는 것을 알려 주세요. 보안 문제는 Security 탭으로.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 무엇이 잘못되었나요
+      description: 기대한 것과 실제로 일어난 것
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 다시 일으키는 순서
+      placeholder: |
+        1. /admin 에서 …
+        2. … 를 누른다
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 판
+      description: 화면 아래 또는 `docker compose images` 에 보이는 판
+      placeholder: v1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: 설치 방식
+      options:
+        - install.sh
+        - compose.yaml 을 손으로
+        - 소스로 빌드
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 로그
+      description: "`docker compose logs app --tail 100` — 비밀값 · 개인 정보는 지우고 붙여 주세요"
+      render: text

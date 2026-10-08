@@ -1,0 +1,1 @@
+ALTER TABLE "posts" ADD COLUMN "revised_at" timestamp with time zone;
