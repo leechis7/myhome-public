@@ -273,11 +273,15 @@ export default function MarkdownField({
       .finally(() => setUploading((n) => n - 1));
   }, []);
 
-  // 지금 본문. 그림이 늦게 올라와 넣을 때 그 순간의 본문을 본다
+  // 지금 본문. 그림이 늦게 올라와 넣을 때 그 순간의 본문을 본다.
+  // 본문을 바꾸는 곳마다 여기도 함께 바꾼다(put). 그린 뒤 effect 에서 맞추면
+  // 한 박자 늦어, 그림 두 장이 잇달아 올라올 때 첫 장을 넣은 본문을 옛 값으로
+  // 덮었다(CI 에서 「첫째.png」 가 사라졌다)
   const latest = useRef(markdown);
-  useEffect(() => {
-    latest.current = markdown;
-  });
+  const put = useCallback((value: string) => {
+    latest.current = value;
+    setMarkdown(value);
+  }, []);
 
   /**
    * 마크다운 탭: 붙여넣거나 끌어놓은 그림을 커서 자리에 넣는다. 올리는 것은
@@ -296,8 +300,7 @@ export default function MarkdownField({
           const line = `${lead}![${alt}](${url})\n`;
           const next = before + line + prev.slice(pos);
           offset = pos + line.length;
-          latest.current = next;
-          setMarkdown(next);
+          put(next);
         })
         .catch(() => {});
     }
@@ -310,8 +313,8 @@ export default function MarkdownField({
   const onChange = useCallback((out: string) => {
     const { source, baseline } = opened.current;
     // 되돌려 손대지 않은 모양이 되면 원문 그대로
-    setMarkdown(baseline !== null && out === baseline ? source : out);
-  }, []);
+    put(baseline !== null && out === baseline ? source : out);
+  }, [put]);
 
   const tabs: { id: TabId; label: string; note: string }[] = [
     { id: "markdown", label: "마크다운", note: MARKDOWN_NOTE },
@@ -414,7 +417,7 @@ export default function MarkdownField({
         rows={rows}
         value={markdown}
         onChange={(e) => {
-          setMarkdown(e.target.value);
+          put(e.target.value);
           // 숨은 칸이 바뀌는 것은 밖에서 넣었을 때뿐이다(보관본 되살리기,
           // MYH-193). 열린 편집기를 그 본문으로 새로 그린다
           if (tab !== "markdown") reopen(e.target.value);
