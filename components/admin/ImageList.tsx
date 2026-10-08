@@ -14,7 +14,7 @@ export type ImageRow = {
   id: number;
   /** 받아 볼 수 있는 주소. 비밀글은 관리자만 지나는 길이다 */
   url: string;
-  /** 열쇠가 바뀌어 이름을 못 꺼낸 비밀글 그림은 null 이다 */
+  /** 열쇠가 바뀌어 이름을 복호화하지 못한 비밀글 그림은 null 이다 */
   filename: string | null;
   size: number;
   /** 본문에 붙여 넣을 한 줄 */

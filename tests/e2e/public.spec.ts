@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { openPasswordLogin } from "./helpers";
+import { login, openPasswordLogin } from "./helpers";
 
 const { version } = JSON.parse(readFileSync("package.json", "utf8"));
 
@@ -31,8 +31,8 @@ test.describe("공개 페이지", () => {
       "짧은 글",
       "프로젝트",
       "책",
+      // 연락처는 방명록으로 합쳤다(MYH-216)
       "방명록",
-      "연락처",
     ]);
 
     await nav.getByRole("link", { name: "블로그" }).click();
@@ -45,8 +45,9 @@ test.describe("공개 페이지", () => {
   // 시드가 넣는 값(보기 값): 개인 메일 · 회사 메일 · 휴대폰("010-", 아직 안 적은 값)
   // · GitHub. 홈페이지는 시드에 없어 줄이 안 나온다 — 비면 안 나오는 것도
   // 여기서 같이 보는 셈이다(MYH-164).
-  test("소개와 연락처에 연락 수단과 바깥 주소가 보인다", async ({ page }) => {
-    for (const path of ["/about", "/contact"]) {
+  test("소개와 방명록에 연락 수단과 바깥 주소가 보인다", async ({ page }) => {
+    // 연락처는 방명록으로 합쳤다(MYH-216)
+    for (const path of ["/about", "/guestbook"]) {
       await page.goto(path);
       const labels = page.locator("dt");
       await expect(labels).toHaveText([
@@ -83,9 +84,9 @@ test.describe("공개 페이지", () => {
     }
   });
 
-  // 소개는 메뉴에서 뺐다. 첫 화면과 연락처에서 들어간다.
-  test("첫 화면과 연락처에서 소개로 들어간다", async ({ page }) => {
-    for (const from of ["/", "/contact"]) {
+  // 소개는 메뉴에서 뺐다. 첫 화면과 방명록에서 들어간다.
+  test("첫 화면과 방명록에서 소개로 들어간다", async ({ page }) => {
+    for (const from of ["/", "/guestbook"]) {
       await page.goto(from);
       await page.getByRole("link", { name: "소개 보기" }).click();
       await expect(
@@ -125,9 +126,11 @@ test.describe("공개 페이지", () => {
       page.getByRole("heading", { name: "프로젝트", level: 1 }),
     ).toBeVisible();
 
+    // 방문자에게는 소개에 보일 항목(MYH-220)에서 끌 수 있다. 관리자에게는 늘 보인다
+    await login(page);
     await page.goto("/about");
     await expect(
-      page.getByRole("heading", { name: "수행 업무" }),
+      page.getByRole("heading", { name: /^수행 업무/ }),
     ).toBeVisible();
   });
 
@@ -168,7 +171,7 @@ test.describe("공개 페이지", () => {
       "/",
       "/about",
       "/projects",
-      "/contact",
+      "/guestbook",
       "/blog",
       "/notes",
     ]) {

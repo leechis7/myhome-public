@@ -10,6 +10,7 @@ import {
   pgTable,
   primaryKey,
   serial,
+  smallint,
   text,
   timestamp,
   unique,
@@ -44,6 +45,14 @@ export const profile = pgTable(
     githubUrl: text("github_url"),
     /** 다른 데 두고 쓰는 홈페이지. 이 사이트 말고 */
     homepageUrl: text("homepage_url"),
+    /**
+     * 소개에서 방문자에게 보일 항목(MYH-220). 값은 lib/about-sections.ts.
+     * 관리자에게는 늘 전부 보인다. 처음은 전부.
+     */
+    aboutSections: text("about_sections")
+      .array()
+      .notNull()
+      .default(sql`'{profile,contacts,career,skills,work}'::text[]`),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -245,6 +254,12 @@ export const books = pgTable(
     url: text("url"),
     startedOn: date("started_on"),
     finishedOn: date("finished_on"),
+    /** 독서 노트(MYH-211). 마크다운. 읽는 중에도 쓴다 */
+    readingNote: text("reading_note"),
+    /** 별점 1~5. 비워도 된다 */
+    rating: smallint("rating"),
+    /** 독서 노트를 마지막으로 고친 때. 상세 화면 · 사이트맵이 쓴다 */
+    noteUpdatedAt: timestamp("note_updated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -255,6 +270,7 @@ export const books = pgTable(
   (t) => [
     check("books_status", sql`${t.status} in ('reading', 'read')`),
     check("books_kind_group", sql`${t.kindGroup} = '00004'`),
+    check("books_rating", sql`${t.rating} between 1 and 5`),
     foreignKey({
       name: "books_kind_codes_fk",
       columns: [t.kindGroup, t.kindCode],
@@ -659,9 +675,9 @@ export const passkeys = pgTable(
 /**
  * 나만 보는 비밀글. 일기와 기억해 둘 것.
  *
- * **담긴 글자는 전부 암호문이다.** 제목까지 담근다 — 제목만 평문으로 두면
+ * **들어 있는 글자는 전부 암호문이다.** 제목까지 암호화한다 — 제목만 평문으로 두면
  * "무엇에 대한 글인지" 가 그대로 샌다. 열쇠는 DB 밖(서버 환경변수)에 있어서
- * 이 테이블만 통째로 가져가도 읽히지 않는다. 담그고 꺼내는 것은
+ * 이 테이블만 통째로 가져가도 읽히지 않는다. 암호화 · 복호화는
  * `lib/secret-crypto.ts` 가 한다.
  *
  * posts 와 섞지 않았다. 저쪽은 공개가 기본이고 목록·검색·RSS·사이트맵이
@@ -682,8 +698,8 @@ export const secrets = pgTable(
     /**
      * 암호문. 원문은 태그를 담은 JSON 배열.
      *
-     * 태그도 담근다 — "건강", "돈", "아이" 같은 낱말만으로도 무엇에 대한
-     * 글인지가 샌다. 대신 SQL 로는 못 거른다. 꺼내서 메모리에서 거른다
+     * 태그도 암호화한다 — "건강", "돈", "아이" 같은 낱말만으로도 무엇에 대한
+     * 글인지가 샌다. 대신 SQL 로는 못 거른다. 복호화해서 메모리에서 거른다
      * (글 수가 적다). 태그가 없으면 null 이다.
      */
     tags: text("tags"),
@@ -694,6 +710,14 @@ export const secrets = pgTable(
     writtenAt: timestamp("written_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    /**
+     * 일기장(MYH-213)이면 그 날. 하루 한 편이라 겹치지 않는다. 비밀글은
+     * null 이다 — 비밀글 목록은 이것이 빈 줄만 본다. 날짜는 암호화하지 않는다
+     * (달력을 그리려면 SQL 로 골라야 한다). 무슨 날에 썼는지만 드러난다.
+     */
+    diaryDay: date("diary_day").unique("secrets_diary_day_key"),
+    /** 암호문. 일기의 기분(good · okay · meh · sad · angry · tired). 비울 수 있다 */
+    mood: text("mood"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -705,7 +729,7 @@ export const secrets = pgTable(
 );
 
 /**
- * 비밀글에 붙인 파일. 파일 내용도 담가서 디스크에 둔다.
+ * 비밀글에 붙인 파일. 파일 내용도 암호화해서 디스크에 둔다.
  *
  * uploads 를 쓰지 않는다. 저쪽은 이름이 내용 해시라, 같은 파일을 가진 사람이
  * 주소를 찍어 보는 것만으로 "이 파일이 여기 있다" 를 알 수 있다. 이쪽 이름은
@@ -724,9 +748,9 @@ export const secretAttachments = pgTable(
     filename: text("filename").notNull(),
     /** 암호문. image/png 같은 것 */
     mimeType: text("mime_type").notNull(),
-    /** 담그기 전 크기(바이트). 화면에 보여주려고 평문으로 둔다 */
+    /** 암호화하기 전 크기(바이트). 화면에 보여주려고 평문으로 둔다 */
     size: integer("size").notNull(),
-    /** attachments.kind 와 같다. 담그는 자리는 같고 쓰는 곳만 다르다 */
+    /** attachments.kind 와 같다. 암호화하는 자리는 같고 쓰는 곳만 다르다 */
     kind: text("kind").notNull().default("file"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -797,6 +821,11 @@ export const siteSettings = pgTable(
     email: text("email"),
     /** 글 편집기: milkdown / tiptap / toast. 비우면 milkdown(MYH-118) */
     editor: text("editor"),
+    /**
+     * 암호문. 구글 캘린더 iCal 비공개 주소들(JSON 배열, MYH-214). 주소만
+     * 알면 일정을 읽을 수 있어 암호화해 둔다. 비우면 일정이 꺼진다.
+     */
+    calendarIcal: text("calendar_ical"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -808,6 +837,53 @@ export const siteSettings = pgTable(
       sql`${t.editor} is null or ${t.editor} in ('milkdown', 'tiptap', 'toast')`,
     ),
   ],
+);
+
+/**
+ * 빠른 메모(MYH-215). 텔레그램 봇으로 보낸 글이나 화면에서 쓴 한 줄을 쌓아
+ * 둔다. 글은 비밀글처럼 암호화한다(SECRETS_KEY). 일기로 옮기면 그때를 적는다.
+ */
+export const memos = pgTable(
+  "memos",
+  {
+    id: serial("id").primaryKey(),
+    /** 암호문. 원문은 평문 글 */
+    content: text("content").notNull(),
+    /** 어디서 왔나: telegram · web */
+    source: text("source").notNull().default("web"),
+    /** 일기로 옮긴 때. 옮기지 않았으면 null */
+    movedAt: timestamp("moved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    check("memos_source", sql`${t.source} in ('telegram', 'web')`),
+    index("memos_created_idx").on(t.createdAt.desc()),
+  ],
+);
+
+/**
+ * 할 일(MYH-217). 체크리스트. 할 일 글은 암호화하고(SECRETS_KEY), 기한 · 끝낸 때는
+ * 줄 세우기와 「넘김」 표시에 써서 평문으로 둔다.
+ */
+export const todos = pgTable(
+  "todos",
+  {
+    id: serial("id").primaryKey(),
+    /** 암호문. 할 일 */
+    title: text("title").notNull(),
+    /** 기한(선택) */
+    dueOn: date("due_on"),
+    /** 끝낸 때. 안 끝났으면 null */
+    doneAt: timestamp("done_at", { withTimezone: true }),
+    /** 어디서 왔나: telegram · web */
+    source: text("source").notNull().default("web"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [check("todos_source", sql`${t.source} in ('telegram', 'web')`)],
 );
 
 export type Profile = typeof profile.$inferSelect;
@@ -824,6 +900,8 @@ export type Passkey = typeof passkeys.$inferSelect;
 export type Secret = typeof secrets.$inferSelect;
 export type SecretAttachment = typeof secretAttachments.$inferSelect;
 export type Menu = typeof menus.$inferSelect;
+export type Memo = typeof memos.$inferSelect;
+export type Todo = typeof todos.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type Code = typeof codes.$inferSelect;
 export type CodeGroupRow = typeof codeGroups.$inferSelect;

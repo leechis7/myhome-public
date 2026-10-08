@@ -1,11 +1,15 @@
 import type { MetadataRoute } from "next";
+import { listBooksWithNotes } from "@/lib/books";
 import { listAllPublishedPosts } from "@/lib/posts";
 import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await listAllPublishedPosts();
+  const [posts, books] = await Promise.all([
+    listAllPublishedPosts(),
+    listBooksWithNotes(),
+  ]);
   // 목록 화면의 lastmod. 글 하나만 고쳐도 목록은 달라지므로 가장 최근
   // 수정 시각을 쓴다.
   const latest =
@@ -29,7 +33,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     { url: `${site.url}/books`, changeFrequency: "weekly", priority: 0.5 },
     { url: `${site.url}/guestbook`, changeFrequency: "weekly", priority: 0.4 },
-    { url: `${site.url}/contact`, changeFrequency: "yearly", priority: 0.5 },
   ];
 
   return [
@@ -40,6 +43,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: post.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.7,
+    })),
+    // 독서 노트가 있는 책(MYH-211)
+    ...books.map((book) => ({
+      url: `${site.url}/books/${book.id}`,
+      lastModified: book.noteUpdatedAt ?? undefined,
+      changeFrequency: "yearly" as const,
+      priority: 0.4,
     })),
   ];
 }

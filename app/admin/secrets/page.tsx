@@ -44,7 +44,7 @@ export default async function SecretsPage({
       </div>
 
       <p className="mt-3 text-sm text-muted">
-        제목·본문·태그와 붙인 파일까지 담겨서 저장됩니다. 열쇠는 서버에만
+        제목·본문·태그와 붙인 파일까지 암호화해서 저장됩니다. 열쇠는 서버에만
         있습니다.
       </p>
 

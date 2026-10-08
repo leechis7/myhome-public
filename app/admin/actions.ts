@@ -26,6 +26,9 @@ export type ActionState = { error?: string; ok?: string };
 /** 소개 화면은 DB에서 바로 읽지만, 나중에 캐시를 켜더라도 안전하도록 갱신해 둔다 */
 function refreshPublicPages() {
   revalidatePath("/about");
+  // 연락 수단은 방명록에도 나온다(MYH-216)
+  revalidatePath("/guestbook");
+  revalidatePath("/resume");
 }
 
 /**
@@ -136,15 +139,11 @@ export async function saveProfile(
   if (!name) return { error: "이름은 비울 수 없습니다." };
   if (!bio) return { error: "소개글은 비울 수 없습니다." };
 
+  // 연락 수단은 따로 저장한다(saveContacts, MYH-222) - 여기서 건드리면 지워진다
   const values = {
     name,
     bio,
     headline: emptyToNull(formData.get("headline")),
-    email: emptyToNull(formData.get("email")),
-    workEmail: emptyToNull(formData.get("workEmail")),
-    phone: emptyToNull(formData.get("phone")),
-    githubUrl: emptyToNull(formData.get("githubUrl")),
-    homepageUrl: emptyToNull(formData.get("homepageUrl")),
     updatedAt: new Date(),
   };
 
@@ -160,6 +159,32 @@ export async function saveProfile(
     await db.insert(profile).values({ id: 1, ...values });
   }
 
+  refreshPublicPages();
+  return { ok: "저장했습니다." };
+}
+
+/**
+ * 연락 수단(MYH-222). 프로필 줄이 있어야 저장한다 — 이름 · 소개글이 비어서는
+ * 줄을 만들 수 없다.
+ */
+export async function saveContacts(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const updated = await getDb()
+    .update(profile)
+    .set({
+      email: emptyToNull(formData.get("email")),
+      workEmail: emptyToNull(formData.get("workEmail")),
+      phone: emptyToNull(formData.get("phone")),
+      githubUrl: emptyToNull(formData.get("githubUrl")),
+      homepageUrl: emptyToNull(formData.get("homepageUrl")),
+      updatedAt: new Date(),
+    })
+    .where(eq(profile.id, 1))
+    .returning({ id: profile.id });
+  if (updated.length === 0) return { error: "프로필(이름 · 소개글)을 먼저 저장하세요." };
   refreshPublicPages();
   return { ok: "저장했습니다." };
 }

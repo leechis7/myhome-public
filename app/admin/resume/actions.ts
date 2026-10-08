@@ -6,11 +6,13 @@ import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth";
 import {
   getDb,
+  profile,
   resumeLicenses,
   resumeProfile,
   resumeSchools,
   resumeTrainings,
 } from "@/lib/db";
+import { ABOUT_SECTIONS, isAboutSection } from "@/lib/about-sections";
 import { isResumeSection, RESUME_SECTIONS } from "@/lib/resume-sections";
 
 /**
@@ -18,7 +20,8 @@ import { isResumeSection, RESUME_SECTIONS } from "@/lib/resume-sections";
  * 실패는 쿼리스트링으로 알린다(?re=…).
  */
 
-const BACK = "/admin/resume";
+// 프로필 한 화면(MYH-218 · MYH-220)
+const BACK = "/admin";
 const MONTH = /^\d{4}-\d{2}$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -43,7 +46,24 @@ function done(anchor: string) {
   redirect(`${BACK}#${anchor}`);
 }
 
-/** 방문자에게 보일 항목 */
+/**
+ * 소개에서 방문자에게 보일 항목(MYH-220). 프로필 줄이 아직 없으면(빈 설치)
+ * 고칠 것이 없다 — 프로필을 먼저 저장해야 소개가 생긴다.
+ */
+export async function saveAboutVisibility(formData: FormData) {
+  await requireAdmin();
+  const chosen = formData.getAll("section").filter(isAboutSection);
+  const ordered = ABOUT_SECTIONS.filter((s) => chosen.includes(s));
+  await getDb()
+    .update(profile)
+    .set({ aboutSections: ordered, updatedAt: new Date() })
+    .where(eq(profile.id, 1));
+  revalidatePath("/about");
+  revalidatePath(BACK);
+  redirect(`${BACK}#visibility`);
+}
+
+/** 이력서에서 방문자에게 보일 항목 */
 export async function saveVisibility(formData: FormData) {
   await requireAdmin();
   const chosen = formData.getAll("section").filter(isResumeSection);

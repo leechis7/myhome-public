@@ -30,7 +30,7 @@ export type SecretUploadState = {
 /**
  * 비밀글을 담고 고치고 지운다.
  *
- * 여기서 오가는 것은 평문이다. 담그는 것은 lib/secrets.ts 가 한다 —
+ * 여기서 오가는 것은 평문이다. 암호화는 lib/secrets.ts 가 한다 —
  * 이 파일에서 암호화를 부르기 시작하면 빠뜨리는 자리가 생긴다.
  *
  * 화면 새로 고침(revalidatePath)은 /admin/secrets 아래만 한다. 이 글은
@@ -134,7 +134,7 @@ export async function detachSecretFile(formData: FormData) {
 /**
  * 본문에 넣은 그림을 목록에서 지운다(MYH-148).
  *
- * 첨부를 떼는 것(detachSecretFile)과 하는 일은 같다 — 줄과 담근 파일을
+ * 첨부를 떼는 것(detachSecretFile)과 하는 일은 같다 — 줄과 암호화한 파일을
  * 함께 지운다. 비밀글 파일은 이름이 난수라 딴 글이 같은 것을 가리킬 수
  * 없어서, 블로그처럼 "아무도 안 볼 때만" 을 따질 것이 없다.
  *
@@ -173,7 +173,7 @@ export async function rotateSecretImageAction(formData: FormData) {
  * 본문에 넣을 그림을 올린다. 올리고 나면 붙여 넣을 마크다운 한 줄을 준다.
  *
  * 블로그 쪽(uploadImage)과 하는 일은 같지만 두는 자리가 다르다. 이쪽은
- * 담가서 비밀글 첨부와 같은 곳에 두고, 주소도 관리자만 받는 길로 준다.
+ * 암호화해서 비밀글 첨부와 같은 곳에 두고, 주소도 관리자만 받는 길로 준다.
  */
 export async function uploadSecretImage(
   _prev: SecretUploadState,

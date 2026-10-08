@@ -1,19 +1,25 @@
 # myhome
 
-> Self-hosted personal homepage — about · résumé · blog · guestbook · reading list.
+> Self-hosted personal homepage — about · résumé · blog · guestbook · reading list,
+> plus a private space (diary · notes · to-dos · Google Calendar).
 > Next.js + PostgreSQL, one-line Docker install. The UI is in Korean.
 
 혼자 쓰는 개인 홈페이지. 소개 · 이력서 · 블로그 · 짧은 글 · 방명록 · 읽는 책을
-한 사이트에 두고, 모두 웹의 관리 화면에서 고친다. 앱 하나와 PostgreSQL 하나로
-돈다.
+한 사이트에 두고, 나만 보는 「내 공간」(일기장 · 메모 · 할 일 · 일정)까지 모두
+웹의 관리 화면에서 고친다. 앱 하나와 PostgreSQL 하나로 돈다.
 
 - **소개 · 이력서**: 경력 · 기술 · 수행 업무. 이력서는 기술이력서 표 모양으로
   그리고 브라우저 인쇄로 PDF 로 저장한다. 인적 사항처럼 공개하기 싫은 항목은
   나에게만 보이게 고른다
 - **글**: 블로그(목차 · 태그 · 검색 · 연재 · 관련 글 · 예약 발행 · 개정 표시),
-  짧은 글, 나만 보는 비밀글(서버에 담가서 저장). 마크다운이고 위지윅 편집기 셋
+  짧은 글, 나만 보는 비밀글(서버에서 암호화해 저장). 마크다운이고 위지윅 편집기 셋
   가운데 고른다. 그림은 붙여넣기 · 끌어놓기로 올린다
-- **사람들과**: 댓글 · 방명록 · 연락 폼. 텔레그램으로 알림을 받을 수 있다
+- **책**: 읽는 책 · 다 읽은 책, 책마다 독서 노트와 별점
+- **사람들과**: 댓글 · 방명록(「나에게만 보내기」 로 연락도). 텔레그램으로
+  알림을 받을 수 있다
+- **내 공간**(나만 봄, 암호화해 저장): 하루 한 편 일기장, 메모, 할 일, 구글
+  캘린더 일정(월간 · 주간). 텔레그램 봇에게 「메모 …」 · 「할일 …」 로 보내도
+  들어가고, 어느 화면에서나 ＋ 단추로 바로 적는다
 - **관리**: 메뉴 · 사이트 정보 · 코드(분류)를 화면에서 고친다. 패스키 로그인
 - **바깥**: 사이트맵 · RSS · 링크 미리보기 이미지 · 검색엔진 등록
 
@@ -233,13 +239,14 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | 변수 | 설명 |
 | --- | --- |
 | `POSTGRES_PASSWORD` | **필수.** DB 비밀번호. 처음 띄운 뒤에는 바꾸지 않는다 |
-| `SESSION_SECRET` | **필수.** 로그인 쿠키를 담그는 열쇠(32자 이상). `openssl rand -base64 32` |
+| `SESSION_SECRET` | **필수.** 로그인 쿠키를 암호화하는 열쇠(32자 이상). `openssl rand -base64 32` |
 | `SITE_URL` | 바깥에서 들어오는 주소. 기본 `http://localhost:3000` |
 | `PORT` | 여는 포트. 기본 `3000` |
 | `MYHOME_VERSION` | 쓸 이미지 판. 기본 `latest` |
 | `ADMIN_PASSWORD` | 처음 관리자 비밀번호. 비우면 처음 `/admin` 에서 설치 코드로 정한다 |
 | `SECRETS_KEY` | 비밀글 열쇠(32바이트 base64). 비우면 비밀글이 꺼지고 메뉴에서 빠진다 |
 | `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | 댓글 · 연락 · 방명록 알림 |
+| `TELEGRAM_INBOX` | `off` 면 이 서버에서는 텔레그램 메모 · 할 일을 받지 않는다(같은 봇을 쓰는 개발기 등). 봇 하나에 받는 곳은 하나뿐이다 |
 | `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 나가지 않는다 |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console 소유 확인 |
 | `MONITORING_DASHBOARD` | 관리 › 감시 화면에 끼울 Grafana 대시보드 경로. 비우면 메뉴에서 빠진다 |

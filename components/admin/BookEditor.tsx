@@ -1,3 +1,4 @@
+import Link from "next/link";
 import DeleteButton from "@/components/admin/DeleteButton";
 import CodePicker from "@/components/admin/CodePicker";
 import CoverInput from "@/components/admin/CoverInput";
@@ -132,8 +133,15 @@ export default function BookEditor({
                   {book.kind ? (
                     <span className="text-xs text-faint">{book.kind}</span>
                   ) : null}
+                  {/* 펼치지 않아도 바로 노트로 간다(MYH-211) */}
+                  <Link
+                    href={`/admin/books/${book.id}`}
+                    className="ml-auto rounded-md border border-border px-2 py-0.5 text-xs transition-colors hover:bg-foreground/5"
+                  >
+                    {book.hasNote ? "📖 독서 노트" : "＋ 독서 노트"}
+                  </Link>
                   <span
-                    className={`ml-auto rounded px-2 py-0.5 text-xs ${
+                    className={`rounded px-2 py-0.5 text-xs ${
                       book.status === "reading"
                         ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                         : "bg-foreground/[0.06] text-foreground/60"
@@ -150,6 +158,10 @@ export default function BookEditor({
                       <button type="submit" className={primary}>
                         저장
                       </button>
+                      {/* 노트는 길어서 따로 쓴다(MYH-211) */}
+                      <Link href={`/admin/books/${book.id}`} className={button}>
+                        {book.hasNote ? "독서 노트 고치기 →" : "독서 노트 쓰기 →"}
+                      </Link>
                     </div>
                   </form>
                   <form action={deleteBook} className="mt-2">

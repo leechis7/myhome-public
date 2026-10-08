@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { getDb, secretAttachments, secrets } from "@/lib/db";
 import {
   decryptBytes,
@@ -18,11 +18,11 @@ import { optimizeImage, rotateBytes } from "@/lib/uploads";
 /**
  * 나만 보는 비밀글.
  *
- * DB 에 오가는 글자는 여기서 담그고 여기서 꺼낸다. 화면과 서버 액션은
- * 평문만 만지고, 테이블에는 평문이 닿지 않는다 — 담그는 자리가 여러 곳이면
+ * DB 에 오가는 글자는 여기서 암호화하고 여기서 복호화한다. 화면과 서버 액션은
+ * 평문만 만지고, 테이블에는 평문이 닿지 않는다 — 암호화하는 자리가 여러 곳이면
  * 언젠가 한 곳이 빠진다.
  *
- * 꺼내다 실패하면 던지지 않고 `null` 을 준다. 열쇠를 바꿨거나 잃었을 때
+ * 복호화에 실패하면 던지지 않고 `null` 을 준다. 열쇠를 바꿨거나 잃었을 때
  * 목록 전체가 죽는 대신 "열 수 없음" 으로 보이게 하려는 것이다. 그래야
  * 무슨 일이 난 건지 화면에서 알아볼 수 있다.
  */
@@ -38,7 +38,7 @@ function open(envelope: string) {
   }
 }
 
-/** 태그는 JSON 배열 한 덩어리로 담근다. 없으면 null 로 둔다 */
+/** 태그는 JSON 배열 한 덩어리로 암호화한다. 없으면 null 로 둔다 */
 function sealTags(tags: string[]) {
   return tags.length > 0 ? encryptText(JSON.stringify(tags)) : null;
 }
@@ -56,10 +56,10 @@ function openTags(envelope: string | null) {
 }
 
 /**
- * 목록. 본문은 꺼내지 않는다 — 제목·태그·날짜만 있으면 된다.
+ * 목록. 본문은 복호화하지 않는다 — 제목·태그·날짜만 있으면 된다.
  *
- * 태그로 거르는 것도 여기서 한다. SQL 로는 못 한다 — 담겨 있어서 DB 는
- * 무슨 글자인지 모른다. 꺼내서 메모리에서 거른다. 글이 몇 만 편이 되면
+ * 태그로 거르는 것도 여기서 한다. SQL 로는 못 한다 — 암호화돼 있어서 DB 는
+ * 무슨 글자인지 모른다. 복호화해서 메모리에서 거른다. 글이 몇 만 편이 되면
  * 다시 생각할 일이지만, 일기가 그렇게 쌓일 일은 없다.
  */
 export async function listSecrets(tag?: string) {
@@ -72,6 +72,8 @@ export async function listSecrets(tag?: string) {
       updatedAt: secrets.updatedAt,
     })
     .from(secrets)
+    // 일기장(MYH-213)은 같은 테이블에 있지만 비밀글 목록에는 넣지 않는다
+    .where(isNull(secrets.diaryDay))
     .orderBy(desc(secrets.writtenAt), desc(secrets.id));
 
   const opened = rows.map((row) => ({
@@ -182,7 +184,7 @@ export async function removeSecret(id: number) {
   }
 }
 
-/** 파일을 붙인다. 디스크에 놓이는 것은 담근 바이트다 */
+/** 파일을 붙인다. 디스크에 놓이는 것은 암호화한 바이트다 */
 export async function addSecretAttachment(secretId: number, file: File) {
   const bytes = Buffer.from(await file.arrayBuffer());
   return storeSecretFile(
@@ -195,7 +197,7 @@ export async function addSecretAttachment(secretId: number, file: File) {
 }
 
 /**
- * 붙임 파일과 본문 그림이 함께 지나는 자리. 담그고 쓰는 일은 여기 한 곳이다.
+ * 붙임 파일과 본문 그림이 함께 지나는 자리. 암호화하고 쓰는 일은 여기 한 곳이다.
  *
  * 자리는 같아도 쓰임새는 다르다. `kind` 로 갈라 두지 않으면 본문에 넣은
  * 그림이 아래 첨부파일 목록에 그대로 나온다(MYH-144).
@@ -229,7 +231,7 @@ async function storeSecretFile(
 }
 
 /**
- * 본문에 넣을 그림을 올린다. 붙임 파일과 같은 자리에 담가서 둔다.
+ * 본문에 넣을 그림을 올린다. 붙임 파일과 같은 자리에 암호화해서 둔다.
  *
  * 공개 그림(lib/uploads.ts)처럼 `/uploads/<해시>` 에 두면 주소를 아는
  * 사람이 그대로 받는다. 그래서 이쪽으로 따로 올리고, 줄이는 길만 같이 쓴다.
@@ -349,7 +351,7 @@ export async function rotateSecretImage(id: number, turn: "left" | "right") {
   return row.secretId;
 }
 
-/** 내려줄 것 하나. 파일 내용까지 꺼내서 준다 */
+/** 내려줄 것 하나. 파일 내용까지 복호화해서 준다 */
 export async function findSecretAttachment(id: number) {
   const [row] = await getDb()
     .select()

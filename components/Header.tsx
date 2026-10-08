@@ -12,7 +12,7 @@ export default async function Header() {
   const items = await getMenu({ admin });
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
       <Container className="flex h-16 items-center justify-between gap-4">
         <Link href="/" className="text-base font-semibold tracking-tight">
           {info.name}

@@ -24,7 +24,7 @@ async function scan(page: import("@playwright/test").Page, path: string) {
 }
 
 test.describe("접근성", () => {
-  for (const path of ["/", "/about", "/blog", "/contact"]) {
+  for (const path of ["/", "/about", "/blog", "/guestbook"]) {
     test(`${path} 에 자동으로 잡히는 위반이 없다`, async ({ page }) => {
       await scan(page, path);
     });

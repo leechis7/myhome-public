@@ -81,7 +81,7 @@ describe("DEFAULT_MENUS", () => {
   // 「코드」 줄을(MYH-131) 더한다. 그것을 합친 것이 「처음 상태로」 가 되돌릴
   // 값과 같아야 한다. 번호는
   // 달라도 된다 — 모양(이름 · 갈 곳 · 보는 사람 · 형제 순서 · 부모)만 본다.
-  it("0029 · 0030 · 0031 · 0037 · 0039 · 0040 이 넣는 줄을 합치면 처음 값과 같다", () => {
+  it("0029 · 0030 · 0031 · 0037 · 0039 · 0040 · 0042 · 0043 ~ 0049 가 넣고 옮긴 줄을 합치면 처음 값과 같다", () => {
     const sql = readFileSync("drizzle/0029_add_menus.sql", "utf8");
     const rows = [
       ...sql.matchAll(
@@ -170,6 +170,109 @@ describe("DEFAULT_MENUS", () => {
       audience: "admin",
     });
 
+    // 0042: 첫 단의 관리 바로 앞(관리 순서 - 5)에 「내 공간」 그룹, 첫 단의 비밀글 · 내 서비스 ·
+    // 감시를 그 아래 10 · 20 · 30 으로(MYH-212)
+    const sql42 = readFileSync("drizzle/0042_add_my_space_menu.sql", "utf8");
+    expect(sql42).toContain("SELECT sort_order - 5 FROM");
+    expect(sql42).toContain("'내 공간', NULL, 'admin'");
+    expect(sql42).toContain("WHEN '/admin/secrets' THEN 10");
+    expect(sql42).toContain("WHEN '/admin/links' THEN 20");
+    expect(sql42).toContain("ELSE 30");
+    rows.push({
+      id: 9993,
+      parentId: null,
+      sortOrder: 관리.sortOrder - 5,
+      label: "내 공간",
+      href: null,
+      audience: "admin",
+    });
+    const order: Record<string, number> = {
+      "/admin/secrets": 10,
+      "/admin/links": 20,
+      "/admin/monitoring": 30,
+    };
+    for (const r of rows) {
+      if (r.parentId === null && r.href && r.href in order) {
+        r.parentId = 9993;
+        r.sortOrder = order[r.href];
+      }
+    }
+
+    // 0043: 내 공간의 맨 앞(순서 5)에 「일기장」(MYH-213)
+    const sql43 = readFileSync("drizzle/0043_add_diary.sql", "utf8");
+    expect(sql43).toContain("SELECT g.id, 5, '일기장', '/admin/diary', 'admin'");
+    rows.push({
+      id: 9992,
+      parentId: 9993,
+      sortOrder: 5,
+      label: "일기장",
+      href: "/admin/diary",
+      audience: "admin",
+    });
+
+    // 0044: 내 공간의 일기장 뒤(순서 7)에 「메모」(MYH-215)
+    const sql44 = readFileSync("drizzle/0044_add_memos.sql", "utf8");
+    expect(sql44).toContain("SELECT g.id, 7, '메모', '/admin/memos', 'admin'");
+    rows.push({
+      id: 9991,
+      parentId: 9993,
+      sortOrder: 7,
+      label: "메모",
+      href: "/admin/memos",
+      audience: "admin",
+    });
+
+    // 0045: 내 공간의 메모 뒤(순서 8)에 「할 일」(MYH-217)
+    const sql45 = readFileSync("drizzle/0045_add_todos.sql", "utf8");
+    expect(sql45).toContain("SELECT g.id, 8, '할 일', '/admin/todos', 'admin'");
+    rows.push({
+      id: 9990,
+      parentId: 9993,
+      sortOrder: 8,
+      label: "할 일",
+      href: "/admin/todos",
+      audience: "admin",
+    });
+
+    // 0046: 내 공간의 일기장 뒤(순서 6)에 「일정」(MYH-214)
+    const sql46 = readFileSync("drizzle/0046_add_calendar.sql", "utf8");
+    expect(sql46).toContain("SELECT g.id, 6, '일정', '/admin/calendar', 'admin'");
+    rows.push({
+      id: 9989,
+      parentId: 9993,
+      sortOrder: 6,
+      label: "일정",
+      href: "/admin/calendar",
+      audience: "admin",
+    });
+
+    // 0047: 설정의 「프로필」 을 「프로필 · 이력서」 로, 「이력서」 줄은 지운다(MYH-218)
+    const sql47 = readFileSync("drizzle/0047_merge_profile_resume_menu.sql", "utf8");
+    expect(sql47).toContain("SET label = '프로필 · 이력서'");
+    expect(sql47).toContain("DELETE FROM \"menus\" WHERE href = '/admin/resume'");
+    for (const r of rows) {
+      if (r.href === "/admin" && r.label === "프로필") r.label = "프로필 · 이력서";
+    }
+    rows.splice(
+      rows.findIndex((r) => r.href === "/admin/resume"),
+      1,
+    );
+
+    // 0048: 첫 단의 「연락처」 를 뺀다 — 방명록으로 합쳤다(MYH-216)
+    const sql48 = readFileSync("drizzle/0048_merge_contact_into_guestbook.sql", "utf8");
+    expect(sql48).toContain("DELETE FROM \"menus\" WHERE href = '/contact' AND label = '연락처'");
+    rows.splice(
+      rows.findIndex((r) => r.href === "/contact"),
+      1,
+    );
+
+    // 0049: 「프로필 · 이력서」 를 다시 「프로필」 로(MYH-220)
+    const sql49 = readFileSync("drizzle/0049_profile_page.sql", "utf8");
+    expect(sql49).toContain("SET label = '프로필'");
+    for (const r of rows) {
+      if (r.href === "/admin" && r.label === "프로필 · 이력서") r.label = "프로필";
+    }
+
     type Row = (typeof rows)[number];
     const shape = (all: readonly Row[], parentId: number | null): unknown[] =>
       all
@@ -197,7 +300,6 @@ describe("DEFAULT_MENUS", () => {
       "프로젝트",
       "책",
       "방명록",
-      "연락처",
     ]);
   });
 });

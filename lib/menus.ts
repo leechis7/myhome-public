@@ -27,7 +27,8 @@ type DefaultMenu = {
  * 처음 메뉴. 코드에 흩어져 있던 것을 옮기고(MYH-123), 따로 있던 관리 화면
  * 메뉴를 "관리" 그룹으로 넣었다.
  *
- * 0029 마이그레이션이 이 값을 넣고(뒤의 0030 · 0031 · 0037 · 0039 · 0040 이 줄을 더한다),
+ * 0029 마이그레이션이 이 값을 넣고(뒤의 0030 · 0031 · 0037 · 0039 · 0040 이 줄을 더하고
+ * 0042 가 「내 공간」 으로 묶고 0043 ~ 0046 이 일기장 · 메모 · 할 일 · 일정을 더하고, 0047 · 0048 이 합친 줄을 뺀다),
  * "처음 상태로" 가 이 값으로 되돌린다.
  * **둘이 어긋나면 안 된다** — tests/unit/menus.test.ts 가 본다.
  * 순서는 배열 순서이고, DB 에는 10, 20, 30 … 으로 들어간다.
@@ -39,18 +40,32 @@ type DefaultMenu = {
 export const DEFAULT_MENUS: readonly DefaultMenu[] = [
   { label: "블로그", href: "/blog", audience: "all" },
   { label: "짧은 글", href: "/notes", audience: "all" },
-  // 뒤가 아니라 짧은 글 옆이다. 글 쓰는 자리끼리 모은다.
-  { label: "비밀글", href: "/admin/secrets", audience: "admin" },
   { label: "프로젝트", href: "/projects", audience: "all" },
   // 0039 가 더한다(MYH-190)
   { label: "책", href: "/books", audience: "all" },
   // 0037 이 더한다(MYH-191)
   { label: "방명록", href: "/guestbook", audience: "all" },
-  { label: "연락처", href: "/contact", audience: "all" },
-  // 비밀글 · 내 서비스 · 감시는 관리 화면이지만 하루에 몇 번씩 여는 것이라
-  // 펼치지 않고 바로 누르게 첫 단에 둔다. 방문자에게는 보이지 않는다.
-  { label: "내 서비스", href: "/admin/links", audience: "admin" },
-  { label: "감시", href: "/admin/monitoring", audience: "admin" },
+  // 연락처는 방명록으로 합쳤다. 0048 이 뺀다(MYH-216)
+  // 0042 가 묶는다(MYH-212). 나만 보는 것 — 날마다 여는 것들이다. 전에는
+  // 첫 단에 공개 메뉴와 섞여 있었다. 관리는 사이트를 고치는 것만 남는다.
+  {
+    label: "내 공간",
+    href: null,
+    audience: "admin",
+    children: [
+      // 0043 이 더한다(MYH-213)
+      { label: "일기장", href: "/admin/diary", audience: "admin" },
+      // 0046 이 더한다(MYH-214)
+      { label: "일정", href: "/admin/calendar", audience: "admin" },
+      // 0044 가 더한다(MYH-215)
+      { label: "메모", href: "/admin/memos", audience: "admin" },
+      // 0045 가 더한다(MYH-217)
+      { label: "할 일", href: "/admin/todos", audience: "admin" },
+      { label: "비밀글", href: "/admin/secrets", audience: "admin" },
+      { label: "내 서비스", href: "/admin/links", audience: "admin" },
+      { label: "감시", href: "/admin/monitoring", audience: "admin" },
+    ],
+  },
   {
     label: "관리",
     href: null,
@@ -59,9 +74,9 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
      * 여덟 줄이 늘어서 있던 것을 둘로 묶었다(MYH-126). 첫 단은 넷이다.
      *
      * - 메시지가 맨 앞이다. 남이 보낸 것이라 늦게 보면 곤란한 것은 이것뿐이다.
-     * - 비밀글 · 내 서비스 · 감시는 여기 없다. 자주 여는 것이라 첫 단에 있다.
+     * - 비밀글 · 내 서비스 · 감시는 여기 없다. 「내 공간」 에 있다(MYH-212).
      * - 설정 안에서는 "소개" 를 "프로필" 로 부른다. 무엇의 소개인지는 설정
-     *   안이라는 자리가 말해 준다. "암호설정" 도 설정 안이라 "암호" 다.
+     *   안이라는 자리가 말해 준다. 이력서도 이 화면에서 고친다. "암호설정" 도 설정 안이라 "암호" 다.
      * - 메뉴 줄을 지워도 /admin/menus 주소로는 늘 들어간다. 막기보다 빠져나갈
      *   길을 남긴다.
      */
@@ -85,9 +100,9 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
         audience: "admin",
         children: [
           { label: "사이트", href: "/admin/site", audience: "admin" },
+          // 0040 이 이력서를 더했고 0047 이 한 줄로 합쳤다(MYH-218).
+          // 이름은 0049 가 다시 「프로필」 로(MYH-220)
           { label: "프로필", href: "/admin", audience: "admin" },
-          // 0040 이 더한다(MYH-198)
-          { label: "이력서", href: "/admin/resume", audience: "admin" },
           { label: "암호", href: "/admin/security", audience: "admin" },
           { label: "메뉴", href: "/admin/menus", audience: "admin" },
           { label: "코드", href: "/admin/codes", audience: "admin" },
@@ -190,12 +205,21 @@ export async function listMenus() {
  * 붙이지 않은 기능의 줄은 뺀다(MYH-173). 받아 띄운 사람이 쓰지 않는 것이
  * 메뉴에 있으면 열어 봐야 「설정되지 않았습니다」 뿐이다. 메뉴 관리 화면에는
  * 그대로 남는다.
- *   비밀글  SECRETS_KEY 가 없으면
+ *   비밀글 · 일기장 · 일정 · 메모 · 할 일  SECRETS_KEY 가 없으면
  *   감시    MONITORING_DASHBOARD 가 없으면
  */
 export async function getMenu({ admin }: { admin: boolean }) {
   const off: string[] = [];
-  if (!hasSecretKey()) off.push("/admin/secrets");
+  // 일기장도 같은 열쇠로 암호화한다(MYH-213)
+  if (!hasSecretKey()) {
+    off.push(
+      "/admin/secrets",
+      "/admin/diary",
+      "/admin/calendar",
+      "/admin/memos",
+      "/admin/todos",
+    );
+  }
   if (!process.env.MONITORING_DASHBOARD?.trim()) off.push("/admin/monitoring");
   const rows = (await readMenus()).filter(
     (r) => !off.some((href) => r.href?.startsWith(href)),

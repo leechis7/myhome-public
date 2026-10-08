@@ -39,7 +39,7 @@ export type SecretDraft = {
  * 블로그 글과 달리 요약·발행 상태가 없다. 남에게 보여줄 것이 아니라
  * 공개/비공개를 고를 일이 없다 — 전부 나만 본다.
  *
- * 태그는 있다. 쌓이면 찾을 길이 필요하고, 태그도 담가서 저장한다.
+ * 태그는 있다. 쌓이면 찾을 길이 필요하고, 태그도 암호화해서 저장한다.
  *
  * 이미지는 블로그처럼 맨 위에 두고 저장 전에도 올릴 수 있다. 새 글에서
  * 올리면 서버가 빈 초안을 만들어 번호를 주고, 이 화면이 그 번호를 이어받아
@@ -120,7 +120,7 @@ export default function SecretForm({
           rows={18}
           required
           defaultValue={secret?.content ?? ""}
-          placeholder="마크다운으로 씁니다. 여기 적은 것은 담겨서 저장됩니다."
+          placeholder="마크다운으로 씁니다. 여기 적은 것은 암호화해서 저장됩니다."
           textareaClassName={`${field} font-mono leading-relaxed`}
           // 붙여넣거나 끌어놓은 그림도 담아서(암호화) 저장한다(MYH-192)
           imageUpload={{

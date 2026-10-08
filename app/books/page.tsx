@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import BookCard from "@/components/BookCard";
 import AdminLinkButton from "@/components/admin/AdminLinkButton";
 import { groupByYear, listShelf } from "@/lib/books";
+import { isAdmin } from "@/lib/auth";
 import { pageMetadata } from "@/lib/page-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,7 +22,7 @@ export const dynamic = "force-dynamic";
  * 다 읽은 책은 아래에 끝낸 해로 묶는다. 고치는 곳은 관리 › 글 › 책.
  */
 export default async function BooksPage() {
-  const { reading, read } = await listShelf();
+  const [{ reading, read }, admin] = await Promise.all([listShelf(), isAdmin()]);
 
   return (
     <Container>
@@ -41,7 +42,7 @@ export default async function BooksPage() {
           <ul className="grid gap-6 sm:grid-cols-2">
             {reading.map((book) => (
               <li key={book.id}>
-                <BookCard book={book} large />
+                <BookCard book={book} large admin={admin} />
               </li>
             ))}
           </ul>
@@ -63,7 +64,7 @@ export default async function BooksPage() {
                 <ul className="grid gap-4 sm:grid-cols-2">
                   {rows.map((book) => (
                     <li key={book.id}>
-                      <BookCard book={book} />
+                      <BookCard book={book} admin={admin} />
                     </li>
                   ))}
                 </ul>

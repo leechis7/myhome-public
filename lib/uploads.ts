@@ -32,7 +32,7 @@ const MAX_WIDTH = 1600;
  * GIF 는 움직임이 사라지므로 건드리지 않는다.
  * 변환에 실패하면 원본을 그대로 쓴다.
  *
- * 비밀글 쪽(lib/secrets.ts)도 이 길을 쓴다. 담그기 전에 줄이는 것은 같고,
+ * 비밀글 쪽(lib/secrets.ts)도 이 길을 쓴다. 암호화하기 전에 줄이는 것은 같고,
  * 어디에 어떻게 두는지만 다르다.
  */
 export async function optimizeImage(bytes: Buffer, mimeType: string) {

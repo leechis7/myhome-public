@@ -11,7 +11,7 @@ import {
  * 비밀글 본문에 넣을 이미지.
  *
  * 올리면 붙여 넣을 마크다운 한 줄을 준다. 블로그 쪽(ImageUpload)과 생김새는
- * 같지만, 나오는 주소가 관리자만 받을 수 있는 길이고 이미지도 담가서 둔다.
+ * 같지만, 나오는 주소가 관리자만 받을 수 있는 길이고 이미지도 암호화해서 둔다.
  *
  * 새 글에서도 올릴 수 있다. 그때는 담아 둘 자리가 없으므로 서버가 빈 초안을
  * 만들어 번호를 돌려주고, 그 번호를 `onCreated` 로 화면에 넘긴다.
@@ -53,7 +53,7 @@ export default function SecretImageUpload({
         {secretId === null ? null : (
           <input type="hidden" name="secretId" value={secretId} />
         )}
-        <ImagePicker note="담겨서 저장됩니다" />
+        <ImagePicker note="암호화해서 저장됩니다" />
         <button
           type="submit"
           disabled={pending}

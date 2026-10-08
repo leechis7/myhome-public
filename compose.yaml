@@ -53,7 +53,7 @@ services:
       - '${PORT:-3000}:3000'
     environment:
       DATABASE_URL: postgresql://myhome:${POSTGRES_PASSWORD}@postgres:5432/myhome
-      # 쿠키를 담그는 열쇠. 32자 이상. openssl rand -base64 32
+      # 쿠키를 암호화하는 열쇠. 32자 이상. openssl rand -base64 32
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET 이 .env 에 없습니다 - openssl rand -base64 32 로 만들어 넣으세요}
       # 바깥에서 들어오는 주소. 캐노니컬 · 사이트맵 · 공유 카드가 쓴다
       SITE_URL: ${SITE_URL:-http://localhost:3000}
@@ -64,6 +64,8 @@ services:
       # 선택. 비우면 꺼진다
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      # 선택. off 면 이 서버에서는 텔레그램 메모 · 할 일을 받지 않는다
+      TELEGRAM_INBOX: ${TELEGRAM_INBOX:-}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
       NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
       MONITORING_DASHBOARD: ${MONITORING_DASHBOARD:-}

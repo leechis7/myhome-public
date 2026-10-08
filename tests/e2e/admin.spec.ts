@@ -19,15 +19,20 @@ test.describe("관리 화면", () => {
     await login(page);
   });
 
-  // 자주 여는 셋은 펼치지 않고 첫 단에서 바로 간다. 나머지 관리 화면은
+  // 나만 보는 것은 「내 공간」 에 묶었다(MYH-212). 사이트를 고치는 화면은
   // "관리" 그룹 안에 있다(MYH-125).
-  test("로그인하면 주요 메뉴에 비밀글·내 서비스·감시가 붙는다", async ({
+  test("로그인하면 주요 메뉴의 내 공간에 비밀글·내 서비스·감시가 있다", async ({
     page,
   }) => {
     const nav = page.getByRole("navigation", { name: "주요 메뉴" });
     for (const item of ["비밀글", "내 서비스", "감시"]) {
       await page.goto("/");
-      await nav.getByRole("link", { name: item, exact: true }).click();
+      // 첫 단에는 없다
+      await expect(
+        nav.locator(":scope > ul > li > a", { hasText: item }),
+      ).toHaveCount(0);
+      await nav.getByText("내 공간", { exact: true }).first().click();
+      await nav.getByRole("link", { name: item, exact: true }).first().click();
       await expect(
         page.getByRole("heading", { name: item, level: 1 }),
       ).toBeVisible();
@@ -82,13 +87,14 @@ test.describe("관리 화면", () => {
   // 관리 안의 글 · 설정 그룹은 펼침 안에서 작은 제목 아래 늘어놓는다 —
   // 펼침 안에 또 펼침을 두지 않는다(MYH-125).
   test("관리 그룹으로 각 화면에 갈 수 있다", async ({ page }) => {
-    // 비밀글 · 내 서비스 · 감시는 첫 단에 있다. 수행 업무는 소개 관리 안이다.
+    // 비밀글 · 내 서비스 · 감시는 내 공간에 있다. 수행 업무는 프로필 안이다.
     const screens = [
       ["메시지", "받은 메시지"],
       ["블로그", "블로그 관리"],
       ["프로젝트", "프로젝트 관리"],
       // 설정 그룹 안에서는 이름이 짧다(MYH-126)
-      ["프로필", "소개 관리"],
+      // 프로필과 이력서는 한 화면이다(MYH-218 · MYH-220)
+      ["프로필", "프로필"],
       ["암호", "암호설정"],
       ["메뉴", "메뉴 관리"],
     ] as const;
@@ -294,12 +300,13 @@ test.describe("관리 화면", () => {
     }
   });
 
-  // 수행 업무는 소개 관리 안에서 고치고 소개 화면에 나온다
+  // 수행 업무는 프로필 안에서 고치고 소개 화면에 나온다
   test("수행 업무를 넣으면 소개 화면에 나오고 지우면 사라진다", async ({
     page,
   }) => {
     await page.goto("/admin");
-    const form = page.locator("form").last();
+    // 아래에 이력서 절이 이어지므로(MYH-218) 수행 업무 절 안에서 찾는다
+    const form = page.locator("#work form").last();
     await form.getByLabel("이름").fill(PROJECT);
     await form.getByLabel("한 줄 요약").fill("자동 시험용");
     await form.getByLabel("사용 기술").fill("Playwright, TypeScript");
@@ -328,15 +335,23 @@ test.describe("관리 화면", () => {
   });
 });
 
+// 연락 폼은 방명록의 「나에게만 보내기」 다(MYH-216)
 test.describe("연락 폼", () => {
-  test("메시지를 보내면 관리 화면에 쌓인다", async ({ page }) => {
+  test("나에게만 보내면 방명록에 안 올라가고 관리 화면에 쌓인다", async ({ page }) => {
     const name = `e2e 손님 ${Date.now().toString(36)}`;
 
+    // 옛 주소로 와도 방명록이다
     await page.goto("/contact");
-    await page.getByLabel("이름").fill(name);
-    await page.getByLabel("내용").fill("자동 시험으로 보낸 메시지입니다.");
-    await page.getByRole("button", { name: "보내기" }).click();
-    await expect(page.getByText("보냈습니다")).toBeVisible();
+    await expect(page).toHaveURL(/\/guestbook$/);
+    const form = page.getByRole("form", { name: "남기기" });
+    await form.getByLabel("나에게만 보내기").check();
+    await form.getByLabel("이름").fill(name);
+    await form.getByLabel("답장받을 메일").fill("e2e@example.com");
+    await form.getByLabel("내용").fill("자동 시험으로 보낸 메시지입니다.");
+    await form.getByRole("button", { name: "보내기" }).click();
+    await expect(page.getByText(/보냈습니다/)).toBeVisible();
+    // 방명록 목록에는 없다
+    await expect(page.getByRole("main").getByText(name)).toHaveCount(0);
 
     await login(page);
     await page.goto("/admin/messages");
@@ -374,8 +389,10 @@ test.describe("연락 폼", () => {
   });
 
   test("이름이나 내용을 비우면 보내지지 않는다", async ({ page }) => {
-    await page.goto("/contact");
-    await page.getByRole("button", { name: "보내기" }).click();
+    await page.goto("/guestbook");
+    const form = page.getByRole("form", { name: "남기기" });
+    await form.getByLabel("나에게만 보내기").check();
+    await form.getByRole("button", { name: "보내기" }).click();
     // 브라우저 기본 검사에 걸려 전송되지 않는다
     await expect(page.getByText("보냈습니다")).toHaveCount(0);
   });

@@ -10,7 +10,8 @@ import ContactRows from "@/components/ContactRows";
 import ProjectList from "@/components/ProjectList";
 import { getDb, profile, careers } from "@/lib/db";
 import { listSkills } from "@/lib/skills";
-import { countReading } from "@/lib/books";
+import { isAdmin } from "@/lib/auth";
+import type { AboutSection } from "@/lib/about-sections";
 import { groupByCategory } from "@/lib/category";
 import { personJsonLd } from "@/lib/jsonld";
 
@@ -39,15 +40,27 @@ function formatPeriod(startedOn: string, endedOn: string | null) {
 export default async function AboutPage() {
   const db = getDb();
 
-  const [profileRows, careerRows, skillRows, reading] = await Promise.all([
+  const [profileRows, careerRows, skillRows, admin] = await Promise.all([
     db.select().from(profile).where(eq(profile.id, 1)).limit(1),
     db.select().from(careers).orderBy(desc(careers.startedOn)),
     listSkills(),
-    countReading(),
+    isAdmin(),
   ]);
 
   const me = profileRows.at(0);
+  // 방문자에게 보일 항목(MYH-220). 관리자에게는 늘 전부 보이고, 끈 항목은
+  // 표시를 단다. 방문자에게는 끈 항목을 아예 그리지 않는다
+  const chosen = me?.aboutSections ?? [];
+  const shown = (s: AboutSection) => admin || chosen.includes(s);
+  const hiddenMark = (s: AboutSection) =>
+    admin && !chosen.includes(s) ? (
+      <span className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-normal text-amber-700 dark:text-amber-400">
+        방문자에게 안 보임
+      </span>
+    ) : null;
   const paragraphs = me?.bio.split(/\n{2,}/).filter(Boolean) ?? [];
+  // 소개글을 끄면 한 줄 소개도 함께 감춘다(MYH-222)
+  const showProfile = shown("profile");
 
   return (
     <Container>
@@ -55,7 +68,9 @@ export default async function AboutPage() {
 
       <PageHeader
         title="소개"
-        description={me?.headline ?? "저에 대한 간단한 소개입니다."}
+        description={
+          (showProfile ? me?.headline : null) ?? "저에 대한 간단한 소개입니다."
+        }
         action={
           // 경력 · 기술 · 수행 업무를 한 장으로(MYH-195)
           <Link
@@ -67,22 +82,32 @@ export default async function AboutPage() {
         }
       />
 
-      <div className="space-y-4 leading-relaxed text-foreground/80">
-        {paragraphs.map((text, i) => (
-          <p key={i}>{text}</p>
-        ))}
-      </div>
+      {showProfile ? (
+        <div className="space-y-4 leading-relaxed text-foreground/80">
+          {hiddenMark("profile") ? <p className="text-sm">소개글{hiddenMark("profile")}</p> : null}
+          {paragraphs.map((text, i) => (
+            <p key={i}>{text}</p>
+          ))}
+        </div>
+      ) : null}
 
       {/* 소개를 읽고 나서 바로 연락할 수 있게 여기 둔다. 값은 DB 에 있고
           관리 화면의 소개에서 고친다 — 연락처 화면도 같은 것을 쓴다. */}
-      <ContactRows
-        me={me}
-        className="mt-10 flex flex-wrap gap-x-10 gap-y-3"
-      />
-
-      {careerRows.length > 0 ? (
+      {shown("contacts") ? (
         <>
-          <h2 className="mt-12 mb-4 text-lg font-semibold">경력</h2>
+          {hiddenMark("contacts") ? (
+            <p className="mt-10 text-sm">연락 수단{hiddenMark("contacts")}</p>
+          ) : null}
+          <ContactRows
+            me={me}
+            className={`${hiddenMark("contacts") ? "mt-3" : "mt-10"} flex flex-wrap gap-x-10 gap-y-3`}
+          />
+        </>
+      ) : null}
+
+      {shown("career") && careerRows.length > 0 ? (
+        <>
+          <h2 className="mt-12 mb-4 text-lg font-semibold">경력{hiddenMark("career")}</h2>
           <ul className="space-y-5">
             {careerRows.map((row) => (
               <li key={row.id} className="sm:flex sm:gap-6">
@@ -103,9 +128,9 @@ export default async function AboutPage() {
         </>
       ) : null}
 
-      {skillRows.length > 0 ? (
+      {shown("skills") && skillRows.length > 0 ? (
         <>
-          <h2 className="mt-12 mb-4 text-lg font-semibold">기술</h2>
+          <h2 className="mt-12 mb-4 text-lg font-semibold">기술{hiddenMark("skills")}</h2>
           <div className="flex flex-col gap-5">
             {groupByCategory(skillRows).map(([category, rows]) => (
               <div key={category}>
@@ -128,23 +153,17 @@ export default async function AboutPage() {
         </>
       ) : null}
 
-      {/* 읽는 책(MYH-190)은 따로 화면(/books)이 있다. 여기는 길만 둔다 */}
-      {reading > 0 ? (
-        <Link
-          href="/books"
-          className="mt-10 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm transition-colors hover:bg-foreground/5"
-        >
-          {`지금 읽는 책 ${reading}권`}
-          <span aria-hidden="true">→</span>
-        </Link>
-      ) : null}
 
       {/* 해 온 일도 "내가 누구인지" 의 일부라 여기에 둔다. 예전에는
           /projects 라는 따로 된 화면이었다. */}
-      <h2 id="work" className="mt-14 mb-4 text-lg font-semibold">
-        수행 업무
-      </h2>
-      <ProjectList kind="work" empty="아직 등록한 수행 업무가 없습니다." />
+      {shown("work") ? (
+        <>
+          <h2 id="work" className="mt-14 mb-4 text-lg font-semibold">
+            수행 업무{hiddenMark("work")}
+          </h2>
+          <ProjectList kind="work" empty="아직 등록한 수행 업무가 없습니다." />
+        </>
+      ) : null}
     </Container>
   );
 }

@@ -132,7 +132,7 @@ export default async function ResumePage() {
       <div data-print-hide className="mb-6 flex flex-wrap justify-end gap-2">
         {admin ? (
           <Link
-            href="/admin/resume"
+            href="/admin#resume"
             className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-foreground/5"
           >
             고치기

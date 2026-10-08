@@ -13,7 +13,7 @@ import { sweepSecrets } from "./sweep";
  * 여기서 보는 것은 두 가지다 — 쓰고 읽고 지우는 것이 도는가, 그리고
  * **로그인하지 않은 사람에게는 없는 것으로 보이는가.**
  *
- * 내용이 정말 담겨서 저장되는지는 단위 시험(tests/unit/secret-crypto.test.ts)이
+ * 내용이 정말 암호화해서 저장되는지는 단위 시험(tests/unit/secret-crypto.test.ts)이
  * 본다. 화면으로는 확인할 수 없는 것이라 여기서 흉내 내지 않는다.
  */
 /** 1x1 PNG */
@@ -100,7 +100,7 @@ test.describe("비밀글", () => {
     await expect(page.getByText("아직 붙인 파일이 없습니다.")).toBeVisible();
 
     // 「올린 이미지」 목록에 미리보기와 함께 남는다(MYH-145·147).
-    // 담근 그림이라 관리자 길로만 내려오는데, 그 길로 실제로 그려져야 한다.
+    // 암호화한 그림이라 관리자 길로만 내려오는데, 그 길로 실제로 그려져야 한다.
     await page.reload();
     const 목록 = page.locator("section", { hasText: "올린 이미지" });
     // 접힌 채로 나온다. 갯수는 접힌 채로도 보인다.
@@ -109,7 +109,7 @@ test.describe("비밀글", () => {
     const 미리보기 = 목록.locator("img");
     await expect(미리보기).toHaveCount(1);
 
-    // 담근 본문도 풀어서 어디에 쓰는지 본다(MYH-148).
+    // 암호화한 본문도 복호화해서 어디에 쓰는지 본다(MYH-148).
     // 아직 안 넣었으니 "없음" 이고, 넣으면 줄 번호가 나와야 한다.
     await expect(목록.getByText("본문에 없음")).toBeVisible();
     // 마크다운은 화면에 없다. 이름과 주소로 만든다 — 「복사」 가 주는 것과 같다.
@@ -235,8 +235,9 @@ test.describe("비밀글", () => {
 
     await login(page);
     await page.goto("/");
-    await expect(
-      page.getByRole("navigation", { name: "주요 메뉴" }).getByText("비밀글"),
-    ).toBeVisible();
+    // 「내 공간」 안에 있다(MYH-212)
+    const nav = page.getByRole("navigation", { name: "주요 메뉴" });
+    await nav.getByText("내 공간", { exact: true }).first().click();
+    await expect(nav.getByText("비밀글").first()).toBeVisible();
   });
 });

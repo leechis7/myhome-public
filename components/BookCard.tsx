@@ -1,4 +1,5 @@
-import { coverUrl, type BookRow } from "@/lib/books";
+import Link from "next/link";
+import { coverUrl, stars, type BookRow } from "@/lib/books";
 
 /**
  * 책 한 권(MYH-190). 표지가 없으면 제목 첫 글자로 자리를 채운다.
@@ -7,9 +8,12 @@ import { coverUrl, type BookRow } from "@/lib/books";
 export default function BookCard({
   book,
   large = false,
+  admin = false,
 }: {
   book: BookRow;
   large?: boolean;
+  /** 관리자면 노트가 없어도 「독서 노트 쓰기」 를 단다(MYH-211) */
+  admin?: boolean;
 }) {
   const cover = coverUrl(book);
   const size = large ? "h-36 w-24" : "h-20 w-14";
@@ -54,6 +58,14 @@ export default function BookCard({
               ? ` · ${book.startedOn.slice(0, 7).replace("-", ".")} 부터`
               : ""}
         </p>
+        {book.rating ? (
+          <p
+            className="text-sm text-amber-500"
+            aria-label={`별점 5점 만점에 ${book.rating}점`}
+          >
+            {stars(book.rating)}
+          </p>
+        ) : null}
         {book.note ? (
           <p
             className={`mt-1 text-sm leading-relaxed text-foreground/70 ${
@@ -62,6 +74,22 @@ export default function BookCard({
           >
             {book.note}
           </p>
+        ) : null}
+        {/* 독서 노트가 있을 때만 상세로 잇는다(MYH-211) */}
+        {book.hasNote ? (
+          <Link
+            href={`/books/${book.id}`}
+            className="mt-1 inline-block text-sm text-muted transition-colors hover:text-foreground"
+          >
+            독서 노트 읽기 →
+          </Link>
+        ) : admin ? (
+          <Link
+            href={`/admin/books/${book.id}`}
+            className="mt-1 inline-block text-sm text-muted transition-colors hover:text-foreground"
+          >
+            ＋ 독서 노트 쓰기
+          </Link>
         ) : null}
       </div>
     </div>

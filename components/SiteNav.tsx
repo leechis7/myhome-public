@@ -190,7 +190,7 @@ function MobileItems({
           {item.children.length > 0 ? (
             // 그룹은 접어 둔다. 첫 단만 보여야 한눈에 들어온다. 다만 지금
             // 화면이 그 안에 있으면 펼쳐 둔다 — 어디 있는지는 보여야 한다.
-            <details open={contains(item, pathname)} className="group">
+            <details open={contains(item, pathname)}>
               <summary
                 className={`flex cursor-pointer list-none items-center justify-between rounded-md px-3 py-3 text-sm [&::-webkit-details-marker]:hidden ${idle}`}
               >
@@ -201,7 +201,9 @@ function MobileItems({
                   stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
-                  className="size-4 transition-transform group-open:rotate-180"
+                  // 바깥 그룹(group)이 열리면 안쪽 화살표까지 함께 돌았다.
+                  // 바로 위 details 의 열림만 본다
+                  className="size-4 transition-transform [details[open]>summary>&]:rotate-180"
                   aria-hidden="true"
                 >
                   <path d="M6 9l6 6 6-6" />

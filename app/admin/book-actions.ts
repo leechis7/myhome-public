@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth";
 import { forgetUploadIfUnused } from "@/lib/attachments";
-import { isBookStatus } from "@/lib/books";
+import { isBookStatus, parseRating } from "@/lib/books";
 import { BOOK_KIND, readCode } from "@/lib/codes";
 import { books, getDb } from "@/lib/db";
 import { ALLOWED_TYPES, MAX_UPLOAD_BYTES, saveUpload } from "@/lib/uploads";
@@ -106,4 +106,41 @@ export async function deleteBook(formData: FormData) {
     .returning({ coverId: books.coverId });
   if (gone?.coverId) await forgetUploadIfUnused(gone.coverId);
   refresh();
+}
+
+/**
+ * 독서 노트와 별점(MYH-211). 책마다 따로 쓰는 화면(/admin/books/번호)에서
+ * 저장한다. 노트를 비우면 상세 화면 · 목록의 「독서 노트 읽기」 가 사라진다.
+ */
+export async function saveReadingNote(formData: FormData) {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id) || id < 1) redirect(BACK);
+
+  const readingNote = String(formData.get("readingNote") ?? "").trim() || null;
+  const rating = parseRating(formData.get("rating"));
+  const db = getDb();
+  const [before] = await db
+    .select({ readingNote: books.readingNote })
+    .from(books)
+    .where(eq(books.id, id))
+    .limit(1);
+  if (!before) redirect(BACK);
+
+  await db
+    .update(books)
+    .set({
+      readingNote,
+      rating,
+      // 노트 글이 바뀐 때만 고친 날을 옮긴다. 별점만 바꾼 것은 넣지 않는다
+      ...(before.readingNote !== readingNote
+        ? { noteUpdatedAt: readingNote ? new Date() : null }
+        : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(books.id, id));
+
+  refresh();
+  revalidatePath(`/books/${id}`);
+  redirect(`/admin/books/${id}?ok=1`);
 }

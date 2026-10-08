@@ -4,6 +4,7 @@ import Analytics from "@/components/Analytics";
 import FontSwap from "@/components/FontSwap";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import QuickMemo from "@/components/QuickMemo";
 import { site } from "@/lib/site";
 import { getSite } from "@/lib/site-info";
 import "./globals.css";
@@ -128,6 +129,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Header />
         <main className="flex-1 py-14">{children}</main>
         <Footer />
+        <QuickMemo />
       </body>
     </html>
   );

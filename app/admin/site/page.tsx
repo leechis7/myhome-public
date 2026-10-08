@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import ActionForm from "@/components/admin/ActionForm";
+import CalendarSettings from "@/components/admin/CalendarSettings";
+import TelegramSettings from "@/components/admin/TelegramSettings";
+import { hasSecretKey } from "@/lib/secret-crypto";
 import { saveSite } from "@/app/admin/site/actions";
 import { isAdmin } from "@/lib/auth";
 import { DEFAULT_SITE, mergeSite, site } from "@/lib/site";
@@ -48,9 +51,12 @@ function Field({
  * 칸을 비워 두면 그 자리는 보기 값(placeholder 로 보이는 것)이 채운다.
  * 사이트 주소는 여기 없다 — 배포와 묶인 값이라 환경변수다.
  */
-export default async function AdminSitePage() {
+export default async function AdminSitePage({
+  searchParams,
+}: PageProps<"/admin/site">) {
   if (!(await isAdmin())) redirect("/admin");
 
+  const { cal, tg } = await searchParams;
   const stored = await getStoredSite();
   const shown = mergeSite(stored);
   const host = new URL(site.url).host;
@@ -156,6 +162,15 @@ export default async function AdminSitePage() {
           <p className="mt-1 text-sm text-muted">{shown.description}</p>
         </section>
       </ActionForm>
+
+      {/* 내 공간이 쓰는 바깥 연결(MYH-214 · MYH-215). 받은 것을 암호화해 두므로
+          열쇠가 있을 때만 */}
+      {hasSecretKey() ? (
+        <>
+          <CalendarSettings notice={typeof cal === "string" ? cal : undefined} />
+          <TelegramSettings notice={typeof tg === "string" ? tg : undefined} />
+        </>
+      ) : null}
     </Container>
   );
 }

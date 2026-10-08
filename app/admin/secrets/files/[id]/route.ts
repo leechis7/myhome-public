@@ -6,7 +6,7 @@ import { findSecretAttachment } from "@/lib/secrets";
 export const dynamic = "force-dynamic";
 
 /**
- * 비밀글에 붙인 파일을 내려준다. 꺼내는 자리는 여기 하나뿐이다.
+ * 비밀글에 붙인 파일을 내려준다. 복호화하는 자리는 여기 하나뿐이다.
  *
  * 관리자가 아니면 404 다. 있는지조차 알릴 이유가 없다.
  *
@@ -42,7 +42,7 @@ export async function GET(
         file.filename,
       )}`,
       "x-content-type-options": "nosniff",
-      // 꺼낸 평문이다. 디스크·프록시 어디에도 남기지 않는다.
+      // 복호화한 평문이다. 디스크·프록시 어디에도 남기지 않는다.
       "cache-control": "private, no-store",
     },
   });

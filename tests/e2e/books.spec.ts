@@ -65,10 +65,9 @@ test.describe("읽는 책", () => {
     const past = visitor.getByRole("region", { name: /다 읽은 책/ });
     await expect(past.getByRole("heading", { name: "2026" })).toBeVisible();
     await expect(past.getByText(done, { exact: true })).toBeVisible();
-    // 소개에는 길만 있다
+    // 소개에는 읽는 책 줄을 두지 않는다(MYH-222)
     await visitor.goto("/about");
-    await visitor.getByRole("link", { name: /^지금 읽는 책 \d+권/ }).click();
-    await expect(visitor).toHaveURL(/\/books$/);
+    await expect(visitor.getByRole("link", { name: /지금 읽는 책/ })).toHaveCount(0);
     await context.close();
 
     // 고치기: 읽는 중 → 다 읽음
@@ -132,5 +131,71 @@ test.describe("책 표지 붙여넣기", () => {
     await expect(page.locator("#books").getByText(title, { exact: true })).toBeVisible();
     await page.goto("/books");
     await expect(page.getByAltText(`${title} 표지`)).toBeVisible();
+  });
+});
+
+test.describe("독서 노트", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await sweepBooks(page);
+  });
+
+  // MYH-211. 노트는 책마다 따로 쓰고, 노트가 있는 책만 목록에서 상세로 잇는다
+  test("노트와 별점을 쓰면 상세에 보이고, 비우면 링크가 사라진다", async ({
+    page,
+    browser,
+  }) => {
+    const title = `e2e 노트 책 ${Date.now().toString(36)}`;
+    await addBook(page, { title, status: "읽는 중" });
+
+    // 노트가 없으면 목록에 「독서 노트 읽기」 가 없다
+    await page.goto("/books");
+    const card = page.locator("li", { hasText: title });
+    await expect(card.getByRole("link", { name: "독서 노트 읽기 →" })).toHaveCount(0);
+
+    // 관리: 줄을 펼쳐 「독서 노트 쓰기」
+    await page.goto("/admin/books");
+    const row = page.locator("#books li", { hasText: title });
+    await row.locator(":scope > details > summary").click();
+    await row.getByRole("link", { name: "독서 노트 쓰기 →" }).click();
+    const form = page.getByRole("form", { name: "독서 노트" });
+    await form.getByLabel("별점").selectOption("4");
+    await form
+      .getByRole("textbox", { name: "독서 노트" })
+      .fill("## 남은 것\n\n읽으며 적은 메모다.");
+    await form.getByRole("button", { name: "저장" }).click();
+    await expect(page.getByText("저장했습니다.")).toBeVisible();
+
+    // 방문자: 카드 → 상세
+    const context = await browser.newContext();
+    const visitor = await context.newPage();
+    await visitor.goto("/books");
+    const visitorCard = visitor.locator("li", { hasText: title });
+    await expect(visitorCard.getByLabel("별점 5점 만점에 4점")).toHaveText("★★★★☆");
+    await visitorCard.getByRole("link", { name: "독서 노트 읽기 →" }).click();
+    await expect(visitor).toHaveURL(/\/books\/\d+$/);
+    await expect(visitor.getByRole("heading", { level: 1 })).toHaveText(title);
+    const note = visitor.getByRole("region", { name: "독서 노트" });
+    await expect(note.getByRole("heading", { name: "남은 것" })).toBeVisible();
+    await expect(note.getByText("읽으며 적은 메모다.")).toBeVisible();
+    // 사이트맵에 들어간다
+    const sitemap = await (await visitor.request.get("/sitemap.xml")).text();
+    expect(sitemap).toContain(new URL(visitor.url()).pathname);
+
+    // 노트와 별점을 비우면 카드에서 링크와 별이 사라진다. 「저장했습니다」
+    // 가 떠 있지 않은 화면에서 시작해야 새 저장을 기다릴 수 있다
+    await page.goto(page.url().split("?")[0]);
+    await form.getByLabel("별점").selectOption("");
+    await form.getByRole("textbox", { name: "독서 노트" }).fill("");
+    await form.getByRole("button", { name: "저장" }).click();
+    await expect(page.getByText("저장했습니다.")).toBeVisible();
+    await visitor.goto("/books");
+    const after = visitor.locator("li", { hasText: title });
+    await expect(after.getByRole("link", { name: "독서 노트 읽기 →" })).toHaveCount(0);
+    await expect(after.getByLabel(/별점/)).toHaveCount(0);
+    await context.close();
   });
 });

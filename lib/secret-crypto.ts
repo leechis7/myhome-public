@@ -70,7 +70,7 @@ export function hasSecretKey() {
   }
 }
 
-/** 글자를 담근다. 돌려주는 것은 `v1.<iv>.<태그>.<암호문>` (base64url) */
+/** 글자를 암호화한다. 돌려주는 것은 `v1.<iv>.<태그>.<암호문>` (base64url) */
 export function encryptText(plain: string) {
   const iv = randomBytes(IV_BYTES);
   const cipher = createCipheriv(ALGORITHM, secretKey(), iv);
@@ -84,12 +84,12 @@ export function encryptText(plain: string) {
   ].join(".");
 }
 
-/** 담근 글자를 꺼낸다. 열쇠가 다르거나 누가 손댔으면 던진다 */
+/** 암호화한 글자를 복호화한다. 열쇠가 다르거나 누가 손댔으면 던진다 */
 export function decryptText(envelope: string) {
   const parts = envelope.split(".");
   const [version, iv, tag, body] = parts;
-  // 본문은 비어 있을 수 있다 - 빈 글자를 담그면 암호문도 0 바이트다(MYH-196).
-  // 비밀글 초안(그림부터 올린 새 글)이 제목 · 본문을 빈 글자로 담근다.
+  // 본문은 비어 있을 수 있다 - 빈 글자를 암호화하면 암호문도 0 바이트다(MYH-196).
+  // 비밀글 초안(그림부터 올린 새 글)이 제목 · 본문을 빈 글자로 암호화한다.
   // 그래서 본문 칸은 「있는지」 만 보고, 비었는지는 보지 않는다
   if (
     parts.length !== 4 ||
@@ -98,7 +98,7 @@ export function decryptText(envelope: string) {
     !tag ||
     body === undefined
   ) {
-    throw new Error("담근 모양이 아닙니다.");
+    throw new Error("암호문 모양이 아닙니다.");
   }
   const decipher = createDecipheriv(
     ALGORITHM,
@@ -113,7 +113,7 @@ export function decryptText(envelope: string) {
 }
 
 /**
- * 파일을 담근다. 글자와 달리 바이트 그대로 이어 붙인다.
+ * 파일을 암호화한다. 글자와 달리 바이트 그대로 이어 붙인다.
  *
  *   MYHS1\0 | iv(12) | 태그(16) | 암호문
  *
@@ -126,14 +126,14 @@ export function encryptBytes(plain: Buffer) {
   return Buffer.concat([FILE_MAGIC, iv, cipher.getAuthTag(), body]);
 }
 
-/** 담근 파일을 꺼낸다 */
+/** 암호화한 파일을 복호화한다 */
 export function decryptBytes(stored: Buffer) {
   const magic = stored.subarray(0, FILE_MAGIC.byteLength);
   if (
     magic.byteLength !== FILE_MAGIC.byteLength ||
     !timingSafeEqual(magic, FILE_MAGIC)
   ) {
-    throw new Error("담근 파일이 아닙니다.");
+    throw new Error("암호화한 파일이 아닙니다.");
   }
   const ivAt = FILE_MAGIC.byteLength;
   const tagAt = ivAt + IV_BYTES;
