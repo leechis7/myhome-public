@@ -106,14 +106,24 @@ export default function QuickMemoButton() {
                 placeholder="할 일 (Ctrl+Enter 로 저장)"
                 className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40"
               />
-              <label className="flex items-center gap-2 text-xs text-muted">
-                기한
+              {/* 기간(MYH-228). 둘 다 비워도 된다 */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                <input
+                  type="date"
+                  name="startOn"
+                  aria-label="시작일"
+                  title="시작일"
+                  className="rounded-lg border border-border bg-transparent px-2 py-1 text-sm outline-none focus:border-foreground/40"
+                />
+                ~
                 <input
                   type="date"
                   name="dueOn"
+                  aria-label="마감일"
+                  title="마감일"
                   className="rounded-lg border border-border bg-transparent px-2 py-1 text-sm outline-none focus:border-foreground/40"
                 />
-              </label>
+              </div>
             </div>
           )}
           {state.error ? (

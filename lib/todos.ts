@@ -1,10 +1,11 @@
 import { asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb, todos } from "@/lib/db";
 import { decryptText, encryptText } from "@/lib/secret-crypto";
+import { orderRange } from "@/lib/todo-dates";
 
 /**
- * 할 일(MYH-217). 글은 암호화하고, 기한 · 끝낸 때는 평문이다(줄 세우기 · 넘김
- * 표시). 암호화 · 복호화는 여기 한 곳에서 한다.
+ * 할 일(MYH-217). 글은 암호화하고, 기간(시작일 ~ 마감일, MYH-228) · 끝낸 때는
+ * 평문이다(줄 세우기 · 넘김 표시). 암호화 · 복호화는 여기 한 곳에서 한다.
  */
 
 export type TodoSource = "telegram" | "web";
@@ -18,8 +19,8 @@ function open(envelope: string) {
 }
 
 /**
- * 안 끝낸 것은 기한이 이른 것부터(기한 없는 것은 뒤, 그 안에서는 먼저 적은
- * 것부터). 끝낸 것은 최근에 끝낸 것부터 30개까지.
+ * 안 끝낸 것은 마감이 이른 것부터(마감 없는 것은 시작일 차례로 그 뒤, 날이
+ * 없는 것은 맨 뒤. 그 안에서는 먼저 적은 것부터). 끝낸 것은 최근에 끝낸 것부터 30개까지.
  */
 export async function listTodos() {
   const db = getDb();
@@ -28,7 +29,12 @@ export async function listTodos() {
       .select()
       .from(todos)
       .where(isNull(todos.doneAt))
-      .orderBy(sql`${todos.dueOn} asc nulls last`, asc(todos.createdAt), asc(todos.id)),
+      .orderBy(
+        sql`${todos.dueOn} asc nulls last`,
+        sql`${todos.startOn} asc nulls last`,
+        asc(todos.createdAt),
+        asc(todos.id),
+      ),
     db
       .select()
       .from(todos)
@@ -43,19 +49,26 @@ export async function listTodos() {
 
 export async function addTodo(
   title: string,
-  { dueOn = null, source = "web" }: { dueOn?: string | null; source?: TodoSource } = {},
+  {
+    startOn = null,
+    dueOn = null,
+    source = "web",
+  }: { startOn?: string | null; dueOn?: string | null; source?: TodoSource } = {},
 ) {
   const [row] = await getDb()
     .insert(todos)
-    .values({ title: encryptText(title), dueOn, source })
+    .values({ title: encryptText(title), ...orderRange({ startOn, dueOn }), source })
     .returning({ id: todos.id });
   return row.id;
 }
 
-export async function updateTodo(id: number, input: { title: string; dueOn: string | null }) {
+export async function updateTodo(
+  id: number,
+  input: { title: string; startOn: string | null; dueOn: string | null },
+) {
   await getDb()
     .update(todos)
-    .set({ title: encryptText(input.title), dueOn: input.dueOn })
+    .set({ title: encryptText(input.title), ...orderRange(input) })
     .where(eq(todos.id, id));
 }
 

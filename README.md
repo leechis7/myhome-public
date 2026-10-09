@@ -247,6 +247,7 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | `SECRETS_KEY` | 비밀글 열쇠(32바이트 base64). 비우면 비밀글이 꺼지고 메뉴에서 빠진다 |
 | `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | 댓글 · 연락 · 방명록 알림 |
 | `TELEGRAM_INBOX` | `off` 면 이 서버에서는 텔레그램 메모 · 할 일을 받지 않는다(같은 봇을 쓰는 개발기 등). 봇 하나에 받는 곳은 하나뿐이다 |
+| `KAKAO_REST_API_KEY` | 관리 › 책 의 책 찾기를 카카오 책 검색으로 한다([developers.kakao.com](https://developers.kakao.com) 앱의 REST API 키). 비우면 열쇠가 필요 없는 Open Library 로 찾는다 — 한국 책은 적다 |
 | `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 나가지 않는다 |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console 소유 확인 |
 | `MONITORING_DASHBOARD` | 관리 › 감시 화면에 끼울 Grafana 대시보드 경로. 비우면 메뉴에서 빠진다 |

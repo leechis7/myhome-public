@@ -89,19 +89,20 @@ test.describe("메모", () => {
     await expect(list.locator("li", { hasText: text })).toBeVisible();
     await pressDelete(list.locator("li", { hasText: text }), "메모 삭제");
 
-    // 할 일 탭: 기한을 붙여 넣으면 할 일 목록에 들어간다
+    // 할 일 탭: 기간을 붙여 넣으면 할 일 목록에 들어간다(MYH-228)
     const todo = `${TEST_PREFIX}빠른 할 일 ${Date.now().toString(36)}`;
     await page.goto("/notes");
     await page.getByRole("button", { name: "빠른 메모" }).click();
     const quick = page.getByRole("form", { name: "빠른 메모" });
     await quick.getByRole("tab", { name: "✅ 할 일" }).click();
     await quick.getByLabel("할 일", { exact: true }).fill(todo);
-    await quick.getByLabel("기한").fill("2099-01-02");
+    await quick.getByLabel("시작일").fill("2099-01-01");
+    await quick.getByLabel("마감일").fill("2099-01-02");
     await quick.getByRole("button", { name: "더하기" }).click();
     await expect(page.getByText("✅ 할 일에 넣었습니다")).toBeVisible();
     await page.goto("/admin/todos");
     const open = page.getByRole("list", { name: "남은 할 일" });
-    await expect(open.locator("li", { hasText: todo })).toContainText("1.2");
+    await expect(open.locator("li", { hasText: todo })).toContainText("1.1 ~ 1.2");
     await pressDelete(open.locator("li", { hasText: todo }), "할 일 삭제");
     // 마지막 탭을 기억한다 - 다음 시험을 위해 메모로 되돌린다
     await page.getByRole("button", { name: "빠른 메모" }).click();

@@ -6,7 +6,8 @@ import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth";
 import { forgetUploadIfUnused } from "@/lib/attachments";
 import { isBookStatus, parseRating } from "@/lib/books";
-import { BOOK_KIND, readCode } from "@/lib/codes";
+import { fetchCover, searchBooks, type FoundBook } from "@/lib/book-lookup";
+import { BOOK_CATEGORY, BOOK_KIND, readCode } from "@/lib/codes";
 import { books, getDb } from "@/lib/db";
 import { ALLOWED_TYPES, MAX_UPLOAD_BYTES, saveUpload } from "@/lib/uploads";
 
@@ -43,6 +44,8 @@ export async function saveBook(formData: FormData) {
 
   const kindCode = await readCode(formData.get("kindCode"), BOOK_KIND);
   if (kindCode === "invalid") redirect("/admin/books?be=kind");
+  const categoryCode = await readCode(formData.get("categoryCode"), BOOK_CATEGORY);
+  if (categoryCode === "invalid") redirect("/admin/books?be=category");
 
   const status = formData.get("status");
   const url = text(formData, "url");
@@ -58,12 +61,20 @@ export async function saveBook(formData: FormData) {
     coverId = (await saveUpload(file)).id;
   } else if (formData.get("removeCover") !== null) {
     coverId = null;
+  } else {
+    // 책 찾기로 고른 표지(MYH-226). 받지 못하면 표지 없이 저장한다
+    const found = text(formData, "coverUrl");
+    const fetched = found ? await fetchCover(found).catch(() => null) : null;
+    if (fetched && ALLOWED_TYPES.has(fetched.type)) {
+      coverId = (await saveUpload(fetched)).id;
+    }
   }
 
   const values = {
     title,
     author,
     kindCode,
+    categoryCode,
     status: isBookStatus(status) ? status : "reading",
     note: text(formData, "note"),
     url,
@@ -143,4 +154,21 @@ export async function saveReadingNote(formData: FormData) {
   refresh();
   revalidatePath(`/books/${id}`);
   redirect(`/admin/books/${id}?ok=1`);
+}
+
+/**
+ * 책 찾기(MYH-226). 제목이나 ISBN 으로 후보를 돌려준다. 밖으로 나가는
+ * 요청이라 관리자만 쓴다.
+ */
+export async function lookupBooks(
+  query: string,
+): Promise<{ books: FoundBook[] } | { error: string }> {
+  await requireAdmin();
+  const q = String(query ?? "").trim().slice(0, 100);
+  if (!q) return { books: [] };
+  try {
+    return { books: await searchBooks(q) };
+  } catch {
+    return { error: "책을 찾지 못했습니다. 잠시 뒤에 다시 해 보세요." };
+  }
 }

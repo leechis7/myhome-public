@@ -1,25 +1,30 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { aliasedTable, and, desc, eq, sql } from "drizzle-orm";
 import { books, codes, getDb, uploads } from "@/lib/db";
-import { BOOK_KIND } from "@/lib/code-groups";
+import { BOOK_CATEGORY, BOOK_KIND } from "@/lib/code-groups";
 import { extensionFor } from "@/lib/uploads";
 
 /**
  * 읽는 책(MYH-190). 직접 적고 소개 화면에 보인다.
  *
+ *   want     읽고 싶은 책(MYH-227). 아직 시작하지 않았다
  *   reading  읽는 중
  *   read     다 읽음
  */
-export type BookStatus = "reading" | "read";
+export type BookStatus = "want" | "reading" | "read";
 
+/** 고르는 칸의 순서이기도 하다 */
 export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
   reading: "읽는 중",
   read: "다 읽음",
+  want: "읽고 싶은 책",
 };
 
 export function isBookStatus(value: unknown): value is BookStatus {
-  return value === "reading" || value === "read";
+  return value === "want" || value === "reading" || value === "read";
 }
 
+/** 분류(MYH-225)도 codes 에서 이름을 가져온다. 종류와 같은 테이블이라 별칭을 둔다 */
+const categories = aliasedTable(codes, "categories");
 
 const columns = {
   id: books.id,
@@ -27,6 +32,9 @@ const columns = {
   author: books.author,
   kindCode: books.kindCode,
   kind: codes.label,
+  categoryCode: books.categoryCode,
+  category: categories.label,
+  categorySort: categories.sortOrder,
   status: books.status,
   note: books.note,
   coverId: books.coverId,
@@ -49,6 +57,13 @@ function query() {
       codes,
       and(eq(codes.groupCode, BOOK_KIND), eq(codes.code, books.kindCode)),
     )
+    .leftJoin(
+      categories,
+      and(
+        eq(categories.groupCode, BOOK_CATEGORY),
+        eq(categories.code, books.categoryCode),
+      ),
+    )
     .leftJoin(uploads, eq(uploads.id, books.coverId))
     .$dynamic();
 }
@@ -61,12 +76,12 @@ export function coverUrl(row: { coverId: string | null; coverType: string | null
 }
 
 /**
- * 관리 화면의 목록. 읽는 중이 먼저, 그 안에서는 최근에 시작한 것부터.
- * 다 읽은 것은 최근에 끝낸 것부터.
+ * 관리 화면의 목록. 읽는 중 · 읽고 싶은 책 · 다 읽음 차례로, 그 안에서는
+ * 최근에 시작한 것부터. 다 읽은 것은 최근에 끝낸 것부터.
  */
 export async function listBooks() {
   return query().orderBy(
-    sql`${books.status} = 'read'`,
+    sql`case ${books.status} when 'reading' then 0 when 'want' then 1 else 2 end`,
     desc(sql`coalesce(${books.finishedOn}, ${books.startedOn})`),
     desc(books.id),
   );
@@ -74,18 +89,19 @@ export async function listBooks() {
 
 /**
  * 공개 화면(/books). 읽는 중은 최근에 시작한 것부터, 다 읽은 것은 최근에
- * 끝낸 것부터(끝낸 날을 안 적었으면 뒤로).
+ * 끝낸 것부터(끝낸 날을 안 적었으면 뒤로). 읽고 싶은 책은 최근에 적은 것부터.
  */
 export async function listShelf() {
-  const [reading, read] = await Promise.all([
+  const [reading, read, want] = await Promise.all([
     query()
       .where(eq(books.status, "reading"))
       .orderBy(desc(books.startedOn), desc(books.id)),
     query()
       .where(eq(books.status, "read"))
       .orderBy(sql`${books.finishedOn} desc nulls last`, desc(books.id)),
+    query().where(eq(books.status, "want")).orderBy(desc(books.id)),
   ]);
-  return { reading, read };
+  return { reading, read, want };
 }
 
 /** 읽는 중인 책 수. 소개의 링크 한 줄에 쓴다 */
@@ -105,6 +121,38 @@ export function groupByYear<T extends { finishedOn: string | null }>(rows: T[]) 
     groups.set(year, [...(groups.get(year) ?? []), row]);
   }
   return [...groups.entries()];
+}
+
+/**
+ * 책장에 있는 분류와 그 책 수(MYH-225). /books 의 거르기 단추에 쓴다.
+ * 코드 화면의 순서대로. 분류가 없는 책은 세지 않는다.
+ */
+export function categoriesOf(
+  rows: {
+    categoryCode: string | null;
+    category: string | null;
+    categorySort: number | null;
+  }[],
+) {
+  const found = new Map<
+    string,
+    { code: string; label: string; sort: number; count: number }
+  >();
+  for (const row of rows) {
+    if (!row.categoryCode || !row.category) continue;
+    const seen = found.get(row.categoryCode);
+    if (seen) seen.count += 1;
+    else
+      found.set(row.categoryCode, {
+        code: row.categoryCode,
+        label: row.category,
+        sort: row.categorySort ?? 0,
+        count: 1,
+      });
+  }
+  return [...found.values()]
+    .sort((a, b) => a.sort - b.sort || a.code.localeCompare(b.code))
+    .map(({ code, label, count }) => ({ code, label, count }));
 }
 
 /** 별점은 1~5 정수. 그 밖(비움 · 잘못된 값)은 null */
@@ -131,6 +179,13 @@ export async function findBook(id: number) {
     .leftJoin(
       codes,
       and(eq(codes.groupCode, BOOK_KIND), eq(codes.code, books.kindCode)),
+    )
+    .leftJoin(
+      categories,
+      and(
+        eq(categories.groupCode, BOOK_CATEGORY),
+        eq(categories.code, books.categoryCode),
+      ),
     )
     .leftJoin(uploads, eq(uploads.id, books.coverId))
     .where(eq(books.id, id))

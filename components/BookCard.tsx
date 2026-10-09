@@ -51,6 +51,7 @@ export default function BookCard({
         <p className={large ? "text-lg font-medium" : "font-medium"}>{title}</p>
         <p className="text-sm text-muted">
           {book.author}
+          {book.category ? ` · ${book.category}` : ""}
           {book.kind ? ` · ${book.kind}` : ""}
           {book.status === "read" && book.finishedOn
             ? ` · ${book.finishedOn.slice(0, 7).replace("-", ".")}`

@@ -5,7 +5,8 @@ import Container from "@/components/Container";
 import BookEditor from "@/components/admin/BookEditor";
 import { isAdmin } from "@/lib/auth";
 import { listBooks } from "@/lib/books";
-import { BOOK_KIND, listCodes } from "@/lib/codes";
+import { lookupSource } from "@/lib/book-lookup";
+import { BOOK_CATEGORY, BOOK_KIND, listCodes } from "@/lib/codes";
 
 export const metadata: Metadata = {
   title: "책 관리",
@@ -17,6 +18,7 @@ export const dynamic = "force-dynamic";
 const errors: Record<string, string> = {
   required: "책 제목과 지은이를 적어 주세요.",
   kind: "고른 종류가 없습니다. 코드 화면에서 지웠는지 확인하세요.",
+  category: "고른 분류가 없습니다. 코드 화면에서 지웠는지 확인하세요.",
   url: "링크는 http:// 나 https:// 로 시작해야 합니다.",
   cover: "표지는 그림 파일(90MB 까지)만 올릴 수 있습니다.",
 };
@@ -29,9 +31,10 @@ export default async function AdminBooksPage({
 
   const params = await searchParams;
   const error = typeof params.be === "string" ? errors[params.be] : undefined;
-  const [rows, kinds] = await Promise.all([
+  const [rows, kinds, categories] = await Promise.all([
     listBooks(),
     listCodes(BOOK_KIND, { all: true }),
+    listCodes(BOOK_CATEGORY, { all: true }),
   ]);
 
   return (
@@ -54,7 +57,12 @@ export default async function AdminBooksPage({
         </p>
       ) : null}
       <div id="books" className="mt-8">
-        <BookEditor rows={rows} kinds={kinds} />
+        <BookEditor
+          rows={rows}
+          kinds={kinds}
+          categories={categories}
+          lookupSource={lookupSource()}
+        />
       </div>
     </Container>
   );

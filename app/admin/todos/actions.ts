@@ -25,10 +25,18 @@ function title(formData: FormData) {
   return String(formData.get("title") ?? "").trim();
 }
 
+/** 기간(MYH-228). 거꾸로 적은 것은 lib/todos.ts 가 바로잡는다 */
+function range(formData: FormData) {
+  return {
+    startOn: parseDay(formData.get("startOn")),
+    dueOn: parseDay(formData.get("dueOn")),
+  };
+}
+
 export async function addTodoAction(formData: FormData) {
   await requireAdmin();
   const text = title(formData);
-  if (text) await addTodo(text, { dueOn: parseDay(formData.get("dueOn")) });
+  if (text) await addTodo(text, range(formData));
   revalidatePath(BACK);
   redirect(BACK);
 }
@@ -38,7 +46,7 @@ export async function saveTodoAction(formData: FormData) {
   const todo = id(formData);
   const text = title(formData);
   if (todo && text) {
-    await updateTodo(todo, { title: text, dueOn: parseDay(formData.get("dueOn")) });
+    await updateTodo(todo, { title: text, ...range(formData) });
   }
   revalidatePath(BACK);
   redirect(BACK);
@@ -74,7 +82,7 @@ export async function quickTodoAction(
   await requireAdmin();
   const text = title(formData);
   if (!text) return { error: "할 일을 적어 주세요." };
-  await addTodo(text.slice(0, 8000), { dueOn: parseDay(formData.get("dueOn")) });
+  await addTodo(text.slice(0, 8000), range(formData));
   revalidatePath(BACK);
   return { ok: true };
 }

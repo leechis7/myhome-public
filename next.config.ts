@@ -27,7 +27,8 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
       "font-src 'self' https://cdn.jsdelivr.net data:",
-      "img-src 'self' data: blob:",
+      // 책 찾기(MYH-226)의 후보 표지 미리보기. 저장한 표지는 우리 쪽(/uploads)에 있다
+      "img-src 'self' data: blob: https://search1.kakaocdn.net https://t1.daumcdn.net https://covers.openlibrary.org https://*.archive.org",
       "connect-src 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",

@@ -66,6 +66,8 @@ services:
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       # 선택. off 면 이 서버에서는 텔레그램 메모 · 할 일을 받지 않는다
       TELEGRAM_INBOX: ${TELEGRAM_INBOX:-}
+      # 선택. 책 찾기를 카카오로 한다. 비우면 Open Library
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
       NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
       MONITORING_DASHBOARD: ${MONITORING_DASHBOARD:-}

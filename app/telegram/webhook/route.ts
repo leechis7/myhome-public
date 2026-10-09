@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { addMemo } from "@/lib/memos";
 import { addTodo } from "@/lib/todos";
+import { rangeLabel, readTodoDates } from "@/lib/todo-dates";
+import { todayInSeoul } from "@/lib/resume-sections";
 import { hasSecretKey } from "@/lib/secret-crypto";
 import { inboxDisabled, reply } from "@/lib/telegram-bot";
 import { matchesSecret, readUpdate } from "@/lib/telegram-inbox";
@@ -40,14 +42,20 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
   if (!hasSecretKey()) {
-    await reply(message.chatId, "메모를 담글 열쇠(SECRETS_KEY)가 없어 받지 못했습니다.");
+    await reply(message.chatId, "메모를 암호화할 열쇠(SECRETS_KEY)가 없어 받지 못했습니다.");
     return Response.json({ ok: true });
   }
 
   if (message.kind === "todo") {
-    await addTodo(message.text.slice(0, MAX_MEMO), { source: "telegram" });
+    // 글 속의 날짜는 날짜 칸으로(MYH-229). 「할일 10/15 보고서」 → 보고서, 마감 10/15
+    const { title, ...range } = readTodoDates(message.text.slice(0, MAX_MEMO), todayInSeoul());
+    await addTodo(title, { ...range, source: "telegram" });
     revalidatePath("/admin/todos");
-    await reply(message.chatId, "✅ 할 일에 넣었습니다.");
+    const when = rangeLabel(range);
+    await reply(
+      message.chatId,
+      when ? `✅ 할 일에 넣었습니다. 「${title}」 · ${when}` : "✅ 할 일에 넣었습니다.",
+    );
     return Response.json({ ok: true });
   }
 

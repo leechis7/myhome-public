@@ -13,12 +13,15 @@ export const SKILL_CATEGORY = "00002";
 export const SERIES = "00003";
 /** 책 종류(MYH-190): 종이책 · 이북 · 오디오북 */
 export const BOOK_KIND = "00004";
+/** 책 분류(MYH-225): 컴퓨터 · 교양 · 소설 … */
+export const BOOK_CATEGORY = "00005";
 
 export const CODE_GROUPS = [
   LINK_CATEGORY,
   SKILL_CATEGORY,
   SERIES,
   BOOK_KIND,
+  BOOK_CATEGORY,
 ] as const;
 export type CodeGroup = (typeof CODE_GROUPS)[number];
 

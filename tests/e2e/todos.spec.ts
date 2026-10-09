@@ -28,10 +28,10 @@ test.describe("할 일", () => {
     // 지워진다(CI 에서 늘 깨졌다) - 첫 것이 목록에 나온 뒤에 적는다
     await expect(open.locator("li", { hasText: first })).toBeVisible();
     await form.getByLabel("새 할 일").fill(late);
-    await form.getByLabel("기한").fill("2020-01-02");
+    await form.getByLabel("마감일").fill("2020-01-02");
     await form.getByRole("button", { name: "더하기" }).click();
 
-    // 기한을 넘긴 것은 표시가 붙고 맨 위로 온다
+    // 마감을 넘긴 것은 표시가 붙고 맨 위로 온다
     const lateRow = open.locator("li", { hasText: late });
     await expect(lateRow.getByText("넘김 · 1.2")).toBeVisible();
     await expect(open.locator("li").first()).toContainText(late);
@@ -47,11 +47,13 @@ test.describe("할 일", () => {
     await done.getByRole("button", { name: `${first} 되살리기` }).click();
     await expect(open.locator("li", { hasText: first })).toBeVisible();
 
-    // 고치기: 기한을 빼면 넘김 표시가 사라진다
+    // 고치기: 마감을 빼고 시작일만 두면 넘김 표시가 사라지고 「… 부터」 (MYH-228)
     await lateRow.getByText("고치기").click();
-    await lateRow.getByLabel("기한 고치기").fill("");
+    await lateRow.getByLabel("시작일 고치기").fill("2099-03-01");
+    await lateRow.getByLabel("마감일 고치기").fill("");
     await lateRow.getByRole("button", { name: "저장" }).click();
     await expect(open.locator("li", { hasText: late }).getByText(/넘김/)).toHaveCount(0);
+    await expect(open.locator("li", { hasText: late })).toContainText("3.1 부터");
 
     // 지우기
     for (const title of [first, late]) {

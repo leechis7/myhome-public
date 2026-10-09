@@ -2,6 +2,7 @@ import Link from "next/link";
 import DeleteButton from "@/components/admin/DeleteButton";
 import CodePicker from "@/components/admin/CodePicker";
 import CoverInput from "@/components/admin/CoverInput";
+import BookLookup from "@/components/admin/BookLookup";
 import { deleteBook, saveBook } from "@/app/admin/book-actions";
 import {
   BOOK_STATUS_LABELS,
@@ -9,7 +10,7 @@ import {
   type BookRow,
   type BookStatus,
 } from "@/lib/books";
-import { BOOK_KIND, codesHref } from "@/lib/code-groups";
+import { BOOK_CATEGORY, BOOK_KIND, codesHref } from "@/lib/code-groups";
 import type { Code } from "@/lib/db";
 
 const field =
@@ -20,7 +21,15 @@ const primary =
   "rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90";
 
 /** 책 한 권의 칸. 더하기와 고치기가 같이 쓴다 */
-function Fields({ book, kinds }: { book?: BookRow; kinds: Code[] }) {
+function Fields({
+  book,
+  kinds,
+  categories,
+}: {
+  book?: BookRow;
+  kinds: Code[];
+  categories: Code[];
+}) {
   const cover = book ? coverUrl(book) : null;
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -46,6 +55,15 @@ function Fields({ book, kinds }: { book?: BookRow; kinds: Code[] }) {
         name="kindCode"
         label="종류"
         editHref={codesHref(BOOK_KIND)}
+        className={field}
+      />
+      {/* 분류(MYH-225). 컴퓨터 · 교양 · 소설 … */}
+      <CodePicker
+        codes={categories}
+        value={book?.categoryCode}
+        name="categoryCode"
+        label="분류"
+        editHref={codesHref(BOOK_CATEGORY)}
         className={field}
       />
       <select
@@ -115,10 +133,16 @@ function Fields({ book, kinds }: { book?: BookRow; kinds: Code[] }) {
 export default function BookEditor({
   rows,
   kinds,
+  categories,
+  lookupSource,
 }: {
   rows: BookRow[];
   /** 책 종류 코드 전부(꺼 둔 것까지) */
   kinds: Code[];
+  /** 책 분류 코드 전부(꺼 둔 것까지, MYH-225) */
+  categories: Code[];
+  /** 책 찾기가 쓰는 곳(카카오 · Open Library, MYH-226) */
+  lookupSource: string;
 }) {
   return (
     <>
@@ -130,8 +154,10 @@ export default function BookEditor({
                 <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
                   <span className="font-medium">{book.title}</span>
                   <span className="text-muted">{book.author}</span>
-                  {book.kind ? (
-                    <span className="text-xs text-faint">{book.kind}</span>
+                  {book.category || book.kind ? (
+                    <span className="text-xs text-faint">
+                      {[book.category, book.kind].filter(Boolean).join(" · ")}
+                    </span>
                   ) : null}
                   {/* 펼치지 않아도 바로 노트로 간다(MYH-211) */}
                   <Link
@@ -144,7 +170,9 @@ export default function BookEditor({
                     className={`rounded px-2 py-0.5 text-xs ${
                       book.status === "reading"
                         ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                        : "bg-foreground/[0.06] text-foreground/60"
+                        : book.status === "want"
+                          ? "bg-sky-500/10 text-sky-700 dark:text-sky-400"
+                          : "bg-foreground/[0.06] text-foreground/60"
                     }`}
                   >
                     {BOOK_STATUS_LABELS[book.status as BookStatus]}
@@ -153,7 +181,7 @@ export default function BookEditor({
                 <div className="border-t border-border p-4">
                   <form action={saveBook} aria-label={`${book.title} 고치기`}>
                     <input type="hidden" name="id" value={book.id} />
-                    <Fields book={book} kinds={kinds} />
+                    <Fields book={book} kinds={kinds} categories={categories} />
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <button type="submit" className={primary}>
                         저장
@@ -187,7 +215,8 @@ export default function BookEditor({
         className="mt-4 rounded-xl border border-dashed border-border p-4"
       >
         <p className="mb-3 text-sm font-medium text-foreground/70">책 추가</p>
-        <Fields kinds={kinds} />
+        <BookLookup source={lookupSource} />
+        <Fields kinds={kinds} categories={categories} />
         <button type="submit" className={`${primary} mt-3`}>
           추가
         </button>

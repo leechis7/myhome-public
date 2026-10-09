@@ -12,6 +12,7 @@ import {
 } from "@/lib/db";
 
 import {
+  BOOK_CATEGORY,
   BOOK_KIND,
   LINK_CATEGORY,
   SERIES,
@@ -73,6 +74,15 @@ export async function countUsage(group: CodeGroup) {
       .from(books)
       .where(isNotNull(books.kindCode))
       .groupBy(books.kindCode);
+    return new Map(rows.map((r) => [r.code!, Number(r.n)]));
+  }
+  // 책 분류도 책이 쓴다(MYH-225)
+  if (group === BOOK_CATEGORY) {
+    const rows = await getDb()
+      .select({ code: books.categoryCode, n: count() })
+      .from(books)
+      .where(isNotNull(books.categoryCode))
+      .groupBy(books.categoryCode);
     return new Map(rows.map((r) => [r.code!, Number(r.n)]));
   }
   // 연재는 글이 쓴다(MYH-187)

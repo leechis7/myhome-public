@@ -228,7 +228,7 @@ export const resumeLicenses = pgTable("resume_licenses", {
 
 /**
  * 읽는 책(MYH-190). 산 책 · 이북 · 오디오북 가운데 읽고 있는 것을 직접 적고
- * 소개 화면에 보인다. 종류는 코드 그룹 00004(책 종류)다.
+ * 소개 화면에 보인다. 종류는 코드 그룹 00004(책 종류), 분류는 00005(책 분류)다.
  */
 export const books = pgTable(
   "books",
@@ -242,7 +242,13 @@ export const books = pgTable(
       .default("00004"),
     /** 종류(codes): 종이책 · 이북 · 오디오북 … 비워도 된다 */
     kindCode: varchar("kind_code", { length: 20 }),
-    /** reading(읽는 중) · read(다 읽음) */
+    /** 분류 그룹. 늘 00005(책 분류) - 외래 키가 그룹까지 보게 하려고 둔다 */
+    categoryGroup: varchar("category_group", { length: 20 })
+      .notNull()
+      .default("00005"),
+    /** 분류(codes, MYH-225): 컴퓨터 · 교양 · 소설 … 비워도 된다 */
+    categoryCode: varchar("category_code", { length: 20 }),
+    /** want(읽고 싶은 책, MYH-227) · reading(읽는 중) · read(다 읽음) */
     status: text("status").notNull().default("reading"),
     /** 한두 줄 소개. 내 말로 */
     note: text("note"),
@@ -268,12 +274,20 @@ export const books = pgTable(
       .defaultNow(),
   },
   (t) => [
-    check("books_status", sql`${t.status} in ('reading', 'read')`),
+    check("books_status", sql`${t.status} in ('want', 'reading', 'read')`),
     check("books_kind_group", sql`${t.kindGroup} = '00004'`),
+    check("books_category_group", sql`${t.categoryGroup} = '00005'`),
     check("books_rating", sql`${t.rating} between 1 and 5`),
     foreignKey({
       name: "books_kind_codes_fk",
       columns: [t.kindGroup, t.kindCode],
+      foreignColumns: [codes.groupCode, codes.code],
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+    foreignKey({
+      name: "books_category_codes_fk",
+      columns: [t.categoryGroup, t.categoryCode],
       foreignColumns: [codes.groupCode, codes.code],
     })
       .onDelete("restrict")
@@ -873,7 +887,9 @@ export const todos = pgTable(
     id: serial("id").primaryKey(),
     /** 암호문. 할 일 */
     title: text("title").notNull(),
-    /** 기한(선택) */
+    /** 시작일(선택, MYH-228). 마감일보다 앞 */
+    startOn: date("start_on"),
+    /** 마감일(선택) */
     dueOn: date("due_on"),
     /** 끝낸 때. 안 끝났으면 null */
     doneAt: timestamp("done_at", { withTimezone: true }),
@@ -883,7 +899,13 @@ export const todos = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (t) => [check("todos_source", sql`${t.source} in ('telegram', 'web')`)],
+  (t) => [
+    check("todos_source", sql`${t.source} in ('telegram', 'web')`),
+    check(
+      "todos_range",
+      sql`${t.startOn} is null or ${t.dueOn} is null or ${t.startOn} <= ${t.dueOn}`,
+    ),
+  ],
 );
 
 export type Profile = typeof profile.$inferSelect;

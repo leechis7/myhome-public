@@ -24,6 +24,7 @@ import {
   listCodeGroups,
   listCodes,
   nextCode,
+  BOOK_CATEGORY,
   BOOK_KIND,
   SERIES,
   SKILL_CATEGORY,
@@ -52,6 +53,7 @@ const USED_IN: Record<CodeGroup, string> = {
     "관리 › 소개의 기술에서 고르고, 소개 화면에 이 순서로 나옵니다.",
   [SERIES]: "블로그 글 쓰기에서 고릅니다. 연재 안의 편은 발행일 순입니다.",
   [BOOK_KIND]: "관리 › 글 › 책에서 고릅니다.",
+  [BOOK_CATEGORY]: "관리 › 글 › 책에서 고르고, 읽는 책 화면에서 이 분류로 걸러 봅니다.",
 };
 
 /** 줄 하나를 가리키는 것(그룹 번호 + 코드). 폼마다 넣는다 */

@@ -14,6 +14,7 @@ import { isAdmin } from "@/lib/auth";
 import { todayInSeoul } from "@/lib/resume-sections";
 import { hasSecretKey } from "@/lib/secret-crypto";
 import { listTodos } from "@/lib/todos";
+import { rangeLabel, rangeState } from "@/lib/todo-dates";
 
 export const metadata: Metadata = {
   title: "할 일",
@@ -29,14 +30,52 @@ const button =
 const primary =
   "rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90";
 
-/** 2026-10-08 → 10.8 */
-function short(day: string) {
-  const [, m, d] = day.split("-").map(Number);
-  return `${m}.${d}`;
+/** 기간 칸 둘. 더하기 · 고치기가 같이 쓴다(MYH-228) */
+function RangeInputs({
+  startOn,
+  dueOn,
+  edit = false,
+}: {
+  startOn?: string | null;
+  dueOn?: string | null;
+  edit?: boolean;
+}) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <input
+        type="date"
+        name="startOn"
+        defaultValue={startOn ?? ""}
+        aria-label={edit ? "시작일 고치기" : "시작일"}
+        title="시작일"
+        className={field}
+      />
+      <span aria-hidden className="text-muted">
+        ~
+      </span>
+      <input
+        type="date"
+        name="dueOn"
+        defaultValue={dueOn ?? ""}
+        aria-label={edit ? "마감일 고치기" : "마감일"}
+        title="마감일"
+        className={field}
+      />
+    </span>
+  );
 }
 
+/** 처지마다 앞에 붙는 말과 색 */
+const STATE_STYLE = {
+  late: ["넘김 · ", "font-medium text-red-600 dark:text-red-400"],
+  today: ["오늘 · ", "font-medium text-amber-700 dark:text-amber-400"],
+  ongoing: ["", "text-emerald-700 dark:text-emerald-400"],
+  upcoming: ["", "text-muted"],
+  plain: ["", "text-muted"],
+} as const;
+
 /**
- * 할 일(MYH-217). 체크리스트다. 기한은 골라서 붙인다. 텔레그램 봇에게
+ * 할 일(MYH-217). 체크리스트다. 기간(시작일 ~ 마감일, MYH-228)은 골라서 붙인다. 텔레그램 봇에게
  * 「할일 우유 사기」 처럼 보내도 여기에 들어온다(빠른 메모와 같은 길).
  */
 export default async function TodosPage() {
@@ -54,7 +93,8 @@ export default async function TodosPage() {
         <Link href="/admin/memos" className="underline underline-offset-4">
           메모
         </Link>
-        에서 연결).
+        에서 연결). 「할일 10/15 보고서 내기」 · 「내일 우유 사기」 · 「10/12~10/15 출장」 처럼
+        날짜를 쓰면 그 날이 기간에 들어갑니다.
       </p>
 
       <form
@@ -69,7 +109,7 @@ export default async function TodosPage() {
           placeholder="할 일"
           className={`${field} min-w-0 flex-1`}
         />
-        <input type="date" name="dueOn" aria-label="기한" className={field} />
+        <RangeInputs />
         <button type="submit" className={primary}>
           더하기
         </button>
@@ -80,7 +120,8 @@ export default async function TodosPage() {
       ) : (
         <ul className="mt-8 divide-y divide-border" aria-label="남은 할 일">
           {open.map((todo) => {
-            const late = todo.dueOn !== null && todo.dueOn < today;
+            const label = rangeLabel(todo);
+            const [prefix, tone] = STATE_STYLE[rangeState(todo, today)];
             return (
               <li key={todo.id} className="flex flex-wrap items-center gap-3 py-3">
                 <form action={toggleTodoAction}>
@@ -96,18 +137,10 @@ export default async function TodosPage() {
                 {todo.source === "telegram" ? (
                   <span className="text-xs text-sky-700 dark:text-sky-400">텔레그램</span>
                 ) : null}
-                {todo.dueOn ? (
-                  <span
-                    className={`text-xs tabular-nums ${
-                      late
-                        ? "font-medium text-red-600 dark:text-red-400"
-                        : todo.dueOn === today
-                          ? "font-medium text-amber-700 dark:text-amber-400"
-                          : "text-muted"
-                    }`}
-                  >
-                    {late ? "넘김 · " : todo.dueOn === today ? "오늘 · " : ""}
-                    {short(todo.dueOn)}
+                {label ? (
+                  <span className={`text-xs tabular-nums ${tone}`}>
+                    {prefix}
+                    {label}
                   </span>
                 ) : null}
                 {todo.title !== null ? (
@@ -124,13 +157,7 @@ export default async function TodosPage() {
                         aria-label="할 일 고치기"
                         className={`${field} min-w-0 flex-1`}
                       />
-                      <input
-                        type="date"
-                        name="dueOn"
-                        defaultValue={todo.dueOn ?? ""}
-                        aria-label="기한 고치기"
-                        className={field}
-                      />
+                      <RangeInputs startOn={todo.startOn} dueOn={todo.dueOn} edit />
                       <button type="submit" className={primary}>
                         저장
                       </button>

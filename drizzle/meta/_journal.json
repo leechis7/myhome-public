@@ -358,6 +358,27 @@
       "when": 1791454547276,
       "tag": "0050_about_sections_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1791521361102,
+      "tag": "0051_book_category",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1791528665904,
+      "tag": "0052_book_want",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1791545728415,
+      "tag": "0053_todo_start_on",
+      "breakpoints": true
     }
   ]
 }
