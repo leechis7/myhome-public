@@ -48,6 +48,12 @@ COPY --from=deps --chown=node:node /app/node_modules/postgres ./node_modules/pos
 RUN mkdir -p /app/storage/uploads /app/storage/secrets \
     && chown -R node:node /app/storage
 
+# Next 가 다시 그린 페이지를 두는 자리. 컨테이너는 node(1000)가 아닌 번호로도
+# 돈다(운영은 APP_UID 로 올린 파일 주인과 맞춘다). 그 번호는 node 것인 .next
+# 안에 폴더를 만들지 못해 「EACCES: mkdir '/app/.next/cache'」 가 쌓였다.
+# 미리 만들어 누구나 쓰게 연다(/tmp 처럼 1777).
+RUN mkdir -p /app/.next/cache && chmod 1777 /app/.next/cache
+
 USER node
 EXPOSE 3000
 
