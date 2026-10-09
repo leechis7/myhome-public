@@ -33,7 +33,7 @@ export function matchesSecret(given: string | null, expected = webhookSecret()) 
 export type InboxMessage =
   | { kind: "memo"; chatId: string; text: string }
   | { kind: "todo"; chatId: string; text: string }
-  | { kind: "unknown"; chatId: string }
+  | { kind: "free"; chatId: string; text: string }
   | { kind: "not-text"; chatId: string };
 
 /**
@@ -85,7 +85,8 @@ export function asMemo(text: string) {
  * - 새 글(message)만 본다. 고친 글 · 채널 글 · 버튼 누름은 버린다
  * - 내 대화방이 아니면 버린다(답도 하지 않는다 - 봇이 있다는 것도 알리지 않게)
  * - /start 같은 명령은 메모가 아니다
- * - 「할일 …」 · 「메모 …」 같은 말이 없으면 저장하지 않는다(unknown)
+ * - 「할일 …」 · 「메모 …」 같은 말이 없으면 free. 할 일인지는 웹훅이
+ *   lib/todo-intent.ts 로 가른다(MYH-230 - 날짜와 말끝을 보는 규칙)
  * - 글자가 없으면(사진 · 스티커) 「글만 받는다」 고 답할 수 있게 알린다
  */
 export function readUpdate(update: unknown, ownChatId: string | undefined) {
@@ -103,6 +104,6 @@ export function readUpdate(update: unknown, ownChatId: string | undefined) {
   if (todo) return { kind: "todo", chatId, text: todo } as const;
   const memo = asMemo(text);
   if (memo) return { kind: "memo", chatId, text: memo } as const;
-  // 말이 없으면 저장하지 않고 쓰는 법만 알린다
-  return { kind: "unknown", chatId } as const;
+  // 말이 없다. 할 일인지는 웹훅이 가른다
+  return { kind: "free", chatId, text } as const;
 }

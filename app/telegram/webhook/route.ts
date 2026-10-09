@@ -1,7 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { addMemo } from "@/lib/memos";
 import { addTodo } from "@/lib/todos";
-import { rangeLabel, readTodoDates } from "@/lib/todo-dates";
+import { rangeLabel, readTodoDates, type TodoRange } from "@/lib/todo-dates";
+import { guessTodo } from "@/lib/todo-intent";
 import { todayInSeoul } from "@/lib/resume-sections";
 import { hasSecretKey } from "@/lib/secret-crypto";
 import { inboxDisabled, reply } from "@/lib/telegram-bot";
@@ -30,13 +31,6 @@ export async function POST(request: Request) {
   const message = readUpdate(update, process.env.TELEGRAM_CHAT_ID);
   if (!message) return Response.json({ ok: true });
 
-  if (message.kind === "unknown") {
-    await reply(
-      message.chatId,
-      "저장하지 않았습니다. 「메모 …」 · 「… 메모해줘」 는 메모로, 「할일 …」 · 「… 할일에 추가」 · 「리마인드 …」 는 할 일로 넣습니다.",
-    );
-    return Response.json({ ok: true });
-  }
   if (message.kind === "not-text") {
     await reply(message.chatId, "글만 메모로 받습니다.");
     return Response.json({ ok: true });
@@ -49,13 +43,21 @@ export async function POST(request: Request) {
   if (message.kind === "todo") {
     // 글 속의 날짜는 날짜 칸으로(MYH-229). 「할일 10/15 보고서」 → 보고서, 마감 10/15
     const { title, ...range } = readTodoDates(message.text.slice(0, MAX_MEMO), todayInSeoul());
-    await addTodo(title, { ...range, source: "telegram" });
-    revalidatePath("/admin/todos");
-    const when = rangeLabel(range);
-    await reply(
-      message.chatId,
-      when ? `✅ 할 일에 넣었습니다. 「${title}」 · ${when}` : "✅ 할 일에 넣었습니다.",
-    );
+    await saveTodo(message.chatId, title, range);
+    return Response.json({ ok: true });
+  }
+
+  if (message.kind === "free") {
+    // 말 없이 온 글(MYH-230). 「내일 우유 사기」 는 할 일, 「오늘 날씨 좋다」 는 아니다
+    const todo = guessTodo(message.text.slice(0, MAX_MEMO), todayInSeoul());
+    if (todo) {
+      await saveTodo(message.chatId, todo.title, todo);
+    } else {
+      await reply(
+        message.chatId,
+        "저장하지 않았습니다. 「메모 …」 · 「… 메모해줘」 는 메모로, 「할일 …」 · 「리마인드 …」 나 「내일 우유 사기」 처럼 할 일로 보이는 글은 할 일로 넣습니다.",
+      );
+    }
     return Response.json({ ok: true });
   }
 
@@ -63,4 +65,11 @@ export async function POST(request: Request) {
   revalidatePath("/admin/memos");
   await reply(message.chatId, "📝 메모했습니다.");
   return Response.json({ ok: true });
+}
+
+async function saveTodo(chatId: string, title: string, range: TodoRange) {
+  await addTodo(title, { startOn: range.startOn, dueOn: range.dueOn, source: "telegram" });
+  revalidatePath("/admin/todos");
+  const when = rangeLabel(range);
+  await reply(chatId, when ? `✅ 할 일에 넣었습니다. 「${title}」 · ${when}` : `✅ 할 일에 넣었습니다. 「${title}」`);
 }

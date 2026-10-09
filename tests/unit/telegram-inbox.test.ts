@@ -35,8 +35,10 @@ describe("받은 글 읽기(MYH-215)", () => {
     });
   });
 
-  it("말이 없는 글은 저장하지 않는다(unknown)", () => {
-    expect(readUpdate(msg({ text: "우유 사기" }), ME)).toEqual({ kind: "unknown", chatId: ME });
+  it("말이 없는 글은 free - 할 일인지는 웹훅이 가른다(MYH-230)", () => {
+    expect(readUpdate(msg({ text: "우유 사기" }), ME)).toEqual({ kind: "free", chatId: ME, text: "우유 사기" });
+    // 말이 있으면 말을 따른다
+    expect(readUpdate(msg({ text: "메모 내일 회의 내용" }), ME)).toMatchObject({ kind: "memo" });
   });
 
   it("남의 대화방 · 내 대화방 번호가 없으면 버린다", () => {
@@ -73,7 +75,7 @@ describe("텔레그램에서 할 일 넣기(MYH-217)", () => {
   it("뒤가 비었거나 낱말 중간이면 메모다", () => {
     expect(asTodo("할일")).toBeNull();
     expect(asTodo("할일이 많다")).toBeNull();
-    expect(readUpdate(msg({ text: "할일이 많다" }), ME)?.kind).toBe("unknown");
+    expect(readUpdate(msg({ text: "할일이 많다" }), ME)?.kind).toBe("free");
   });
 });
 
