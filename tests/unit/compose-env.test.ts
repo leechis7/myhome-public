@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CONFIG_FIELDS } from "@/lib/site/settings";
 
@@ -7,7 +7,8 @@ import { CONFIG_FIELDS } from "@/lib/site/settings";
  * 넘기는 환경변수가 어긋나지 않게 본다. v1.2.0 에서 운영 쪽에 KAKAO_REST_API_KEY
  * 가 빠져 .env 에 넣어도 앱에 닿지 않았다.
  */
-const FILES = ["compose.yaml", "infra/docker-compose.yml"];
+// 공개 저장소에는 infra/ 가 넘어가지 않는다 - 있는 것만 본다
+const FILES = ["compose.yaml", "infra/docker-compose.yml"].filter((f) => existsSync(f));
 
 /** 환경설정(lib/site/settings.ts) 값과, 그 밖에 앱이 읽는 선택 값 */
 const MUST = [
