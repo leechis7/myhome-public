@@ -1,4 +1,4 @@
-import { contactRows } from "@/lib/contact-info";
+import { contactRows } from "@/lib/profile/contact-info";
 
 /**
  * 연락 수단 목록. 소개와 연락처가 같은 것을 쓴다.

@@ -76,8 +76,10 @@ docker compose logs app | grep "처음 설정 코드"
 2. **관리 › 설정 › 사이트**: 이름 · 제목 · 한 줄 소개 · 대표 메일. 비워 두면
    「홍길동」 같은 보기 값이 보인다
 3. **관리 › 설정 › 프로필**: 소개 글 · 연락 수단 · 경력 · 기술 · 수행 업무
-4. **관리 › 설정 › 암호**: 패스키(얼굴 · 지문)를 등록해 두면 비밀번호 없이 들어온다
-5. **관리 › 설정 › 메뉴**: 위쪽 메뉴의 줄과 순서
+4. **관리 › 설정 › 환경설정**: 기본 편집기, 텔레그램 알림 · 카카오 책 검색 ·
+   Gemini 요약 · 통계 같은 바깥 서비스(쓰는 것만)
+5. **관리 › 설정 › 보안**: 패스키(얼굴 · 지문)를 등록해 두면 비밀번호 없이 들어온다
+6. **관리 › 설정 › 메뉴**: 위쪽 메뉴의 줄과 순서
 
 ## 도메인과 HTTPS
 
@@ -236,22 +238,36 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 
 `compose.yaml` 이 읽는다. 꼭 필요한 것은 둘이고 나머지는 비우면 꺼진다.
 
+두 묶음이다. **1** 은 `.env` 에만 둔다 — DB 를 열고 푸는 열쇠와 서버마다 다른
+값이라 화면에서 바꿀 수 없다. **2** 는 관리 › 설정 › 환경설정 에서도 넣을 수 있다.
+`.env` 에 값이 있으면 그것이 먼저이고, 비워 두고 화면에서 넣어도 된다(휴대폰에서도).
+화면에서 넣은 토큰 · 키는 `SECRETS_KEY` 로 암호화해 둔다.
+
+**1. `.env` 에만**
+
 | 변수 | 설명 |
 | --- | --- |
 | `POSTGRES_PASSWORD` | **필수.** DB 비밀번호. 처음 띄운 뒤에는 바꾸지 않는다 |
 | `SESSION_SECRET` | **필수.** 로그인 쿠키를 암호화하는 열쇠(32자 이상). `openssl rand -base64 32` |
+| `SECRETS_KEY` | 비밀글 · 일기장 · 메모 · 할 일과 화면에서 넣은 토큰 · 키를 암호화하는 열쇠(32바이트 base64). 비우면 그 기능이 꺼지고 메뉴에서 빠진다. **잃으면 복구할 수 없다** |
+| `ADMIN_PASSWORD` | 처음 관리자 비밀번호. 비우면 처음 `/admin` 에서 설치 코드로 정한다. 처음 로그인 뒤로는 보지 않는다(관리 › 설정 › 보안 에서 바꾼다) |
 | `SITE_URL` | 바깥에서 들어오는 주소. 기본 `http://localhost:3000` |
 | `PORT` | 여는 포트. 기본 `3000` |
 | `MYHOME_VERSION` | 쓸 이미지 판. 기본 `latest` |
-| `ADMIN_PASSWORD` | 처음 관리자 비밀번호. 비우면 처음 `/admin` 에서 설치 코드로 정한다 |
-| `SECRETS_KEY` | 비밀글 열쇠(32바이트 base64). 비우면 비밀글이 꺼지고 메뉴에서 빠진다 |
-| `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | 댓글 · 연락 · 방명록 알림 |
 | `TELEGRAM_INBOX` | `off` 면 이 서버에서는 텔레그램 메모 · 할 일을 받지 않는다(같은 봇을 쓰는 개발기 등). 봇 하나에 받는 곳은 하나뿐이다 |
+| `GEMINI_MODEL` | 책 소개 요약에 쓸 Gemini 모델. 기본 `gemini-flash-latest` |
+| `TZ` | 시간대. 기본 `Asia/Seoul` |
+
+**2. 관리 › 설정 › 환경설정 에서도**
+
+| 변수 | 설명 |
+| --- | --- |
+| `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | 댓글 · 방명록 알림과 텔레그램으로 메모 · 할 일 적기 |
 | `KAKAO_REST_API_KEY` | 관리 › 책 의 책 찾기를 카카오 책 검색으로 한다([developers.kakao.com](https://developers.kakao.com) 앱의 REST API 키). 비우면 열쇠가 필요 없는 Open Library 로 찾는다 — 한국 책은 적다 |
+| `GEMINI_API_KEY` | 책 찾기로 고른 책의 소개를 한두 줄로 요약한다([aistudio.google.com](https://aistudio.google.com) 의 무료 API 키). 비우면 소개 앞부분을 줄인다. 보내는 것은 공개된 책 소개뿐 |
 | `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 나가지 않는다 |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console 소유 확인 |
 | `MONITORING_DASHBOARD` | 관리 › 감시 화면에 끼울 Grafana 대시보드 경로. 비우면 메뉴에서 빠진다 |
-| `TZ` | 시간대. 기본 `Asia/Seoul` |
 
 ## 소스로 고쳐 쓰기
 

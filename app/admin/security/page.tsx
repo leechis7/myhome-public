@@ -4,12 +4,12 @@ import Container from "@/components/Container";
 import PasskeyList from "@/components/admin/PasskeyList";
 import PasskeyRegister from "@/components/admin/PasskeyRegister";
 import PasswordForm from "@/components/admin/PasswordForm";
-import { MIN_PASSWORD_LENGTH } from "@/lib/password-limits";
-import { isAdmin } from "@/lib/auth";
-import { listPasskeys } from "@/lib/passkeys";
+import { MIN_PASSWORD_LENGTH } from "@/lib/security/password-limits";
+import { isAdmin } from "@/lib/security/auth";
+import { listPasskeys } from "@/lib/security/passkeys";
 
 export const metadata: Metadata = {
-  title: "암호설정",
+  title: "보안",
   robots: { index: false, follow: false },
 };
 
@@ -20,7 +20,7 @@ export default async function AdminSecurityPage() {
 
   return (
     <Container>
-      <h1 className="text-2xl font-semibold tracking-tight">암호설정</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">보안</h1>
 
       <section className="mt-10">
         <h2 className="mb-2 text-lg font-semibold">비밀번호</h2>

@@ -25,7 +25,7 @@ async function change(
 // 비밀번호를 실제로 바꾸므로 다른 시험과 겹치면 안 된다
 test.describe.configure({ mode: "serial" });
 
-test.describe("암호설정", () => {
+test.describe("보안", () => {
   test("로그인 없이는 볼 수 없다", async ({ page }) => {
     await page.goto("/admin/security");
     await expect(loginScreen(page)).toBeVisible();
@@ -79,7 +79,7 @@ test.describe("암호설정", () => {
     await openPasswordLogin(page);
     await page.getByLabel("비밀번호").fill(TEMP);
     await page.getByRole("button", { name: "로그인", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "받은 메시지" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "대시보드", level: 1 })).toBeVisible();
 
     // 여기서 되돌려 둔다. 이 줄에 닿지 못하고 끝나면 afterAll 이 되돌린다
     await change(page, TEMP, ADMIN_PASSWORD);
@@ -99,7 +99,7 @@ test.describe("암호설정", () => {
       await openPasswordLogin(page);
       await page.getByLabel("비밀번호").fill(TEMP);
       await page.getByRole("button", { name: "로그인", exact: true }).click();
-      await page.getByRole("heading", { name: "받은 메시지" }).waitFor();
+      await page.getByRole("heading", { name: "대시보드", level: 1 }).waitFor();
       await change(page, TEMP, ADMIN_PASSWORD);
       await expect(page.getByText("비밀번호를 바꿨습니다")).toBeVisible();
       changed = false;

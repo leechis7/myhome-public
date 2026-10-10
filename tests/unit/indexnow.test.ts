@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { submitToIndexNow } from "@/lib/indexnow";
+import { submitToIndexNow } from "@/lib/posts/indexnow";
 
 function fakeFetch(status: number, body = "") {
   return vi.fn().mockResolvedValue({

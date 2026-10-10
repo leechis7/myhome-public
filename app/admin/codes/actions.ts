@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { and, asc, eq } from "drizzle-orm";
 import { codeGroups, codes, getDb } from "@/lib/db";
 import { isForeignKeyViolation, isUniqueViolation } from "@/lib/db/errors";
-import { requireAdmin } from "@/lib/auth";
-import { CODE_PATTERN, isCodeGroup, nextCode } from "@/lib/code-groups";
+import { requireAdmin } from "@/lib/security/auth";
+import { CODE_PATTERN, isCodeGroup, nextCode } from "@/lib/codes/groups";
 import { groupExists } from "@/lib/codes";
 import type { ActionState } from "@/app/admin/actions";
 
@@ -59,7 +59,7 @@ function keyOf({ group, code }: { group: string; code: string }) {
 /** 분류는 소개 · 관리 첫 화면 · 내 서비스에 나온다 */
 function refresh() {
   revalidatePath("/about");
-  revalidatePath("/admin");
+  revalidatePath("/admin/profile");
   revalidatePath("/admin/links");
   revalidatePath("/admin/codes");
 }
@@ -210,7 +210,7 @@ export async function deleteCode(formData: FormData) {
  * 그룹(MYH-183). 그룹은 어느 화면의 고르는 칸이 써야 쓸모가 있지만, 쓸 곳을
  * 만들기 전에 그룹과 코드를 먼저 정해 둘 수 있게 한다.
  *
- * 프로그램이 쓰는 그룹(lib/code-groups.ts)은 그룹 코드를 바꾸거나 지울 수
+ * 프로그램이 쓰는 그룹(lib/codes/groups.ts)은 그룹 코드를 바꾸거나 지울 수
  * 없다 - 프로그램은 그 코드로 그룹을 찾는다.
  */
 

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/page-metadata";
+import { pageMetadata } from "@/lib/site/page-metadata";
 import Link from "next/link";
 import Container from "@/components/Container";
 import PageHeader from "@/components/PageHeader";
 import AdminLinkButton from "@/components/admin/AdminLinkButton";
 import NoteSummary from "@/components/blog/NoteSummary";
-import { isAdmin } from "@/lib/auth";
-import { countCommentsByPost } from "@/lib/comments";
+import { isAdmin } from "@/lib/security/auth";
+import { countCommentsByPost } from "@/lib/posts/comments";
 import { listPublishedNotes, listTags } from "@/lib/posts";
 
 export async function generateMetadata(): Promise<Metadata> {

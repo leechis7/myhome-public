@@ -3,9 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import BookEditor from "@/components/admin/BookEditor";
-import { isAdmin } from "@/lib/auth";
-import { listBooks } from "@/lib/books";
-import { lookupSource } from "@/lib/book-lookup";
+import { isAdmin } from "@/lib/security/auth";
+import { listBooks, readBookFilter } from "@/lib/books";
+import { lookupSource } from "@/lib/books/lookup";
+import { kakaoKey } from "@/lib/books/lookup-key";
 import { BOOK_CATEGORY, BOOK_KIND, listCodes } from "@/lib/codes";
 
 export const metadata: Metadata = {
@@ -31,10 +32,11 @@ export default async function AdminBooksPage({
 
   const params = await searchParams;
   const error = typeof params.be === "string" ? errors[params.be] : undefined;
-  const [rows, kinds, categories] = await Promise.all([
+  const [rows, kinds, categories, key] = await Promise.all([
     listBooks(),
     listCodes(BOOK_KIND, { all: true }),
     listCodes(BOOK_CATEGORY, { all: true }),
+    kakaoKey(),
   ]);
 
   return (
@@ -49,7 +51,7 @@ export default async function AdminBooksPage({
         </Link>
       </div>
       <p className="mt-3 text-sm text-muted">
-        읽는 중인 책은 위에 크게, 다 읽은 책은 아래에 연도별로 나옵니다.
+        읽는 중 · 읽고 싶은 책 · 다 읽음으로 나뉘고, 다 읽은 책은 해마다 접어 둡니다.
       </p>
       {error ? (
         <p role="alert" className="mt-6 text-sm text-red-600 dark:text-red-400">
@@ -61,7 +63,10 @@ export default async function AdminBooksPage({
           rows={rows}
           kinds={kinds}
           categories={categories}
-          lookupSource={lookupSource()}
+          lookupSource={lookupSource(key)}
+          filter={readBookFilter(params)}
+          // 저장하다 막혀 돌아왔거나(?be=) ?add=1 이면 「책 추가」 를 펼쳐 둔다
+          addOpen={params.add === "1" || Boolean(error)}
         />
       </div>
     </Container>

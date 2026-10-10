@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Container from "@/components/Container";
 import JsonLd from "@/components/JsonLd";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import PostCountSelect from "@/components/PostCountSelect";
 import NoteSummary from "@/components/blog/NoteSummary";
 import PostSummary from "@/components/blog/PostSummary";
-import { websiteJsonLd } from "@/lib/jsonld";
-import { postCountOf } from "@/lib/post-counts";
+import { websiteJsonLd } from "@/lib/site/jsonld";
+import { postCountOf } from "@/lib/posts/counts";
 import {
   listPopularPosts,
   listRecentNotes,
   listRecentPosts,
   POPULAR_DAYS,
 } from "@/lib/posts";
-import { getSite } from "@/lib/site-info";
+import { getSite } from "@/lib/site/info";
 
 // 루트 레이아웃에서 canonical 을 걷었으므로(MYH-162) 홈도 제 것을 적는다.
 // 제목·설명·그림은 루트 것이 곧 홈 것이라 그대로 둔다.

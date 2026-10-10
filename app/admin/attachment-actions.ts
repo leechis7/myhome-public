@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/security/auth";
 import {
   MAX_ATTACHMENT_BYTES,
   addAttachment,
   removeAttachment,
-} from "@/lib/attachments";
+} from "@/lib/uploads/attachments";
 import { getDb, posts } from "@/lib/db";
 
 /**
@@ -46,7 +46,7 @@ export async function attachFile(formData: FormData) {
   }
 
   // 화면에서도 막지만 그것만 믿지 않는다. 형식은 가리지 않는다 —
-  // 내려줄 때 브라우저가 열지 않게 첨부로 준다(lib/upload-limits.ts).
+  // 내려줄 때 브라우저가 열지 않게 첨부로 준다(lib/uploads/limits.ts).
   if (file.size > MAX_ATTACHMENT_BYTES) return;
 
   await addAttachment(postId, file);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isFromOurSide, isPrivateAddress } from "@/lib/private-ip";
+import { isFromOurSide, isPrivateAddress } from "@/lib/security/private-ip";
 
 describe("사설 대역 판별", () => {
   it("도커 대역은 사설이다", () => {

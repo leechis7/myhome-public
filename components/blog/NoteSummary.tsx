@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Markdown from "@/components/blog/Markdown";
 import ClampedText from "@/components/blog/ClampedText";
-import { postState } from "@/lib/post-state";
+import { postState } from "@/lib/posts/state";
 import { formatDate, revisionInfo } from "@/lib/posts";
 
 export type NoteSummaryRow = {

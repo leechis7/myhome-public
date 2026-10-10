@@ -27,8 +27,8 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
       "font-src 'self' https://cdn.jsdelivr.net data:",
-      // 책 찾기(MYH-226)의 후보 표지 미리보기. 저장한 표지는 우리 쪽(/uploads)에 있다
-      "img-src 'self' data: blob: https://search1.kakaocdn.net https://t1.daumcdn.net https://covers.openlibrary.org https://*.archive.org",
+      // 책 찾기의 후보 표지도 우리 서버가 받아 보여 준다(app/admin/books/cover)
+      "img-src 'self' data: blob:",
       "connect-src 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
@@ -57,7 +57,7 @@ const nextConfig: NextConfig = {
       // 올리기와 붙이기가 모두 서버 액션으로 간다. 기본 1MB 로는 사진
       // 한 장도 못 올린다.
       //
-      // **lib/upload-limits.ts 의 두 한도(각 90MB)보다 커야 한다.** 여기가
+      // **lib/uploads/limits.ts 의 두 한도(각 90MB)보다 커야 한다.** 여기가
       // 더 낮으면 우리 검사에 닿기도 전에 Next 가 끊고 "Body exceeded Nmb
       // limit" 으로 터진다 — 안내 문구가 나올 자리가 없다(2026-09-19).
       //

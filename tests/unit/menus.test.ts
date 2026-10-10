@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { defaultRows, visibleMenu } from "@/lib/menus";
-import { audienceFixes } from "@/lib/menu-edit";
+import { defaultRows, visibleMenu } from "@/lib/site/menus";
+import { audienceFixes } from "@/lib/site/menu-edit";
 import type { Menu } from "@/lib/db";
 
 function row(id: number, label: string, over: Partial<Menu> = {}): Menu {
@@ -81,7 +81,7 @@ describe("DEFAULT_MENUS", () => {
   // 「코드」 줄을(MYH-131) 더한다. 그것을 합친 것이 「처음 상태로」 가 되돌릴
   // 값과 같아야 한다. 번호는
   // 달라도 된다 — 모양(이름 · 갈 곳 · 보는 사람 · 형제 순서 · 부모)만 본다.
-  it("0029 · 0030 · 0031 · 0037 · 0039 · 0040 · 0042 · 0043 ~ 0049 가 넣고 옮긴 줄을 합치면 처음 값과 같다", () => {
+  it("0029 · 0030 · 0031 · 0037 · 0039 · 0040 · 0042 · 0043 ~ 0049 · 0057 · 0058 이 넣고 옮긴 줄을 합치면 처음 값과 같다", () => {
     const sql = readFileSync("drizzle/0029_add_menus.sql", "utf8");
     const rows = [
       ...sql.matchAll(
@@ -272,6 +272,39 @@ describe("DEFAULT_MENUS", () => {
     for (const r of rows) {
       if (r.href === "/admin" && r.label === "프로필 · 이력서") r.label = "프로필";
     }
+
+    // 0057: 「암호」 바로 앞(그 순서 - 5)에 「환경설정」, 「암호」 는 「보안」 으로(MYH-232)
+    const sql57 = readFileSync("drizzle/0057_menu_settings_security.sql", "utf8");
+    expect(sql57).toContain("SELECT s.parent_id, s.sort_order - 5, '환경설정', '/admin/settings', 'admin'");
+    expect(sql57).toContain("SET \"label\" = '보안' WHERE \"href\" = '/admin/security' AND \"label\" = '암호'");
+    const 보안줄 = rows.find((r) => r.href === "/admin/security")!;
+    rows.push({
+      id: 9998,
+      parentId: 보안줄.parentId,
+      sortOrder: 보안줄.sortOrder - 5,
+      label: "환경설정",
+      href: "/admin/settings",
+      audience: "admin",
+    });
+    for (const r of rows) {
+      if (r.href === "/admin/security" && r.label === "암호") r.label = "보안";
+    }
+
+    // 0058: 프로필은 /admin/profile, 「관리」 맨 앞(그 순서 - 5)에 「대시보드」(MYH-234)
+    const sql58 = readFileSync("drizzle/0058_admin_home.sql", "utf8");
+    expect(sql58).toContain("UPDATE \"menus\" SET \"href\" = '/admin/profile' WHERE \"href\" = '/admin'");
+    expect(sql58).toContain("'대시보드', '/admin', 'admin'");
+    for (const r of rows) if (r.href === "/admin") r.href = "/admin/profile";
+    const 관리그룹 = rows.find((r) => r.label === "관리" && r.parentId === null)!;
+    const 첫줄 = Math.min(...rows.filter((r) => r.parentId === 관리그룹.id).map((r) => r.sortOrder));
+    rows.push({
+      id: 9997,
+      parentId: 관리그룹.id,
+      sortOrder: 첫줄 - 5,
+      label: "대시보드",
+      href: "/admin",
+      audience: "admin",
+    });
 
     type Row = (typeof rows)[number];
     const shape = (all: readonly Row[], parentId: number | null): unknown[] =>

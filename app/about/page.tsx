@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSite } from "@/lib/site-info";
-import { pageMetadata } from "@/lib/page-metadata";
+import { getSite } from "@/lib/site/info";
+import { pageMetadata } from "@/lib/site/page-metadata";
 import { desc, eq } from "drizzle-orm";
 import Container from "@/components/Container";
 import JsonLd from "@/components/JsonLd";
@@ -9,11 +9,11 @@ import PageHeader from "@/components/PageHeader";
 import ContactRows from "@/components/ContactRows";
 import ProjectList from "@/components/ProjectList";
 import { getDb, profile, careers } from "@/lib/db";
-import { listSkills } from "@/lib/skills";
-import { isAdmin } from "@/lib/auth";
-import type { AboutSection } from "@/lib/about-sections";
-import { groupByCategory } from "@/lib/category";
-import { personJsonLd } from "@/lib/jsonld";
+import { listSkills } from "@/lib/profile/skills";
+import { isAdmin } from "@/lib/security/auth";
+import type { AboutSection } from "@/lib/profile/about-sections";
+import { groupByCategory } from "@/lib/codes/category";
+import { personJsonLd } from "@/lib/site/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({

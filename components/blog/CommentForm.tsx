@@ -5,7 +5,7 @@ import {
   createComment,
   createGuestbookEntry,
 } from "@/app/blog/comment-actions";
-import { AUTHOR_MAX, BODY_MAX } from "@/lib/comment-limits";
+import { AUTHOR_MAX, BODY_MAX } from "@/lib/posts/comment-limits";
 
 const field =
   "w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm outline-none focus:border-foreground/40";

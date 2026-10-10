@@ -4,7 +4,7 @@ import {
   needsBadge,
   postState,
   stateLabel,
-} from "@/lib/post-state";
+} from "@/lib/posts/state";
 
 describe("글 상태", () => {
   it("낸 글은 공개다", () => {

@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import Container from "@/components/Container";
 import NoteEditor from "@/components/admin/NoteEditor";
-import { listAttachments, listPostImages } from "@/lib/attachments";
-import { isAdmin } from "@/lib/auth";
+import { listAttachments, listPostImages } from "@/lib/uploads/attachments";
+import { isAdmin } from "@/lib/security/auth";
 import { getDb, posts } from "@/lib/db";
 
 export const metadata: Metadata = {

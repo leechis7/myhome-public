@@ -34,8 +34,8 @@ export async function login(page: Page) {
   await page.getByLabel("비밀번호").fill(ADMIN_PASSWORD);
   // "패스키로 로그인" 과 겹치므로 정확히 "로그인" 인 것만 고른다
   await page.getByRole("button", { name: "로그인", exact: true }).click();
-  // 들어오면 메시지 화면이다
-  await page.getByRole("heading", { name: "받은 메시지" }).waitFor();
+  // 들어오면 대시보드(MYH-234)
+  await page.getByRole("heading", { name: "대시보드", level: 1 }).waitFor();
 }
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/security/password";
 
 describe("hashPassword", () => {
   it("무엇을 어떻게 돌렸는지 함께 적는다", async () => {

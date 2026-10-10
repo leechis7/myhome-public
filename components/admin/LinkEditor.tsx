@@ -3,8 +3,8 @@ import ActionForm from "@/components/admin/ActionForm";
 import DeleteButton from "@/components/admin/DeleteButton";
 import LinkStatusDot from "@/components/admin/LinkStatusDot";
 import CodePicker from "@/components/admin/CodePicker";
-import { codesHref, LINK_CATEGORY } from "@/lib/code-groups";
-import { hostOf, type LinkRow, type LinkStatus } from "@/lib/links";
+import { codesHref, LINK_CATEGORY } from "@/lib/codes/groups";
+import { hostOf, type LinkRow, type LinkStatus } from "@/lib/my-space/links";
 import type { Code } from "@/lib/db";
 
 const field =

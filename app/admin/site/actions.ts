@@ -2,12 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb, siteSettings } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { invalidateSite } from "@/lib/site-info";
-import { isEditorKind } from "@/lib/editor-kinds";
+import { requireAdmin } from "@/lib/security/auth";
+import { invalidateSite } from "@/lib/site/info";
 import type { ActionState } from "@/app/admin/actions";
 
-/** 칸 하나. 비우면 null — 비운 칸은 보기 값이 채운다(lib/site.ts 의 mergeSite) */
+/** 칸 하나. 비우면 null — 비운 칸은 보기 값이 채운다(lib/site/index.ts 의 mergeSite) */
 function field(formData: FormData, name: string, max: number) {
   const value = String(formData.get(name) ?? "").trim();
   return value ? value.slice(0, max) : null;
@@ -31,10 +30,6 @@ export async function saveSite(
     tagline: field(formData, "tagline", 120),
     description: field(formData, "description", 300),
     email,
-    // 모르는 값이면 비운다 - 비우면 기본 편집기다(MYH-118)
-    editor: isEditorKind(formData.get("editor"))
-      ? String(formData.get("editor"))
-      : null,
     updatedAt: new Date(),
   };
 
@@ -48,3 +43,4 @@ export async function saveSite(
   revalidatePath("/", "layout");
   return { ok: "저장했습니다." };
 }
+

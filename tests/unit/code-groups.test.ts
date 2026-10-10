@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CODE_PATTERN, nextCode } from "@/lib/code-groups";
+import { CODE_PATTERN, nextCode } from "@/lib/codes/groups";
 
 describe("nextCode", () => {
   it("비었으면 00001", () => {

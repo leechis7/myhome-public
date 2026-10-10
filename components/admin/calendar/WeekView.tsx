@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CalendarEvent } from "@/lib/calendar-ical";
+import type { CalendarEvent } from "@/lib/my-space/calendar-ical";
 
 type Event = CalendarEvent & { calendar?: string | null };
 

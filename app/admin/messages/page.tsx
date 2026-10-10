@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { desc } from "drizzle-orm";
 import Container from "@/components/Container";
 import MessageList from "@/components/admin/MessageList";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { getDb, messages } from "@/lib/db";
 
 export const metadata: Metadata = {

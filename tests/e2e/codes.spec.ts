@@ -132,7 +132,7 @@ test.describe("코드", () => {
     ).toHaveValue(`e2e_r_${stamp}`);
 
     // 끄면 기술 추가의 고르는 칸에서 빠진다
-    await page.goto("/admin");
+    await page.goto("/admin/profile");
     const picker = page
       .locator("form", { hasText: "기술 추가" })
       .getByLabel("분류", { exact: true });
@@ -144,7 +144,7 @@ test.describe("코드", () => {
       .getByRole("button", { name: "쓰지 않기" })
       .click();
     await expect(rowOf(page, renamed).getByText("쓰지 않음")).toBeVisible();
-    await page.goto("/admin");
+    await page.goto("/admin/profile");
     await expect(picker.locator("option", { hasText: renamed })).toHaveCount(0);
 
     // 다시 쓰면 돌아온다

@@ -46,7 +46,7 @@ export const profile = pgTable(
     /** 다른 데 두고 쓰는 홈페이지. 이 사이트 말고 */
     homepageUrl: text("homepage_url"),
     /**
-     * 소개에서 방문자에게 보일 항목(MYH-220). 값은 lib/about-sections.ts.
+     * 소개에서 방문자에게 보일 항목(MYH-220). 값은 lib/profile/about-sections.ts.
      * 관리자에게는 늘 전부 보인다. 처음은 전부.
      */
     aboutSections: text("about_sections")
@@ -99,7 +99,7 @@ export const careers = pgTable(
  * 값이 생기면 조용히 아무 일도 안 일어난다.
  */
 export const codeGroups = pgTable("code_groups", {
-  /** 그룹 번호. 다섯 자리 글자(00001, 00002 …). lib/codes.ts 에 이름 붙은 상수가 있다 */
+  /** 그룹 번호. 다섯 자리 글자(00001, 00002 …). lib/codes/index.ts 에 이름 붙은 상수가 있다 */
   groupCode: varchar("group_code", { length: 20 }).primaryKey(),
   /** 화면에 보이는 그룹 이름 */
   name: text("name").notNull(),
@@ -172,7 +172,7 @@ export const skills = pgTable(
  * 셈해 보인다.
  *
  * public_sections 는 방문자에게 /resume 에서 보일 항목이다. 관리자에게는
- * 늘 전부 보인다. 값은 lib/resume.ts 의 RESUME_SECTIONS.
+ * 늘 전부 보인다. 값은 lib/profile/resume.ts 의 RESUME_SECTIONS.
  */
 export const resumeProfile = pgTable(
   "resume_profile",
@@ -451,7 +451,7 @@ export const comments = pgTable(
 );
 
 /**
- * 올린 파일의 기록. **내용은 디스크에 있다**(lib/storage.ts).
+ * 올린 파일의 기록. **내용은 디스크에 있다**(lib/uploads/storage.ts).
  *
  * 예전에는 내용까지 이 테이블(data 컬럼)에 담았다. 백업 한 번으로 파일까지 보관하려던
  * 것이었는데, 첨부파일이 생기면서 DB 덤프가 파일 크기만큼 부풀었다.
@@ -478,12 +478,12 @@ export const uploads = pgTable("uploads", {
 /**
  * 글에 붙인 파일.
  *
- * 파일 내용은 uploads 가 가리키는 디스크에 있고(lib/storage.ts), 이 테이블은
+ * 파일 내용은 uploads 가 가리키는 디스크에 있고(lib/uploads/storage.ts), 이 테이블은
  * "어느 글에 어떤 이름으로 붙었는지" 만 담는다. 같은 파일을 여러 글에
  * 붙이면 디스크에는 하나만 남는다 - 이름이 내용 해시이기 때문이다.
  *
  * 글을 지우면 같이 지운다(cascade). 디스크 파일은 아무 글도 안 가리킬 때만
- * 지운다(lib/attachments.ts).
+ * 지운다(lib/uploads/attachments.ts).
  */
 export const attachments = pgTable(
   "attachments",
@@ -692,7 +692,7 @@ export const passkeys = pgTable(
  * **들어 있는 글자는 전부 암호문이다.** 제목까지 암호화한다 — 제목만 평문으로 두면
  * "무엇에 대한 글인지" 가 그대로 샌다. 열쇠는 DB 밖(서버 환경변수)에 있어서
  * 이 테이블만 통째로 가져가도 읽히지 않는다. 암호화 · 복호화는
- * `lib/secret-crypto.ts` 가 한다.
+ * `lib/security/secret-crypto.ts` 가 한다.
  *
  * posts 와 섞지 않았다. 저쪽은 공개가 기본이고 목록·검색·RSS·사이트맵이
  * 줄줄이 달려 있다. 한 테이블에 담으면 그 길 어딘가에서 새어 나갈 날이 온다.
@@ -780,13 +780,13 @@ export const secretAttachments = pgTable(
 /**
  * 메뉴. 위쪽 메뉴 하나를 트리로 담는다.
  *
- * 전에는 코드 세 군데(lib/site.ts, Header, AdminNav)에 흩어져 있어서 한 줄
+ * 전에는 코드 세 군데(lib/site/index.ts, Header, AdminNav)에 흩어져 있어서 한 줄
  * 옮기려 해도 배포를 해야 했다. 관리 화면 메뉴도 따로 두지 않는다 — 관리자
- * 에게만 보이는 "관리" 그룹이 위쪽 메뉴 안에 있다. 처음 값은 lib/menus.ts 의
+ * 에게만 보이는 "관리" 그룹이 위쪽 메뉴 안에 있다. 처음 값은 lib/site/menus.ts 의
  * DEFAULT_MENUS 와 같고, "처음 상태로" 가 그 값으로 되돌린다.
  *
  * **관리자 줄을 거르는 것은 서버에서 한다.** 화면단에서 감추면 HTML 에
- * 남아 소스 보기로 드러난다. lib/menus.ts 의 visibleMenu 가 거른다.
+ * 남아 소스 보기로 드러난다. lib/site/menus.ts 의 visibleMenu 가 거른다.
  */
 export const menus = pgTable(
   "menus",
@@ -813,9 +813,9 @@ export const menus = pgTable(
 /**
  * 사이트 정보. 한 행만 있는 테이블이다(MYH-169).
  *
- * 전에는 `lib/site.ts` 에 박혀 있어서 남이 받아 쓰려면 코드를 고쳐야 했다.
+ * 전에는 `lib/site/index.ts` 에 박혀 있어서 남이 받아 쓰려면 코드를 고쳐야 했다.
  * 모든 화면의 제목 · 검색 결과 · 공유 카드 · RSS · 아이콘 글자가 여기서
- * 읽는다. 비어 있거나 행이 없으면 `lib/site.ts` 의 보기 값을 쓴다.
+ * 읽는다. 비어 있거나 행이 없으면 `lib/site/index.ts` 의 보기 값을 쓴다.
  *
  * 사이트 주소는 여기 없다. 배포와 묶인 값이라 환경변수(NEXT_PUBLIC_SITE_URL)다.
  */
@@ -840,6 +840,27 @@ export const siteSettings = pgTable(
      * 알면 일정을 읽을 수 있어 암호화해 둔다. 비우면 일정이 꺼진다.
      */
     calendarIcal: text("calendar_ical"),
+    /**
+     * 암호문. 카카오 책 검색 REST API 키(MYH-231). 휴대폰에서도 넣으려고 화면에
+     * 둔다. .env 의 KAKAO_REST_API_KEY 가 있으면 그것이 먼저다.
+     */
+    kakaoRestKey: text("kakao_rest_key"),
+    /*
+     * .env 에만 있던 환경설정(MYH-232). .env 에 값이 있으면 그것이 먼저다.
+     * lib/site-config.ts 가 둘을 합쳐 읽는다.
+     */
+    /** 암호문. 텔레그램 알림 봇 토큰 */
+    telegramBotToken: text("telegram_bot_token"),
+    /** 텔레그램 내 대화방 번호 */
+    telegramChatId: text("telegram_chat_id"),
+    /** umami 사이트 ID */
+    umamiWebsiteId: text("umami_website_id"),
+    /** Search Console 소유 확인 값 */
+    googleSiteVerification: text("google_site_verification"),
+    /** 감시 화면의 Grafana 대시보드 경로 */
+    monitoringDashboard: text("monitoring_dashboard"),
+    /** 암호문. 책 소개를 요약할 Gemini API 키(MYH-233) */
+    geminiApiKey: text("gemini_api_key"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

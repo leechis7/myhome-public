@@ -10,11 +10,11 @@ import {
   saveTodoAction,
   toggleTodoAction,
 } from "@/app/admin/todos/actions";
-import { isAdmin } from "@/lib/auth";
-import { todayInSeoul } from "@/lib/resume-sections";
-import { hasSecretKey } from "@/lib/secret-crypto";
-import { listTodos } from "@/lib/todos";
-import { rangeLabel, rangeState } from "@/lib/todo-dates";
+import { isAdmin } from "@/lib/security/auth";
+import { todayInSeoul } from "@/lib/profile/resume-sections";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { listTodos } from "@/lib/my-space/todos";
+import { rangeLabel, rangeState } from "@/lib/my-space/todo-dates";
 
 export const metadata: Metadata = {
   title: "할 일",

@@ -7,7 +7,7 @@ import {
   parseDay,
   parseMonth,
   shiftMonth,
-} from "@/lib/diary-calendar";
+} from "@/lib/my-space/diary-calendar";
 
 describe("일기장 날짜(MYH-213)", () => {
   it("있는 날만 받는다", () => {

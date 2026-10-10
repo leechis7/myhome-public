@@ -97,7 +97,7 @@ test.describe("패스키", () => {
 
       await page.getByRole("button", { name: "패스키로 로그인" }).click();
       await expect(
-        page.getByRole("heading", { name: "받은 메시지" }),
+        page.getByRole("heading", { name: "대시보드", level: 1 }),
       ).toBeVisible();
 
       // 쓴 자국이 남는다

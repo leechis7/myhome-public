@@ -1,4 +1,4 @@
-import { slugifyHeading } from "@/lib/headings";
+import { slugifyHeading } from "@/lib/posts/headings";
 
 type Heading = { level: number; text: string };
 

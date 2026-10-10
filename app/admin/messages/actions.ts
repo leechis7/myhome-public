@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb, messages } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/security/auth";
 
 /**
  * 읽음으로 표시하거나 되돌린다.

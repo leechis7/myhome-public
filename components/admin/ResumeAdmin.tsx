@@ -8,7 +8,7 @@ import {
   RESUME_SECTION_LABELS,
   RESUME_SECTIONS,
   todayInSeoul,
-} from "@/lib/resume";
+} from "@/lib/profile/resume";
 import { formatDate } from "@/lib/posts";
 import {
   deleteLicense,
@@ -19,7 +19,7 @@ import {
   saveSchool,
   saveTraining,
   saveVisibility,
-} from "@/app/admin/resume/actions";
+} from "@/app/admin/profile/resume-actions";
 
 const field =
   "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40";

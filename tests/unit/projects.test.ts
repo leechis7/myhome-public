@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPeriod } from "@/lib/projects";
+import { formatPeriod } from "@/lib/profile/projects";
 
 describe("formatPeriod", () => {
   it("끝난 프로젝트는 시작과 끝을 보여준다", () => {

@@ -11,7 +11,7 @@ import {
   stars,
   type BookStatus,
 } from "@/lib/books";
-import { pageMetadata } from "@/lib/page-metadata";
+import { pageMetadata } from "@/lib/site/page-metadata";
 import { formatDate } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";

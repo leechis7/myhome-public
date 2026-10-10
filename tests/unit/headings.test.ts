@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractHeadings, slugifyHeading } from "@/lib/headings";
+import { extractHeadings, slugifyHeading } from "@/lib/posts/headings";
 
 describe("extractHeadings", () => {
   it("## 과 ### 을 뽑는다", () => {

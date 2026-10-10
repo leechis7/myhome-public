@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Container from "@/components/Container";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { formatDate } from "@/lib/posts";
-import { hasSecretKey } from "@/lib/secret-crypto";
-import { listSecrets, listSecretTags } from "@/lib/secrets";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { listSecrets, listSecretTags } from "@/lib/my-space/secrets";
 
 export const metadata: Metadata = {
   title: "비밀글",

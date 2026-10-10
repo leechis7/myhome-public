@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { noteTitle } from "@/lib/notes";
+import { noteTitle } from "@/lib/posts/notes";
 
 describe("noteTitle", () => {
   it("첫 줄을 쓴다", () => {

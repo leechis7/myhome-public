@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/page-metadata";
+import { pageMetadata } from "@/lib/site/page-metadata";
 import Container from "@/components/Container";
 import PageHeader from "@/components/PageHeader";
 import ProjectList from "@/components/ProjectList";

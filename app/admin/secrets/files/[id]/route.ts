@@ -1,7 +1,7 @@
-import { isAdmin } from "@/lib/auth";
-import { isImageType } from "@/lib/upload-limits";
-import { hasSecretKey } from "@/lib/secret-crypto";
-import { findSecretAttachment } from "@/lib/secrets";
+import { isAdmin } from "@/lib/security/auth";
+import { isImageType } from "@/lib/uploads/limits";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { findSecretAttachment } from "@/lib/my-space/secrets";
 
 export const dynamic = "force-dynamic";
 

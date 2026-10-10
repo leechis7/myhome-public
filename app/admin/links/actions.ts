@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb, links } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/security/auth";
 import { LINK_CATEGORY, readCode } from "@/lib/codes";
 import type { ActionState } from "@/app/admin/actions";
 
@@ -32,7 +32,7 @@ async function readForm(formData: FormData) {
 }
 
 function refresh() {
-  revalidatePath("/admin");
+  revalidatePath("/admin/profile");
   revalidatePath("/admin/links");
 }
 

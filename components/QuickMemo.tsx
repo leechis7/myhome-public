@@ -1,6 +1,6 @@
 import QuickMemoButton from "@/components/admin/QuickMemoButton";
-import { isAdmin } from "@/lib/auth";
-import { hasSecretKey } from "@/lib/secret-crypto";
+import { isAdmin } from "@/lib/security/auth";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
 
 /**
  * 빠른 메모 단추(MYH-223). 로그인한 관리자에게만, 메모를 암호화할 열쇠가

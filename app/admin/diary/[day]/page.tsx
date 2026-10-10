@@ -10,11 +10,11 @@ import {
   saveDiaryAction,
   uploadDiaryImage,
 } from "@/app/admin/diary/actions";
-import { isAdmin } from "@/lib/auth";
-import { findDiary } from "@/lib/diary";
-import { MOODS, dayLabel, parseDay, type Mood } from "@/lib/diary-calendar";
+import { isAdmin } from "@/lib/security/auth";
+import { findDiary } from "@/lib/my-space/diary";
+import { MOODS, dayLabel, parseDay, type Mood } from "@/lib/my-space/diary-calendar";
 import { formatDate } from "@/lib/posts";
-import { hasSecretKey } from "@/lib/secret-crypto";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
 
 export const metadata: Metadata = {
   title: "일기",

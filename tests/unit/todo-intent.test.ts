@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { guessTodo, looksLikeTask } from "@/lib/todo-intent";
+import { guessTodo, looksLikeTask } from "@/lib/my-space/todo-intent";
 
 // 2026-10-10 은 토요일이다
 const today = "2026-10-10";

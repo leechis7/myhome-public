@@ -3,10 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import Container from "@/components/Container";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { getDb, posts } from "@/lib/db";
-import { countCommentsByPost } from "@/lib/comments";
-import { isScheduled, stateLabel } from "@/lib/post-state";
+import { countCommentsByPost } from "@/lib/posts/comments";
+import { isScheduled, stateLabel } from "@/lib/posts/state";
 import { formatDate } from "@/lib/posts";
 
 export const metadata: Metadata = {

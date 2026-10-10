@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Container from "@/components/Container";
 import SecretForm from "@/components/admin/SecretForm";
-import { isAdmin } from "@/lib/auth";
-import { hasSecretKey } from "@/lib/secret-crypto";
+import { isAdmin } from "@/lib/security/auth";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
 
 export const metadata: Metadata = {
   title: "비밀글 쓰기",

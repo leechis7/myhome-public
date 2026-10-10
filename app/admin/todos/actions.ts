@@ -2,17 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
-import { parseDay } from "@/lib/diary-calendar";
+import { requireAdmin } from "@/lib/security/auth";
+import { parseDay } from "@/lib/my-space/diary-calendar";
 import {
   addTodo,
   clearDoneTodos,
   removeTodo,
   setTodoDone,
   updateTodo,
-} from "@/lib/todos";
+} from "@/lib/my-space/todos";
 
-/** 할 일(MYH-217) 화면의 일. 암호화는 lib/todos.ts 가 한다 */
+/** 할 일(MYH-217) 화면의 일. 암호화는 lib/my-space/todos.ts 가 한다 */
 
 const BACK = "/admin/todos";
 
@@ -25,7 +25,7 @@ function title(formData: FormData) {
   return String(formData.get("title") ?? "").trim();
 }
 
-/** 기간(MYH-228). 거꾸로 적은 것은 lib/todos.ts 가 바로잡는다 */
+/** 기간(MYH-228). 거꾸로 적은 것은 lib/my-space/todos.ts 가 바로잡는다 */
 function range(formData: FormData) {
   return {
     startOn: parseDay(formData.get("startOn")),

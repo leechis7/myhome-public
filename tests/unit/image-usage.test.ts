@@ -3,7 +3,7 @@ import {
   describeUsage,
   findImageUsage,
   stripImage,
-} from "@/lib/image-usage";
+} from "@/lib/uploads/image-usage";
 
 const HASH = "c414cd0e204de974f73753c7e28d7abc";
 

@@ -12,11 +12,11 @@ import Comments from "@/components/blog/Comments";
 import TableOfContents from "@/components/blog/TableOfContents";
 import ViewCounter from "@/components/blog/ViewCounter";
 import Markdown from "@/components/blog/Markdown";
-import { listAttachments } from "@/lib/attachments";
-import { isAdmin } from "@/lib/auth";
-import { extractHeadings } from "@/lib/headings";
-import { articleJsonLd } from "@/lib/jsonld";
-import { needsBadge, stateLabel } from "@/lib/post-state";
+import { listAttachments } from "@/lib/uploads/attachments";
+import { isAdmin } from "@/lib/security/auth";
+import { extractHeadings } from "@/lib/posts/headings";
+import { articleJsonLd } from "@/lib/site/jsonld";
+import { needsBadge, stateLabel } from "@/lib/posts/state";
 import {
   findAdjacentPosts,
   findRelatedPosts,
@@ -29,7 +29,7 @@ import {
   revisionInfo,
 } from "@/lib/posts";
 import { site } from "@/lib/site";
-import { getSite } from "@/lib/site-info";
+import { getSite } from "@/lib/site/info";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,6 @@
 import { listAllPublishedPosts } from "@/lib/posts";
 import { site } from "@/lib/site";
-import { getSite } from "@/lib/site-info";
+import { getSite } from "@/lib/site/info";
 
 export const dynamic = "force-dynamic";
 

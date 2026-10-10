@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import LogoutButton from "./admin/LogoutButton";
-import type { MenuItem } from "@/lib/menus";
+import type { MenuItem } from "@/lib/site/menus";
 
 /**
- * 위쪽 메뉴. 자료는 트리다(lib/menus.ts) — 잎이면 링크, 가지면 펼침이다.
+ * 위쪽 메뉴. 자료는 트리다(lib/site/menus.ts) — 잎이면 링크, 가지면 펼침이다.
  *
  * 깊이 제한은 자료에 두지 않고 그리는 쪽이 정한다(MYH-125).
  *   데스크톱   2단까지 펼침. 3단부터는 펼침 안에서 작은 제목 아래 늘어놓는다.

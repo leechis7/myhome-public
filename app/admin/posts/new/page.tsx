@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import PostForm from "@/components/admin/PostForm";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { listCodes, SERIES } from "@/lib/codes";
 import { postErrors } from "../errors";
 

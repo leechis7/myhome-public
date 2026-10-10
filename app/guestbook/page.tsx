@@ -5,9 +5,9 @@ import PageHeader from "@/components/PageHeader";
 import ContactRows from "@/components/ContactRows";
 import GuestbookForm from "@/components/GuestbookForm";
 import DeleteCommentButton from "@/components/blog/DeleteCommentButton";
-import { isAdmin } from "@/lib/auth";
-import { formatDateTime, listGuestbook } from "@/lib/comments";
-import { pageMetadata } from "@/lib/page-metadata";
+import { isAdmin } from "@/lib/security/auth";
+import { formatDateTime, listGuestbook } from "@/lib/posts/comments";
+import { pageMetadata } from "@/lib/site/page-metadata";
 import { eq } from "drizzle-orm";
 import { getDb, profile } from "@/lib/db";
 

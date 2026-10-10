@@ -8,8 +8,8 @@ import {
 import {
   finishPasskeyRegistration,
   startPasskeyRegistration,
-} from "@/app/admin/passkey-actions";
-import { MAX_PASSKEY_LABEL } from "@/lib/passkey-limits";
+} from "@/app/admin/security/passkey-actions";
+import { MAX_PASSKEY_LABEL } from "@/lib/security/passkey-limits";
 
 export default function PasskeyRegister() {
   const [label, setLabel] = useState("");

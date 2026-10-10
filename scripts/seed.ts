@@ -5,7 +5,7 @@
  *   npm run db:seed
  */
 import { eq } from "drizzle-orm";
-import { nextCode, SKILL_CATEGORY } from "../lib/code-groups";
+import { nextCode, SKILL_CATEGORY } from "../lib/codes/groups";
 import { getDb, profile, careers, skills, codes } from "../lib/db";
 
 // 개발 DB에 넣으려면 DRIZZLE_ENV=dev 를 준다.

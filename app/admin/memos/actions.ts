@@ -2,19 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
-import { addMemo, moveMemoToDiary, removeMemo, updateMemo } from "@/lib/memos";
-import { asTodo } from "@/lib/telegram-inbox";
-import { addTodo } from "@/lib/todos";
+import { requireAdmin } from "@/lib/security/auth";
+import { addMemo, moveMemoToDiary, removeMemo, updateMemo } from "@/lib/my-space/memos";
+import { asTodo } from "@/lib/telegram/inbox";
+import { addTodo } from "@/lib/my-space/todos";
 import {
   connectWebhook,
   currentWebhook,
   inboxReady,
   disconnectWebhook,
   webhookUrl,
-} from "@/lib/telegram-bot";
+} from "@/lib/telegram/bot";
 
-/** 빠른 메모(MYH-215) 화면의 일. 암호화는 lib/memos.ts 가 한다 */
+/** 빠른 메모(MYH-215) 화면의 일. 암호화는 lib/my-space/memos.ts 가 한다 */
 
 const BACK = "/admin/memos";
 
@@ -70,13 +70,13 @@ export async function moveMemoAction(formData: FormData) {
 export async function connectTelegramAction(formData: FormData) {
   await requireAdmin();
   // 받기를 끈 서버(개발기)에서는 걸지 않는다 - 운영의 웹훅을 빼앗는다
-  if (!inboxReady()) redirect("/admin/site#telegram");
+  if (!(await inboxReady())) redirect("/admin/settings#telegram");
   const now = await currentWebhook();
   if (now.url && now.url !== webhookUrl() && formData.get("takeOver") !== "1") {
-    redirect("/admin/site?tg=elsewhere#telegram");
+    redirect("/admin/settings?tg=elsewhere#telegram");
   }
   const result = await connectWebhook();
-  redirect(`/admin/site?tg=${result.ok ? "connected" : "failed"}#telegram`);
+  redirect(`/admin/settings?tg=${result.ok ? "connected" : "failed"}#telegram`);
 }
 
 export async function disconnectTelegramAction() {
@@ -84,7 +84,7 @@ export async function disconnectTelegramAction() {
   const now = await currentWebhook();
   // 다른 서버에 걸린 것을 여기서 풀지 않는다
   if (now.url === webhookUrl()) await disconnectWebhook();
-  redirect("/admin/site?tg=disconnected#telegram");
+  redirect("/admin/settings?tg=disconnected#telegram");
 }
 
 export type QuickMemoState = { ok?: boolean; error?: string; todo?: boolean };

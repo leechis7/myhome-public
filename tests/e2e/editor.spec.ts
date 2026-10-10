@@ -28,12 +28,13 @@ const tab = (page: Page, name: string | RegExp) =>
     .getByRole("tablist", { name: "편집기 고르기" })
     .getByRole("tab", { name });
 
-/** 관리 › 설정 › 사이트 에서 기본 편집기를 고른다. 다른 칸은 그대로 둔다 */
+/** 관리 › 설정 › 환경설정 › 글쓰기 에서 기본 편집기를 고른다 */
 async function chooseEditor(page: Page, kind: "milkdown" | "tiptap" | "toast") {
-  await page.goto("/admin/site");
-  await page.getByLabel("기본 편집기").selectOption(kind);
-  await page.getByRole("button", { name: "저장" }).click();
-  await expect(page.getByText("저장했습니다.")).toBeVisible();
+  await page.goto("/admin/settings#writing");
+  const form = page.getByRole("form", { name: "글쓰기" });
+  await form.getByLabel("기본 편집기").selectOption(kind);
+  await form.getByRole("button", { name: "편집기 저장" }).click();
+  await expect(page.locator("#writing").getByRole("status")).toHaveText("저장했습니다.");
 }
 
 // 편집기 설정은 하나라 차례로 돈다

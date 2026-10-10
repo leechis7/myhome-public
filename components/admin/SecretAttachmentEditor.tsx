@@ -6,7 +6,7 @@ import {
   detachSecretFile,
 } from "@/app/admin/secrets/actions";
 import DeleteButton from "@/components/admin/DeleteButton";
-import { MAX_ATTACHMENT_BYTES, formatBytes } from "@/lib/upload-limits";
+import { MAX_ATTACHMENT_BYTES, formatBytes } from "@/lib/uploads/limits";
 
 export type SecretAttachmentRow = {
   id: number;

@@ -5,10 +5,10 @@ import { useState } from "react";
 import { formatDateTime } from "@/lib/format";
 import DeleteButton from "@/components/admin/DeleteButton";
 import DraftKeeper from "@/components/admin/DraftKeeper";
-import { draftKey } from "@/lib/draft-store";
-import { FIRST_VERSION, VERSION_PATTERN } from "@/lib/post-version";
-import { formatSchedule, isScheduled } from "@/lib/post-state";
-import { futureSchedule, toScheduleInput } from "@/lib/post-schedule";
+import { draftKey } from "@/lib/posts/draft-store";
+import { FIRST_VERSION, VERSION_PATTERN } from "@/lib/posts/version";
+import { formatSchedule, isScheduled } from "@/lib/posts/state";
+import { futureSchedule, toScheduleInput } from "@/lib/posts/schedule";
 import {
   createPost,
   deletePost,
@@ -22,7 +22,7 @@ import ImageList, { type ImageRow } from "./ImageList";
 import ImageUpload from "./ImageUpload";
 import MarkdownField from "./markdown/MarkdownField";
 import CodePicker from "./CodePicker";
-import { codesHref, SERIES } from "@/lib/code-groups";
+import { codesHref, SERIES } from "@/lib/codes/groups";
 import type { Code, Post } from "@/lib/db";
 
 const field =

@@ -5,9 +5,9 @@ import Container from "@/components/Container";
 import LinkEditor from "@/components/admin/LinkEditor";
 import LinkFilter from "@/components/admin/LinkFilter";
 import LinkList from "@/components/admin/LinkList";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { LINK_CATEGORY, listCodes } from "@/lib/codes";
-import { checkLinks, listLinks } from "@/lib/links";
+import { checkLinks, listLinks } from "@/lib/my-space/links";
 
 export const metadata: Metadata = {
   title: "내 서비스",

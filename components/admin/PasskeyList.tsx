@@ -1,11 +1,11 @@
 import {
   deletePasskeyAction,
   renamePasskeyAction,
-} from "@/app/admin/passkey-actions";
+} from "@/app/admin/security/passkey-actions";
 import DeleteButton from "@/components/admin/DeleteButton";
 import { formatDateTime } from "@/lib/format";
-import { MAX_PASSKEY_LABEL } from "@/lib/passkey-limits";
-import type { StoredPasskey } from "@/lib/passkeys";
+import { MAX_PASSKEY_LABEL } from "@/lib/security/passkey-limits";
+import type { StoredPasskey } from "@/lib/security/passkeys";
 
 /**
  * 등록한 기기 목록. 이름을 고치고 지운다.

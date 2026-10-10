@@ -1,4 +1,4 @@
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 
 /**
  * Caddy 의 forward_auth 가 `/grafana/*` 요청마다 여기에 먼저 묻는다.

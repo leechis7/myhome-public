@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asMemo, asTodo, matchesSecret, readUpdate, webhookSecret } from "@/lib/telegram-inbox";
+import { asMemo, asTodo, matchesSecret, readUpdate, webhookSecret } from "@/lib/telegram/inbox";
 
 const ME = "5873072800";
 const msg = (over: Record<string, unknown>) => ({

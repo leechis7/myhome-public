@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Container from "./Container";
 import SiteNav from "./SiteNav";
-import { isAdmin } from "@/lib/auth";
-import { getMenu } from "@/lib/menus";
-import { getSite } from "@/lib/site-info";
+import { isAdmin } from "@/lib/security/auth";
+import { getMenu } from "@/lib/site/menus";
+import { getSite } from "@/lib/site/info";
 
 export default async function Header() {
   const info = await getSite();

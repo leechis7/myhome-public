@@ -1,12 +1,12 @@
 "use client";
 
-import { addSkill, deleteSkill } from "@/app/admin/actions";
+import { addSkill, deleteSkill } from "@/app/admin/profile/actions";
 import DeleteButton from "@/components/admin/DeleteButton";
 import CodePicker from "@/components/admin/CodePicker";
-import { codesHref, SKILL_CATEGORY } from "@/lib/code-groups";
+import { codesHref, SKILL_CATEGORY } from "@/lib/codes/groups";
 import type { Code } from "@/lib/db";
-import type { SkillRow } from "@/lib/skills";
-import { groupByCategory } from "@/lib/category";
+import type { SkillRow } from "@/lib/profile/skills";
+import { groupByCategory } from "@/lib/codes/category";
 
 const field =
   "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40";

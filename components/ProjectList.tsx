@@ -2,7 +2,7 @@ import {
   formatPeriod,
   listProjects,
   type ProjectKind,
-} from "@/lib/projects";
+} from "@/lib/profile/projects";
 
 /**
  * 프로젝트·수행 업무 목록. 두 화면이 같은 것을 쓴다.

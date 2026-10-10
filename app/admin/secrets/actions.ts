@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/security/auth";
 import {
   addSecretAttachment,
   addSecretImage,
@@ -13,12 +13,12 @@ import {
   removeSecretImage,
   rotateSecretImage,
   updateSecret,
-} from "@/lib/secrets";
+} from "@/lib/my-space/secrets";
 import {
   ALLOWED_TYPES,
   MAX_ATTACHMENT_BYTES,
   MAX_UPLOAD_BYTES,
-} from "@/lib/upload-limits";
+} from "@/lib/uploads/limits";
 
 export type SecretUploadState = {
   error?: string;
@@ -30,7 +30,7 @@ export type SecretUploadState = {
 /**
  * 비밀글을 담고 고치고 지운다.
  *
- * 여기서 오가는 것은 평문이다. 암호화는 lib/secrets.ts 가 한다 —
+ * 여기서 오가는 것은 평문이다. 암호화는 lib/my-space/secrets.ts 가 한다 —
  * 이 파일에서 암호화를 부르기 시작하면 빠뜨리는 자리가 생긴다.
  *
  * 화면 새로 고침(revalidatePath)은 /admin/secrets 아래만 한다. 이 글은

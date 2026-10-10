@@ -7,10 +7,10 @@ import AttachmentList from "@/components/blog/AttachmentList";
 import Comments from "@/components/blog/Comments";
 import Markdown from "@/components/blog/Markdown";
 import ViewCounter from "@/components/blog/ViewCounter";
-import { listAttachments } from "@/lib/attachments";
-import { isAdmin } from "@/lib/auth";
-import { noteTitle } from "@/lib/notes";
-import { postState } from "@/lib/post-state";
+import { listAttachments } from "@/lib/uploads/attachments";
+import { isAdmin } from "@/lib/security/auth";
+import { noteTitle } from "@/lib/posts/notes";
+import { postState } from "@/lib/posts/state";
 import { findPublishedPost, formatDate, revisionInfo } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";

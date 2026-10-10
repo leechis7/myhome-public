@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { relyingParty } from "@/lib/passkeys";
+import { relyingParty } from "@/lib/security/passkeys";
 
 afterEach(() => {
   // 없애야 한다. undefined 를 넣으면 "undefined" 라는 글자가 들어간다.

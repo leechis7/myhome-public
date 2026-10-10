@@ -6,9 +6,9 @@ import {
   describeUsage,
   stripImage,
   type ImageUsage,
-} from "@/lib/image-usage";
+} from "@/lib/uploads/image-usage";
 import { fillField } from "./fill-field";
-import { formatBytes } from "@/lib/upload-limits";
+import { formatBytes } from "@/lib/uploads/limits";
 
 export type ImageRow = {
   id: number;

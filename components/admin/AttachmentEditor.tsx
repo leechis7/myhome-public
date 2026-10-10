@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { attachFile, detachFile } from "@/app/admin/attachment-actions";
 import DeleteButton from "@/components/admin/DeleteButton";
-import { MAX_ATTACHMENT_BYTES, formatBytes } from "@/lib/upload-limits";
+import { MAX_ATTACHMENT_BYTES, formatBytes } from "@/lib/uploads/limits";
 
 export type AttachmentRow = {
   id: number;

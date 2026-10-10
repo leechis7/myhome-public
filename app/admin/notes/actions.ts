@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb, posts } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { removePost } from "@/lib/attachments";
-import { noteTitle } from "@/lib/notes";
+import { requireAdmin } from "@/lib/security/auth";
+import { removePost } from "@/lib/uploads/attachments";
+import { noteTitle } from "@/lib/posts/notes";
 
 /**
  * 짧은 글은 제목과 주소를 사람이 정하지 않는다. 본문 첫 줄이 제목이 되고

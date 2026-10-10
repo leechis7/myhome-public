@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTENT_CELLS, mergeContentCounts } from "@/lib/content-counts";
+import { CONTENT_CELLS, mergeContentCounts } from "@/lib/ops/content-counts";
 
 describe("쌓인 것 세기", () => {
   it("아무것도 없으면 모든 칸이 0 이다", () => {

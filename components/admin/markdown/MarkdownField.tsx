@@ -14,7 +14,7 @@ import {
   EDITOR_LABELS,
   isEditorKind,
   type EditorKind,
-} from "@/lib/editor-kinds";
+} from "@/lib/posts/editor-kinds";
 import { useEditorChoice } from "./editor-choice";
 import { imageFiles, type EditorProps, type UploadedImage } from "./types";
 import "./prosemirror-reset.css";

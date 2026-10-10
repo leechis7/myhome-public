@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
-import { OG_SIZE, loadOgFont } from "@/lib/og";
+import { OG_SIZE, loadOgFont } from "@/lib/site/og";
 import { findPublishedPost, formatDate } from "@/lib/posts";
 import { site } from "@/lib/site";
-import { getSite } from "@/lib/site-info";
+import { getSite } from "@/lib/site/info";
 
 export const dynamic = "force-dynamic";
 

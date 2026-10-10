@@ -379,6 +379,41 @@
       "when": 1791545728415,
       "tag": "0053_todo_start_on",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1791568537341,
+      "tag": "0054_site_kakao_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1791569061215,
+      "tag": "0055_site_outside_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1791571899967,
+      "tag": "0056_site_gemini_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1791575746594,
+      "tag": "0057_menu_settings_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1791580313411,
+      "tag": "0058_admin_home",
+      "breakpoints": true
     }
   ]
 }

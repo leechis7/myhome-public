@@ -1,7 +1,7 @@
-import { isAdmin } from "@/lib/auth";
-import { findAttachment, isImageType } from "@/lib/attachments";
-import { isScheduled } from "@/lib/post-state";
-import { readStoredFile } from "@/lib/storage";
+import { isAdmin } from "@/lib/security/auth";
+import { findAttachment, isImageType } from "@/lib/uploads/attachments";
+import { isScheduled } from "@/lib/posts/state";
+import { readStoredFile } from "@/lib/uploads/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * 붙은 것은 관리자만 받는다. 파일 주소를 알아도 마찬가지다.
  *
  * 그림은 화면에 바로 보여주고 나머지는 내려받게 한다. **형식은 가리지
- * 않고 받으므로**(lib/upload-limits.ts) 안전은 여기서 나온다 — 그림이
+ * 않고 받으므로**(lib/uploads/limits.ts) 안전은 여기서 나온다 — 그림이
  * 아닌 것은 전부 `attachment` 로 내보내 브라우저가 열지 않게 하고,
  * 멋대로 해석하지도 않게 nosniff 를 붙인다. svg 는 그림이지만 안에
  * 스크립트가 들 수 있어 `isImageType` 이 빼 준다.

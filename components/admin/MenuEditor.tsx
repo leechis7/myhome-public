@@ -14,7 +14,7 @@ import {
   descendantIds,
   MENU_PAGES,
   siblingsOf,
-} from "@/lib/menu-edit";
+} from "@/lib/site/menu-edit";
 
 /**
  * 메뉴를 고치는 화면의 두 쪽(MYH-124).

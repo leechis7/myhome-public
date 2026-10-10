@@ -6,7 +6,7 @@ import {
   encryptBytes,
   encryptText,
   hasSecretKey,
-} from "@/lib/secret-crypto";
+} from "@/lib/security/secret-crypto";
 
 const KEY = randomBytes(32).toString("base64");
 const OTHER_KEY = randomBytes(32).toString("base64");

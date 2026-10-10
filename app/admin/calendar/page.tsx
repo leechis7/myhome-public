@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import Container from "@/components/Container";
 import WeekView from "@/components/admin/calendar/WeekView";
-import { isAdmin } from "@/lib/auth";
-import { getCalendars, upcomingEvents } from "@/lib/calendar";
-import { groupByDay, type CalendarEvent } from "@/lib/calendar-ical";
+import { isAdmin } from "@/lib/security/auth";
+import { getCalendars, upcomingEvents } from "@/lib/my-space/calendar";
+import { groupByDay, type CalendarEvent } from "@/lib/my-space/calendar-ical";
 import {
   dayLabel,
   monthGrid,
@@ -13,9 +13,9 @@ import {
   parseDay,
   parseMonth,
   shiftMonth,
-} from "@/lib/diary-calendar";
-import { todayInSeoul } from "@/lib/resume-sections";
-import { hasSecretKey } from "@/lib/secret-crypto";
+} from "@/lib/my-space/diary-calendar";
+import { todayInSeoul } from "@/lib/profile/resume-sections";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
 
 export const metadata: Metadata = {
   title: "일정",
@@ -104,7 +104,7 @@ export default async function CalendarPage({
         <h1 className="text-2xl font-semibold tracking-tight">일정</h1>
         <p className="text-sm text-muted">
           구글 캘린더에서 읽어 옵니다(5분마다) ·{" "}
-          <Link href="/admin/site#calendar" className="underline underline-offset-4">
+          <Link href="/admin/settings#calendar" className="underline underline-offset-4">
             연결 설정
           </Link>
         </p>
@@ -113,8 +113,8 @@ export default async function CalendarPage({
       {urls.length === 0 ? (
         <p className="mt-10 text-sm text-muted">
           아직 캘린더가 연결돼 있지 않습니다.{" "}
-          <Link href="/admin/site#calendar" className="underline underline-offset-4">
-            관리 › 설정 › 사이트
+          <Link href="/admin/settings#calendar" className="underline underline-offset-4">
+            관리 › 설정 › 환경설정
           </Link>
           에서 구글 캘린더 주소를 넣으세요.
         </p>

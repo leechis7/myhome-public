@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { groupByCategory } from "@/lib/category";
-import type { SkillRow } from "@/lib/skills";
+import { groupByCategory } from "@/lib/codes/category";
+import type { SkillRow } from "@/lib/profile/skills";
 
 function skill(id: number, name: string, category: string | null): SkillRow {
   return {

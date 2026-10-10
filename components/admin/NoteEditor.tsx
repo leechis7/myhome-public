@@ -8,14 +8,14 @@ import MarkdownField from "@/components/admin/markdown/MarkdownField";
 import ImageList, { type ImageRow } from "@/components/admin/ImageList";
 import ImageUpload from "@/components/admin/ImageUpload";
 import NoteComposer from "@/components/admin/NoteComposer";
-import { noteTitle } from "@/lib/notes";
+import { noteTitle } from "@/lib/posts/notes";
 import { deleteNote, updateNote } from "@/app/admin/notes/actions";
 import {
   deletePostImage,
   rotatePostImageAction,
   uploadImage,
 } from "@/app/admin/posts/actions";
-import { needsBadge, postState } from "@/lib/post-state";
+import { needsBadge, postState } from "@/lib/posts/state";
 import { formatDate } from "@/lib/posts";
 import type { Post } from "@/lib/db";
 

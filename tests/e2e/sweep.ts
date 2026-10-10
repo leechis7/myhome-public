@@ -257,7 +257,8 @@ export async function sweepGuestbook(page: Page, tally: Tally = {}) {
 /** 읽는 책(MYH-190). 제목이 e2e 로 시작하는 것 */
 export async function sweepBooks(page: Page, tally: Tally = {}) {
   await loop("책", tally, async () => {
-    await page.goto("/admin/books");
+    // 거르는 중이면 해마다 접은 것도 다 펼친다(MYH-226)
+    await page.goto("/admin/books?q=e2e");
     const row = page.locator("#books li").filter({ hasText: TEST_NAME }).first();
     if ((await row.count()) === 0) return false;
     const title = (await row.locator(":scope > details > summary span").first().textContent()) ?? "";

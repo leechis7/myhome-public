@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveProfile, type ActionState } from "@/app/admin/actions";
+import type { ActionState } from "@/app/admin/actions";
+import { saveProfile } from "@/app/admin/profile/actions";
 import type { Profile } from "@/lib/db";
 
 const field =

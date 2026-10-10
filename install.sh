@@ -135,7 +135,8 @@ else
   SECRETS_KEY=""
   if confirm "나만 보는 비밀글을 쓸까요?
 
-쓰면 비밀글을 담글 열쇠를 만들어 .env 에 넣습니다.
+쓰면 비밀글을 암호화할 열쇠를 만들어 .env 에 넣습니다.
+화면에서 넣는 토큰 · 키(텔레그램 · 카카오 · Gemini)도 이 열쇠로 암호화합니다.
 그 열쇠를 잃으면 비밀글을 영영 못 읽습니다 - 따로 보관해야 합니다.
 쓰지 않으면 메뉴에서 비밀글이 빠집니다(나중에 켤 수 있음)." no; then
     SECRETS_KEY=$(secret 32)
@@ -167,11 +168,9 @@ PORT=${PORT}
 SECRETS_KEY=${SECRETS_KEY}
 # 선택: 처음 관리자 비밀번호. 비우면 /admin 에서 처음 설정 코드로 정한다
 ADMIN_PASSWORD=
-# 선택: 텔레그램 알림 · 방문 통계(umami) · Search Console
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
-UMAMI_WEBSITE_ID=
-NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=
+# 텔레그램 · 카카오 책 검색 · Gemini 요약 · 방문 통계 · Search Console 은
+# 관리 › 설정 › 환경설정 에서 넣는다. 여기 적어도 되고, 그러면 이것이 먼저다
+# (이름은 README 의 「환경변수」 표)
 EOF
   umask 022
   say "설정을 썼습니다: $DIR/.env (권한 600)"

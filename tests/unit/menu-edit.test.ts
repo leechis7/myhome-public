@@ -9,7 +9,7 @@ import {
   numbered,
   resolveHref,
   wouldCycle,
-} from "@/lib/menu-edit";
+} from "@/lib/site/menu-edit";
 import type { Menu } from "@/lib/db";
 
 function row(id: number, over: Partial<Menu> = {}): Menu {

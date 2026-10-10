@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
-import { isAdmin } from "@/lib/auth";
-import { renderMetrics } from "@/lib/metrics";
-import { isFromOurSide } from "@/lib/private-ip";
+import { isAdmin } from "@/lib/security/auth";
+import { renderMetrics } from "@/lib/ops/metrics";
+import { isFromOurSide } from "@/lib/security/private-ip";
 
 export const dynamic = "force-dynamic";
 

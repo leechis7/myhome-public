@@ -8,7 +8,7 @@ import {
 import {
   finishPasskeyLogin,
   startPasskeyLogin,
-} from "@/app/admin/passkey-actions";
+} from "@/app/admin/security/passkey-actions";
 
 export default function PasskeyLoginButton() {
   const [error, setError] = useState<string>();

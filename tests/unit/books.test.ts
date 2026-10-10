@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoriesOf, groupByYear, isBookStatus, parseRating, stars } from "@/lib/books";
+import { categoriesOf, filterBooks, groupByYear, isBookStatus, parseRating, readBookFilter, stars } from "@/lib/books";
 
 describe("독서 노트의 별점(MYH-211)", () => {
   it("1~5 정수만 받는다", () => {
@@ -69,5 +69,33 @@ describe("책 상태(MYH-227)", () => {
   it("읽고 싶은 책 · 읽는 중 · 다 읽음만 받는다", () => {
     for (const s of ["want", "reading", "read"]) expect(isBookStatus(s)).toBe(true);
     for (const s of ["", "wish", null]) expect(isBookStatus(s)).toBe(false);
+  });
+});
+
+describe("관리 › 책 거르기(MYH-226)", () => {
+  const rows = [
+    { status: "reading", categoryCode: "00001", title: "클린 코드", author: "로버트 마틴" },
+    { status: "read", categoryCode: "00003", title: "소년이 온다", author: "한강" },
+    { status: "want", categoryCode: null, title: "Magical Haskell", author: "Anton Antich" },
+  ];
+
+  it("주소에서 읽고 모르는 상태는 버린다", () => {
+    expect(readBookFilter({ status: "read", category: "00003", q: " 한강 " })).toEqual({
+      status: "read",
+      category: "00003",
+      q: "한강",
+    });
+    expect(readBookFilter({ status: "몰라" }).status).toBeNull();
+  });
+
+  it("상태 · 분류 · 낱말(제목이나 지은이, 대소문자 무시)로 거른다", () => {
+    const f = (o: Partial<Parameters<typeof filterBooks>[1]>) =>
+      filterBooks(rows, { status: null, category: null, q: "", ...o }).map((b) => b.title);
+    expect(f({})).toHaveLength(3);
+    expect(f({ status: "reading" })).toEqual(["클린 코드"]);
+    expect(f({ category: "00003" })).toEqual(["소년이 온다"]);
+    expect(f({ q: "haskell" })).toEqual(["Magical Haskell"]);
+    expect(f({ q: "로버트 코드" })).toEqual(["클린 코드"]);
+    expect(f({ q: "없는 책" })).toEqual([]);
   });
 });

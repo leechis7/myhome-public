@@ -9,7 +9,7 @@ import {
   removeStoredFile,
   uploadDir,
   writeFileOnce,
-} from "@/lib/storage";
+} from "@/lib/uploads/storage";
 
 describe("파일 저장 자리", () => {
   it("앞 두 글자로 디렉터리를 나눈다", () => {

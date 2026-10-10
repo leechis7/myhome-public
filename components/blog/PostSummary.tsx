@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { needsBadge, stateLabel } from "@/lib/post-state";
+import { needsBadge, stateLabel } from "@/lib/posts/state";
 import { formatDate, revisionInfo } from "@/lib/posts";
 
 export type PostSummaryRow = {

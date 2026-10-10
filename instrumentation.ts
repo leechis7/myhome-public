@@ -10,9 +10,9 @@ export async function register() {
   const secret = process.env.SESSION_SECRET;
   if (!secret || process.env.ADMIN_PASSWORD) return;
   try {
-    const { needsSetup } = await import("@/lib/auth");
+    const { needsSetup } = await import("@/lib/security/auth");
     if (!(await needsSetup())) return;
-    const { setupCode } = await import("@/lib/setup-code");
+    const { setupCode } = await import("@/lib/security/setup-code");
     console.log(
       `[myhome] 관리자 비밀번호를 아직 정하지 않았습니다. /admin 에서 정하세요. 처음 설정 코드: ${setupCode(secret)}`,
     );

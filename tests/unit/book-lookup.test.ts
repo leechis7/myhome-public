@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asIsbn, fromKakao, fromOpenLibrary, isCoverUrl } from "@/lib/book-lookup";
+import { asIsbn, fromKakao, fromOpenLibrary, isCoverUrl, summarize } from "@/lib/books/lookup";
 
 describe("책 찾기(MYH-226)", () => {
   it("10 · 13자리 숫자는 ISBN 으로 본다", () => {
@@ -30,6 +30,8 @@ describe("책 찾기(MYH-226)", () => {
       isbn: "9788936434120",
       url: "https://search.daum.net/search?q=x",
       cover: "https://t1.daumcdn.net/lbook/image/1467038",
+      summary: null,
+      description: null,
     });
   });
 
@@ -52,5 +54,35 @@ describe("책 찾기(MYH-226)", () => {
     expect(isCoverUrl("https://user@t1.daumcdn.net/a")).toBe(false);
     expect(isCoverUrl("https://t1.daumcdn.net:8443/a")).toBe(false);
     expect(isCoverUrl("아무 글")).toBe(false);
+  });
+});
+
+describe("카카오 키 모양(MYH-231)", () => {
+  it("영숫자 20~64자만 받는다", async () => {
+    const { isKakaoKey } = await import("@/lib/books/lookup-key");
+    expect(isKakaoKey("a".repeat(32))).toBe(true);
+    expect(isKakaoKey("짧다")).toBe(false);
+    expect(isKakaoKey("a".repeat(32) + " ")).toBe(false);
+    expect(isKakaoKey("KakaoAK " + "a".repeat(32))).toBe(false);
+  });
+});
+
+describe("소개 밑그림(카카오 소개 앞부분)", () => {
+  it("문장 끝에서 120자 안으로 끊는다", () => {
+    const text =
+      "1980년 5월 광주를 그린 소설이다. 열다섯 살 동호의 눈으로 그날을 따라간다. 이어지는 여섯 장은 그 뒤에 남은 사람들의 이야기를 저마다의 목소리로 들려주며 오래 이어진다 그리고 계속";
+    expect(summarize(text)).toBe("1980년 5월 광주를 그린 소설이다. 열다섯 살 동호의 눈으로 그날을 따라간다.");
+  });
+
+  it("끊을 자리가 없으면 낱말 사이에서 자르고 … 를 붙인다", () => {
+    const out = summarize("가나다라 ".repeat(40));
+    expect(out!.endsWith("…")).toBe(true);
+    expect(out!.length).toBeLessThanOrEqual(121);
+  });
+
+  it("비었으면 null, 짧은 한 문장은 그대로", () => {
+    expect(summarize("")).toBeNull();
+    expect(summarize(undefined)).toBeNull();
+    expect(summarize("  짧은 책이다.  ")).toBe("짧은 책이다.");
   });
 });

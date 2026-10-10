@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import Container from "@/components/Container";
 import MarkdownField from "@/components/admin/markdown/MarkdownField";
-import { saveReadingNote } from "@/app/admin/book-actions";
-import { isAdmin } from "@/lib/auth";
+import { saveReadingNote } from "@/app/admin/books/actions";
+import { isAdmin } from "@/lib/security/auth";
 import { BOOK_STATUS_LABELS, findBook, type BookStatus } from "@/lib/books";
 
 export const metadata: Metadata = {

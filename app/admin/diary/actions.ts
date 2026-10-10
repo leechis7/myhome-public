@@ -2,15 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
-import { ensureDiary, findDiary, saveDiary } from "@/lib/diary";
-import { isMood, parseDay } from "@/lib/diary-calendar";
-import { addSecretImage, removeSecret } from "@/lib/secrets";
-import { ALLOWED_TYPES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
+import { requireAdmin } from "@/lib/security/auth";
+import { ensureDiary, findDiary, saveDiary } from "@/lib/my-space/diary";
+import { isMood, parseDay } from "@/lib/my-space/diary-calendar";
+import { addSecretImage, removeSecret } from "@/lib/my-space/secrets";
+import { ALLOWED_TYPES, MAX_UPLOAD_BYTES } from "@/lib/uploads/limits";
 import type { SecretUploadState } from "@/app/admin/secrets/actions";
 
 /**
- * 일기장(MYH-213)을 쓰고 지운다. 암호화는 lib/diary.ts · lib/secrets.ts
+ * 일기장(MYH-213)을 쓰고 지운다. 암호화는 lib/my-space/diary.ts · lib/my-space/secrets.ts
  * 가 한다 — 여기서 오가는 것은 평문이다.
  */
 

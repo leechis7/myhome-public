@@ -3,7 +3,7 @@ import {
   futureSchedule,
   parseSchedule,
   toScheduleInput,
-} from "@/lib/post-schedule";
+} from "@/lib/posts/schedule";
 
 describe("예약 시각(MYH-194)", () => {
   it("칸의 값을 한국 시각으로 읽는다", () => {

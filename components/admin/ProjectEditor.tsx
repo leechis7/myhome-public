@@ -9,7 +9,7 @@ import {
 import ActionForm from "@/components/admin/ActionForm";
 import DeleteButton from "@/components/admin/DeleteButton";
 import type { Project } from "@/lib/db";
-import type { ProjectKind } from "@/lib/projects";
+import type { ProjectKind } from "@/lib/profile/projects";
 
 const field =
   "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40";

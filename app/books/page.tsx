@@ -5,8 +5,8 @@ import BookCard from "@/components/BookCard";
 import AdminLinkButton from "@/components/admin/AdminLinkButton";
 import Link from "next/link";
 import { categoriesOf, groupByYear, listShelf } from "@/lib/books";
-import { isAdmin } from "@/lib/auth";
-import { pageMetadata } from "@/lib/page-metadata";
+import { isAdmin } from "@/lib/security/auth";
+import { pageMetadata } from "@/lib/site/page-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({

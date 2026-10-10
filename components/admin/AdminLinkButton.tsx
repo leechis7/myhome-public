@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 
 /**
  * 공개 화면에 붙는 관리자 전용 단추. 로그인했을 때만 렌더한다.

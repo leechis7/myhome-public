@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 import { desc, eq } from "drizzle-orm";
 import Container from "@/components/Container";
 import PrintButton from "@/components/PrintButton";
-import { isAdmin } from "@/lib/auth";
-import { groupByCategory } from "@/lib/category";
+import { isAdmin } from "@/lib/security/auth";
+import { groupByCategory } from "@/lib/codes/category";
 import { careers, getDb, profile } from "@/lib/db";
-import { pageMetadata } from "@/lib/page-metadata";
-import { formatPeriod as projectPeriod, listProjects } from "@/lib/projects";
+import { pageMetadata } from "@/lib/site/page-metadata";
+import { formatPeriod as projectPeriod, listProjects } from "@/lib/profile/projects";
 import {
   ageOn,
   careerYears,
@@ -18,8 +18,8 @@ import {
   RESUME_SECTIONS,
   todayInSeoul,
   type ResumeSection,
-} from "@/lib/resume";
-import { listSkills } from "@/lib/skills";
+} from "@/lib/profile/resume";
+import { listSkills } from "@/lib/profile/skills";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -132,7 +132,7 @@ export default async function ResumePage() {
       <div data-print-hide className="mb-6 flex flex-wrap justify-end gap-2">
         {admin ? (
           <Link
-            href="/admin#resume"
+            href="/admin/profile#resume"
             className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-foreground/5"
           >
             고치기

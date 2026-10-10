@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { mermaidSource } from "@/lib/mermaid-block";
+import { mermaidSource } from "@/lib/posts/mermaid-block";
 
 /** `pre` 가 받는 모양 그대로 만든다 */
 function code(className: string | undefined, ...children: ReactNode[]) {

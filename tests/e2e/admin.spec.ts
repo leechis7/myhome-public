@@ -95,7 +95,7 @@ test.describe("관리 화면", () => {
       // 설정 그룹 안에서는 이름이 짧다(MYH-126)
       // 프로필과 이력서는 한 화면이다(MYH-218 · MYH-220)
       ["프로필", "프로필"],
-      ["암호", "암호설정"],
+      ["보안", "보안"],
       ["메뉴", "메뉴 관리"],
     ] as const;
 
@@ -304,7 +304,7 @@ test.describe("관리 화면", () => {
   test("수행 업무를 넣으면 소개 화면에 나오고 지우면 사라진다", async ({
     page,
   }) => {
-    await page.goto("/admin");
+    await page.goto("/admin/profile");
     // 아래에 이력서 절이 이어지므로(MYH-218) 수행 업무 절 안에서 찾는다
     const form = page.locator("#work form").last();
     await form.getByLabel("이름").fill(PROJECT);
@@ -323,7 +323,7 @@ test.describe("관리 화면", () => {
     await expect(card.getByText("Playwright")).toBeVisible();
 
     // 관리 화면에서는 이름이 입력칸 안에 있어 글자 검색으로는 못 찾는다
-    await page.goto("/admin");
+    await page.goto("/admin/profile");
     const row = page.locator("li").filter({
       has: page.locator(`input[value="${PROJECT}"]`),
     });

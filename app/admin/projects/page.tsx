@@ -3,8 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import ProjectEditor from "@/components/admin/ProjectEditor";
-import { isAdmin } from "@/lib/auth";
-import { listProjects } from "@/lib/projects";
+import { isAdmin } from "@/lib/security/auth";
+import { listProjects } from "@/lib/profile/projects";
 
 export const metadata: Metadata = {
   title: "프로젝트 관리",

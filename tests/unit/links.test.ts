@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { checkLink, checkLinks, hostOf } from "@/lib/links";
+import { checkLink, checkLinks, hostOf } from "@/lib/my-space/links";
 import type { Link } from "@/lib/db";
 
 afterEach(() => vi.unstubAllGlobals());

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contactRows, prettyUrl, telHref } from "@/lib/contact-info";
+import { contactRows, prettyUrl, telHref } from "@/lib/profile/contact-info";
 
 describe("telHref", () => {
   it("숫자가 열 자리는 돼야 걸어 준다", () => {

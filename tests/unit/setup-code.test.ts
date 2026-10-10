@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesSetupCode, setupCode } from "@/lib/setup-code";
+import { matchesSetupCode, setupCode } from "@/lib/security/setup-code";
 
 const SECRET = "보기-비밀값-보기-비밀값-보기-비밀값-32자-넘게";
 

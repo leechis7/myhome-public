@@ -16,7 +16,7 @@ test.describe("이력서 전용 항목", () => {
     browser,
   }) => {
     const name = `e2e 자격증 ${Date.now().toString(36)}`;
-    await page.goto("/admin#resume");
+    await page.goto("/admin/profile#resume");
     const add = page.getByRole("form", { name: "자격증 추가" });
     await add.getByLabel("취득일").fill("2001-02-03");
     await add.getByLabel("자격증명").fill(name);
@@ -47,7 +47,7 @@ test.describe("이력서 전용 항목", () => {
     expect(await visitor.content()).not.toContain(name);
 
     // 켜면 방문자에게도 보인다
-    await page.goto("/admin#resume");
+    await page.goto("/admin/profile#resume");
     await page.getByRole("form", { name: "이력서에 보일 항목" }).getByLabel("자격증").check();
     await page.getByRole("form", { name: "이력서에 보일 항목" }).getByRole("button", { name: "저장" }).click();
     // 저장이 끝날 때까지 다시 열어 본다
@@ -59,12 +59,12 @@ test.describe("이력서 전용 항목", () => {
     await context.close();
 
     // 되돌리고 지운다
-    await page.goto("/admin#resume");
+    await page.goto("/admin/profile#resume");
     if (!was) {
       await page.getByRole("form", { name: "이력서에 보일 항목" }).getByLabel("자격증").uncheck();
       await page.getByRole("form", { name: "이력서에 보일 항목" }).getByRole("button", { name: "저장" }).click();
       await page.waitForLoadState("networkidle");
-      await page.goto("/admin#resume");
+      await page.goto("/admin/profile#resume");
     }
     const row = page.locator("li", { has: page.getByRole("form", { name }) });
     await pressDelete(row, `${name} 삭제`);
@@ -74,13 +74,13 @@ test.describe("이력서 전용 항목", () => {
   // 옛 주소는 한 화면의 이력서 절로 넘어간다
   test("옛 이력서 관리 주소는 프로필 화면으로 간다", async ({ page }) => {
     await page.goto("/admin/resume");
-    await expect(page).toHaveURL(/\/admin(#resume)?$/);
+    await expect(page).toHaveURL(/\/admin\/profile(#resume)?$/);
     await expect(page.getByRole("heading", { name: "프로필", level: 1 })).toBeVisible();
     await expect(page.getByRole("form", { name: "기본 인적 사항" })).toBeVisible();
   });
 
   test("연령과 전산 경력은 저절로 센다", async ({ page }) => {
-    await page.goto("/admin#resume");
+    await page.goto("/admin/profile#resume");
     const form = page.getByRole("form", { name: "기본 인적 사항" });
     const birth = await form.getByLabel("생년월일").inputValue();
     test.skip(!birth, "생년월일이 없는 DB");
@@ -97,7 +97,7 @@ test.describe("이력서 전용 항목", () => {
 
   // 소개에서도 항목을 고른다(MYH-220). 관리자에게는 표시와 함께 다 보인다
   test("소개에 보일 항목을 끄면 방문자에게 그 절이 없다", async ({ page, browser }) => {
-    await page.goto("/admin");
+    await page.goto("/admin/profile");
     const about = page.getByRole("form", { name: "소개에 보일 항목" });
     const skills = about.getByLabel("기술");
     const was = await skills.isChecked();
@@ -117,7 +117,7 @@ test.describe("이력서 전용 항목", () => {
 
     // 되돌린다
     if (was) {
-      await page.goto("/admin");
+      await page.goto("/admin/profile");
       await page.getByRole("form", { name: "소개에 보일 항목" }).getByLabel("기술").check();
       await page.getByRole("form", { name: "소개에 보일 항목" }).getByRole("button", { name: "저장" }).click();
       await expect(page).toHaveURL(/#visibility$/);

@@ -9,7 +9,7 @@ import {
   sameFields,
   type Draft,
   type DraftFields,
-} from "@/lib/draft-store";
+} from "@/lib/posts/draft-store";
 import { fillField } from "./fill-field";
 
 /**

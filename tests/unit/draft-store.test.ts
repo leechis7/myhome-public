@@ -6,7 +6,7 @@ import {
   isDraftKey,
   parseDraft,
   sameFields,
-} from "@/lib/draft-store";
+} from "@/lib/posts/draft-store";
 
 describe("쓰던 글 보관(MYH-193)", () => {
   it("글마다 이름이 따로고, 새 글은 하나다", () => {

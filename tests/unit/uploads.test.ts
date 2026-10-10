@@ -4,7 +4,7 @@ import {
   MAX_ATTACHMENT_BYTES,
   MAX_UPLOAD_BYTES,
   oversizeMessage,
-} from "@/lib/upload-limits";
+} from "@/lib/uploads/limits";
 import { extensionFor } from "@/lib/uploads";
 
 describe("업로드 제한", () => {

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getSite } from "@/lib/site-info";
+import { getSite } from "@/lib/site/info";
 
 /**
  * 홈 화면에 추가했을 때 앱처럼 열리게 한다.

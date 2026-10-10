@@ -9,11 +9,11 @@ import {
   moveMemoAction,
   saveMemoAction,
 } from "@/app/admin/memos/actions";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { formatDateTime } from "@/lib/format";
-import { listMemos } from "@/lib/memos";
-import { hasSecretKey } from "@/lib/secret-crypto";
-import { currentWebhook, inboxReady, webhookUrl } from "@/lib/telegram-bot";
+import { listMemos } from "@/lib/my-space/memos";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { currentWebhook, inboxReady, webhookUrl } from "@/lib/telegram/bot";
 
 export const metadata: Metadata = {
   title: "메모",
@@ -41,7 +41,7 @@ export default async function MemosPage({
 
   const params = await searchParams;
   const moved = typeof params.moved === "string" ? params.moved : null;
-  const ready = inboxReady();
+  const ready = await inboxReady();
   const [rows, hook] = await Promise.all([
     listMemos(),
     ready ? currentWebhook() : Promise.resolve(null),
@@ -149,7 +149,7 @@ export default async function MemosPage({
       <p className="mt-12 border-t border-border pt-6 text-sm text-muted">
         텔레그램 봇에게 「메모 …」 로 보낸 글도 여기로 옵니다.{" "}
         {ready ? (connected ? "● 연결됨 · " : "○ 연결 안 됨 · ") : null}
-        <Link href="/admin/site#telegram" className="underline underline-offset-4">
+        <Link href="/admin/settings#telegram" className="underline underline-offset-4">
           연결 설정
         </Link>
       </p>

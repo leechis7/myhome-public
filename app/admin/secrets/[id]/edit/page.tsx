@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Container from "@/components/Container";
 import SecretForm from "@/components/admin/SecretForm";
-import { isAdmin } from "@/lib/auth";
-import { hasSecretKey } from "@/lib/secret-crypto";
+import { isAdmin } from "@/lib/security/auth";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
 import {
   findSecret,
   listSecretAttachments,
   listSecretImages,
-} from "@/lib/secrets";
+} from "@/lib/my-space/secrets";
 
 export const metadata: Metadata = {
   title: "비밀글 고치기",

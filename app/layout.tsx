@@ -6,7 +6,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import QuickMemo from "@/components/QuickMemo";
 import { site } from "@/lib/site";
-import { getSite } from "@/lib/site-info";
+import { getSite } from "@/lib/site/info";
+import { siteConfig } from "@/lib/site/settings";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const info = await getSite();
+  const [info, config] = await Promise.all([getSite(), siteConfig()]);
   return {
     // 상대 경로로 적은 이미지·링크의 기준 주소
     metadataBase: new URL(site.url),
@@ -34,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
     //
     // **canonical 은 여기에 두지 않는다.** 루트에 적으면 아래 모든 쪽이
     // 물려받아 /blog 도 /about 도 "나는 사실 홈페이지다" 라고 말하게 된다
-    // (MYH-162). 쪽마다 lib/page-metadata.ts 로 제 것을 준다. 없는 편이
+    // (MYH-162). 쪽마다 lib/site/page-metadata.ts 로 제 것을 준다. 없는 편이
     // 틀린 것보다 낫다 — 없으면 구글이 그 주소를 그대로 쓴다.
     alternates: {
       types: {
@@ -70,8 +71,9 @@ export async function generateMetadata(): Promise<Metadata> {
       statusBarStyle: "black-translucent",
     },
     // Search Console 소유 확인용. 값이 없으면 태그가 나가지 않는다.
-    verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
-      ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    // .env 나 관리 › 설정 › 환경설정(MYH-232)
+    verification: config.googleSiteVerification
+      ? { google: config.googleSiteVerification }
       : undefined,
     twitter: {
       card: "summary_large_image",

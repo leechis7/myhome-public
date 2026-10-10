@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { getDb, comments, posts } from "@/lib/db";
-import { clientKey, requireAdmin } from "@/lib/auth";
-import { AUTHOR_MAX, BODY_MAX } from "@/lib/comment-limits";
-import { commentMessage, guestbookMessage, notifyTelegram } from "@/lib/notify";
-import { isScheduled } from "@/lib/post-state";
+import { clientKey, requireAdmin } from "@/lib/security/auth";
+import { AUTHOR_MAX, BODY_MAX } from "@/lib/posts/comment-limits";
+import { commentMessage, guestbookMessage, notifyTelegram } from "@/lib/telegram/notify";
+import { isScheduled } from "@/lib/posts/state";
 
 /** 같은 사람이 짧은 시간에 몇 개까지 쓸 수 있는지 */
 const WINDOW_MINUTES = 10;

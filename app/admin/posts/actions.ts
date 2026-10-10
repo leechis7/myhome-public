@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb, posts } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { futureSchedule } from "@/lib/post-schedule";
-import { isVersion, versionChange } from "@/lib/post-version";
+import { requireAdmin } from "@/lib/security/auth";
+import { futureSchedule } from "@/lib/posts/schedule";
+import { isVersion, versionChange } from "@/lib/posts/version";
 import { readCode, SERIES } from "@/lib/codes";
 import { createDraftPost } from "@/lib/posts";
 import {
@@ -15,7 +15,7 @@ import {
   removePost,
   removePostImage,
   rotatePostImage,
-} from "@/lib/attachments";
+} from "@/lib/uploads/attachments";
 import { ALLOWED_TYPES, MAX_UPLOAD_BYTES, saveUpload } from "@/lib/uploads";
 
 export type UploadState = {

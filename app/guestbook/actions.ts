@@ -3,10 +3,10 @@
 import { redirect } from "next/navigation";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { createGuestbookEntry } from "@/app/blog/comment-actions";
-import { clientKey } from "@/lib/auth";
+import { clientKey } from "@/lib/security/auth";
 import { getDb, messages } from "@/lib/db";
-import { BODY_MAX, NAME_MAX } from "@/lib/message-limits";
-import { notifyTelegram } from "@/lib/notify";
+import { BODY_MAX, NAME_MAX } from "@/lib/posts/message-limits";
+import { notifyTelegram } from "@/lib/telegram/notify";
 
 /**
  * 방명록 한 칸에서 두 길로 간다(MYH-216). 「나에게만 보내기」 를 고르면

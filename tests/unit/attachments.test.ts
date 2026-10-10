@@ -4,7 +4,7 @@ import {
   attachmentMimeType,
   formatBytes,
   isImageType,
-} from "@/lib/upload-limits";
+} from "@/lib/uploads/limits";
 
 describe("첨부파일 규칙", () => {
   it("그림은 화면에 바로 보여 준다", () => {

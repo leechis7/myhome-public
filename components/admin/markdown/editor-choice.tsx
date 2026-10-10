@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { DEFAULT_EDITOR, type EditorKind } from "@/lib/editor-kinds";
+import { DEFAULT_EDITOR, type EditorKind } from "@/lib/posts/editor-kinds";
 
 /**
  * 고른 글 편집기를 본문 칸까지 나른다. 관리 화면의 틀(app/admin/layout.tsx)이

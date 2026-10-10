@@ -7,11 +7,11 @@
  *
  * 구글은 IndexNow 에 참여하지 않는다. Bing·Naver·Yandex·Seznam 이 받는다.
  *
- * lib/indexnow.ts 를 그대로 쓴다. Node 가 "모듈 종류가 안 적혀 있다"고
+ * lib/posts/indexnow.ts 를 그대로 쓴다. Node 가 "모듈 종류가 안 적혀 있다"고
  * 경고하는데 성능 안내일 뿐이라, npm 스크립트에서 그 경고만 껐다.
  */
 import { readdirSync } from "node:fs";
-import { submitToIndexNow } from "../lib/indexnow.ts";
+import { submitToIndexNow } from "../lib/posts/indexnow.ts";
 
 const site = process.env.SITE_URL;
 if (!site) {

@@ -1,12 +1,13 @@
 import { revalidatePath } from "next/cache";
-import { addMemo } from "@/lib/memos";
-import { addTodo } from "@/lib/todos";
-import { rangeLabel, readTodoDates, type TodoRange } from "@/lib/todo-dates";
-import { guessTodo } from "@/lib/todo-intent";
-import { todayInSeoul } from "@/lib/resume-sections";
-import { hasSecretKey } from "@/lib/secret-crypto";
-import { inboxDisabled, reply } from "@/lib/telegram-bot";
-import { matchesSecret, readUpdate } from "@/lib/telegram-inbox";
+import { addMemo } from "@/lib/my-space/memos";
+import { addTodo } from "@/lib/my-space/todos";
+import { rangeLabel, readTodoDates, type TodoRange } from "@/lib/my-space/todo-dates";
+import { guessTodo } from "@/lib/my-space/todo-intent";
+import { todayInSeoul } from "@/lib/profile/resume-sections";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { inboxDisabled, reply } from "@/lib/telegram/bot";
+import { siteConfig } from "@/lib/site/settings";
+import { matchesSecret, readUpdate } from "@/lib/telegram/inbox";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ const MAX_MEMO = 8000;
 
 /**
  * 텔레그램이 봇에 온 글을 넘겨주는 자리(MYH-215). 내 대화방에서 온 글을
- * 빠른 메모로 쌓는다. 「할일 …」 로 시작하면 할 일로 넣는다(MYH-217). 문은 lib/telegram-inbox.ts 에 적었다.
+ * 빠른 메모로 쌓는다. 「할일 …」 로 시작하면 할 일로 넣는다(MYH-217). 문은 lib/telegram/inbox.ts 에 적었다.
  *
  * 받지 않는 글에도 200 을 준다. 4xx · 5xx 를 주면 텔레그램이 같은 글을
  * 계속 다시 보낸다. 토큰이 틀린 것만 401 이다 — 텔레그램이 보낸 것이 아니다.
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   }
 
   const update = await request.json().catch(() => null);
-  const message = readUpdate(update, process.env.TELEGRAM_CHAT_ID);
+  const message = readUpdate(update, (await siteConfig()).telegramChatId ?? undefined);
   if (!message) return Response.json({ ok: true });
 
   if (message.kind === "not-text") {

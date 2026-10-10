@@ -1,6 +1,6 @@
 "use client";
 
-import { addCareer, deleteCareer, updateCareer } from "@/app/admin/actions";
+import { addCareer, deleteCareer, updateCareer } from "@/app/admin/profile/actions";
 import ActionForm from "@/components/admin/ActionForm";
 import DeleteButton from "@/components/admin/DeleteButton";
 import type { Career } from "@/lib/db";

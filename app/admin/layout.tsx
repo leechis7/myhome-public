@@ -1,6 +1,6 @@
 import { EditorChoiceProvider } from "@/components/admin/markdown/editor-choice";
-import { editorOf } from "@/lib/editor-kinds";
-import { getStoredSite } from "@/lib/site-info";
+import { editorOf } from "@/lib/posts/editor-kinds";
+import { getStoredSite } from "@/lib/site/info";
 
 /**
  * 관리 화면들의 틀.

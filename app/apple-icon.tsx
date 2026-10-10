@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
-import { loadOgFont } from "@/lib/og";
-import { getSite } from "@/lib/site-info";
+import { loadOgFont } from "@/lib/site/og";
+import { getSite } from "@/lib/site/info";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";

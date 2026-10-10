@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { orderRange, rangeLabel, rangeState, readTodoDates } from "@/lib/todo-dates";
+import { orderRange, rangeLabel, rangeState, readTodoDates } from "@/lib/my-space/todo-dates";
 
 describe("할 일의 기간(MYH-228)", () => {
   it("거꾸로 적은 기간은 바로잡는다", () => {

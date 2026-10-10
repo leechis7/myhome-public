@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { setupAdmin } from "@/app/admin/actions";
-import { MIN_PASSWORD_LENGTH } from "@/lib/password-limits";
+import { MIN_PASSWORD_LENGTH } from "@/lib/security/password-limits";
 
 const field =
   "mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm outline-none focus:border-foreground/40";
@@ -71,7 +71,7 @@ export default function SetupForm() {
         </button>
       </form>
       <p className="mt-4 text-xs text-faint">
-        {MIN_PASSWORD_LENGTH}자 이상. 정한 뒤에는 관리 › 설정 › 암호에서 바꾸고,
+        {MIN_PASSWORD_LENGTH}자 이상. 정한 뒤에는 관리 › 설정 › 보안에서 바꾸고,
         패스키도 등록할 수 있습니다.
       </p>
     </div>

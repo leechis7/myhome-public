@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { eventsBetween, groupByDay } from "@/lib/calendar-ical";
+import { eventsBetween, groupByDay } from "@/lib/my-space/calendar-ical";
 
 const ics = readFileSync("tests/unit/fixtures/calendar.ics", "utf8");
 const kst = (s: string) => new Date(`${s}+09:00`);
@@ -52,7 +52,7 @@ describe("iCal 일정 읽기(MYH-214)", () => {
 });
 
 describe("캘린더 주소 줄 읽기(MYH-214)", async () => {
-  const { parseCalendarLine } = await import("@/lib/calendar");
+  const { parseCalendarLine } = await import("@/lib/my-space/calendar");
 
   it("앞은 이름, 끝은 주소", () => {
     expect(parseCalendarLine("회사 https://calendar.google.com/x/basic.ics")).toEqual({

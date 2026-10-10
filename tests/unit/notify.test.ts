@@ -3,13 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const ENV_KEYS = [
   "TELEGRAM_BOT_TOKEN",
   "TELEGRAM_CHAT_ID",
-  "TELEGRAM_BOT_TOKEN_2",
-  "TELEGRAM_CHAT_ID_2",
 ] as const;
 
 async function loadNotify() {
   vi.resetModules();
-  return (await import("@/lib/notify")).notifyTelegram;
+  return (await import("@/lib/telegram/notify")).notifyTelegram;
 }
 
 function setEnv(values: Partial<Record<(typeof ENV_KEYS)[number], string>>) {
@@ -44,51 +42,19 @@ describe("notifyTelegram", () => {
     expect(fetchMock.mock.calls[0][0]).toContain("bottok1");
   });
 
-  it("봇이 둘이면 각각 보낸다", async () => {
+  it("토큰만 있고 대화방 번호가 없으면 보내지 않는다", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("{}"));
     vi.stubGlobal("fetch", fetchMock);
-    setEnv({
-      TELEGRAM_BOT_TOKEN: "tok1",
-      TELEGRAM_CHAT_ID: "111",
-      TELEGRAM_BOT_TOKEN_2: "tok2",
-      TELEGRAM_CHAT_ID_2: "222",
-    });
+    setEnv({ TELEGRAM_BOT_TOKEN: "tok1" });
     await (
       await loadNotify()
     )("안녕");
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes("bottok1"))).toBe(true);
-    expect(urls.some((u) => u.includes("bottok2"))).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("토큰만 있고 대화방 번호가 없으면 그 봇은 건너뛴다", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response("{}"));
-    vi.stubGlobal("fetch", fetchMock);
-    setEnv({
-      TELEGRAM_BOT_TOKEN: "tok1",
-      TELEGRAM_CHAT_ID: "111",
-      TELEGRAM_BOT_TOKEN_2: "tok2",
-    });
-    await (
-      await loadNotify()
-    )("안녕");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("한 봇이 실패해도 나머지는 보낸다", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockRejectedValueOnce(new Error("끊김"))
-      .mockResolvedValue(new Response("{}"));
-    vi.stubGlobal("fetch", fetchMock);
-    setEnv({
-      TELEGRAM_BOT_TOKEN: "tok1",
-      TELEGRAM_CHAT_ID: "111",
-      TELEGRAM_BOT_TOKEN_2: "tok2",
-      TELEGRAM_CHAT_ID_2: "222",
-    });
+  it("보내다 실패해도 던지지 않는다", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("끊김")));
+    setEnv({ TELEGRAM_BOT_TOKEN: "tok1", TELEGRAM_CHAT_ID: "111" });
     await expect((await loadNotify())("안녕")).resolves.toBeUndefined();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

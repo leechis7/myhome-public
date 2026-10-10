@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { changePassword, type ActionState } from "@/app/admin/actions";
+import type { ActionState } from "@/app/admin/actions";
+import { changePassword } from "@/app/admin/security/actions";
 
 const field =
   "mt-2 w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm outline-none focus:border-foreground/40";

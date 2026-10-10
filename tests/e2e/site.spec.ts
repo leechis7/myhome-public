@@ -33,7 +33,7 @@ async function save(page: Page, values: Partial<Values>) {
   for (const [f, v] of Object.entries(values)) {
     await field(page, f).fill(v);
   }
-  await page.getByRole("button", { name: "저장" }).click();
+  await page.getByRole("button", { name: "저장", exact: true }).click();
   await expect(page.getByText("저장했습니다.")).toBeVisible();
 }
 
@@ -106,7 +106,7 @@ test.describe("사이트 정보", () => {
     // 서버는 도메인에 점이 있어야 받는다 — 그 검사를 본다
     await page.goto("/admin/site");
     await field(page, "email").fill("a@b");
-    await page.getByRole("button", { name: "저장" }).click();
+    await page.getByRole("button", { name: "저장", exact: true }).click();
     await expect(page.getByText("메일 주소 모양이 아닙니다")).toBeVisible();
   });
 });

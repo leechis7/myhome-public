@@ -2,19 +2,10 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import ActionForm from "@/components/admin/ActionForm";
-import CalendarSettings from "@/components/admin/CalendarSettings";
-import TelegramSettings from "@/components/admin/TelegramSettings";
-import { hasSecretKey } from "@/lib/secret-crypto";
 import { saveSite } from "@/app/admin/site/actions";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { DEFAULT_SITE, mergeSite, site } from "@/lib/site";
-import { getStoredSite } from "@/lib/site-info";
-import {
-  DEFAULT_EDITOR,
-  EDITORS,
-  EDITOR_LABELS,
-  editorOf,
-} from "@/lib/editor-kinds";
+import { getStoredSite } from "@/lib/site/info";
 
 export const metadata: Metadata = {
   title: "사이트",
@@ -49,14 +40,12 @@ function Field({
  * 사이트 정보를 고치는 화면(MYH-169). 관리 › 설정 › 사이트.
  *
  * 칸을 비워 두면 그 자리는 보기 값(placeholder 로 보이는 것)이 채운다.
- * 사이트 주소는 여기 없다 — 배포와 묶인 값이라 환경변수다.
+ * 사이트 주소는 여기 없다 — 배포와 묶인 값이라 환경변수다. 텔레그램 · 카카오 같은
+ * 바깥 서비스는 관리 › 설정 › 환경설정(/admin/settings)에 있다.
  */
-export default async function AdminSitePage({
-  searchParams,
-}: PageProps<"/admin/site">) {
+export default async function AdminSitePage() {
   if (!(await isAdmin())) redirect("/admin");
 
-  const { cal, tg } = await searchParams;
   const stored = await getStoredSite();
   const shown = mergeSite(stored);
   const host = new URL(site.url).host;
@@ -131,24 +120,6 @@ export default async function AdminSitePage({
           />
         </Field>
 
-        <Field
-          label="기본 편집기"
-          hint="블로그 · 짧은 글 · 비밀글 본문 칸의 「편집기」 탭에 처음 나오는 것. 탭의 ▾ 로 그때그때 바꿀 수 있고, 바꾼 것은 그 브라우저가 기억합니다. 저장되는 것은 늘 마크다운입니다"
-        >
-          <select
-            name="editor"
-            defaultValue={editorOf(stored?.editor)}
-            className={input}
-          >
-            {EDITORS.map((e) => (
-              <option key={e} value={e}>
-                {EDITOR_LABELS[e]}
-                {e === DEFAULT_EDITOR ? " (기본)" : ""}
-              </option>
-            ))}
-          </select>
-        </Field>
-
         {/* 저장한 값으로 그린다. 고친 뒤 「저장」 하면 여기도 바뀐다 */}
         <section
           aria-label="검색 결과 미리보기"
@@ -163,14 +134,6 @@ export default async function AdminSitePage({
         </section>
       </ActionForm>
 
-      {/* 내 공간이 쓰는 바깥 연결(MYH-214 · MYH-215). 받은 것을 암호화해 두므로
-          열쇠가 있을 때만 */}
-      {hasSecretKey() ? (
-        <>
-          <CalendarSettings notice={typeof cal === "string" ? cal : undefined} />
-          <TelegramSettings notice={typeof tg === "string" ? tg : undefined} />
-        </>
-      ) : null}
     </Container>
   );
 }

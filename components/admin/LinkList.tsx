@@ -1,5 +1,5 @@
-import { groupByCategory } from "@/lib/category";
-import { hostOf, type LinkRow, type LinkStatus } from "@/lib/links";
+import { groupByCategory } from "@/lib/codes/category";
+import { hostOf, type LinkRow, type LinkStatus } from "@/lib/my-space/links";
 import LinkStatusDot from "@/components/admin/LinkStatusDot";
 
 /**

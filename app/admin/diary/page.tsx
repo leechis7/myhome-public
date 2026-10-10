@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import Container from "@/components/Container";
-import { isAdmin } from "@/lib/auth";
-import { listDiaryMonth } from "@/lib/diary";
+import { isAdmin } from "@/lib/security/auth";
+import { listDiaryMonth } from "@/lib/my-space/diary";
 import {
   MOODS,
   monthGrid,
   monthLabel,
   parseMonth,
   shiftMonth,
-} from "@/lib/diary-calendar";
-import { todayInSeoul } from "@/lib/resume-sections";
-import { hasSecretKey } from "@/lib/secret-crypto";
+} from "@/lib/my-space/diary-calendar";
+import { todayInSeoul } from "@/lib/profile/resume-sections";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
 
 export const metadata: Metadata = {
   title: "일기장",

@@ -26,7 +26,8 @@ async function addBook(
     category,
   }: { title: string; status: "읽는 중" | "다 읽음" | "읽고 싶은 책"; cover?: boolean; category?: string },
 ) {
-  await page.goto("/admin/books");
+  // 「책 추가」 는 평소 접혀 있다. ?add=1 이면 펼쳐 둔다(MYH-226)
+  await page.goto("/admin/books?add=1");
   const form = page.getByRole("form", { name: "책 추가" });
   await form.getByLabel("제목").fill(title);
   await form.getByLabel("지은이").fill("e2e 지은이");
@@ -95,6 +96,49 @@ test.describe("읽는 책", () => {
     await again.locator(":scope > details > summary").click();
     await pressDelete(again, `${done} 삭제`);
     await expect(page.locator("#books").getByText(done, { exact: true })).toHaveCount(0);
+  });
+});
+
+test.describe("책 목록 검색", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await sweepBooks(page);
+  });
+
+  // MYH-226. 책이 많아도 쓰기 좋게: 추가는 맨 위에 접어 두고, 상태 · 낱말로 거른다
+  test("책 추가는 맨 위 단추로 펼치고, 상태별로 보고 검색한다", async ({ page }) => {
+    const stamp = Date.now().toString(36);
+    const reading = `e2e 거르기 읽는 ${stamp}`;
+    const done = `e2e 거르기 다읽은 ${stamp}`;
+    await addBook(page, { title: reading, status: "읽는 중" });
+    await addBook(page, { title: done, status: "다 읽음" });
+
+    // 평소에는 접혀 있고, 맨 위 단추로 연다
+    await page.goto("/admin/books");
+    const add = page.getByRole("form", { name: "책 추가" });
+    await expect(add).toBeHidden();
+    await page.getByText("＋ 책 추가").click();
+    await expect(add).toBeVisible();
+
+    // 낱말로 거르면 그 책들만
+    const filters = page.getByRole("form", { name: "책 검색" });
+    await filters.getByLabel("목록 검색").fill(stamp);
+    await filters.getByRole("button", { name: "검색" }).click();
+    await expect(page).toHaveURL(new RegExp(`q=${stamp}`));
+    await expect(page.locator("#books > div > ul li, #books section li")).toHaveCount(2);
+
+    // 상태 단추: 다 읽음만
+    await page.getByRole("navigation", { name: "상태별 보기" }).getByRole("link", { name: /^다 읽음/ }).click();
+    await expect(page).toHaveURL(/status=read/);
+    await expect(page.locator("#books").getByText(done, { exact: true })).toBeVisible();
+    await expect(page.locator("#books").getByText(reading, { exact: true })).toHaveCount(0);
+
+    // 다 보기
+    await page.getByRole("link", { name: "전체 보기" }).click();
+    await expect(page).toHaveURL(/\/admin\/books#books$/);
   });
 });
 
@@ -195,12 +239,25 @@ test.describe("책 찾기", () => {
   });
 
   test("ISBN 으로 찾아 고르면 칸이 채워지고 표지까지 저장된다", async ({ page }) => {
-    await page.goto("/admin/books");
+    await page.goto("/admin/books?add=1");
     const form = page.getByRole("form", { name: "책 추가" });
     await form.getByLabel("책 찾기").fill("9780136083221");
     await form.getByLabel("책 찾기").press("Enter");
     const found = form.getByRole("list", { name: "찾은 책" });
-    await found.getByRole("button").first().click();
+    // 섬네일은 우리 서버를 거쳐 보이고(CSP 는 'self'), 누르면 크게 뜬다
+    const thumb = found.getByRole("button", { name: /표지 크게 보기/ }).first();
+    // Open Library 표지는 archive.org 를 한 번 거쳐 와서 늦을 수 있다
+    await expect
+      .poll(() => thumb.locator("img").evaluate((img: HTMLImageElement) => img.naturalWidth), {
+        timeout: 30_000,
+      })
+      .toBeGreaterThan(0);
+    await thumb.click();
+    const big = page.getByRole("dialog");
+    await expect(big.getByRole("img")).toBeVisible();
+    await big.getByRole("button", { name: "닫기" }).click();
+    await expect(big).toBeHidden();
+    await found.getByRole("button", { name: /눌러서 고르기/ }).first().click();
     await expect(form.getByLabel("제목")).toHaveValue(/Clean Code/);
     await expect(form.getByLabel("지은이")).toHaveValue(/Robert C. Martin/);
     // sweepBooks 가 치우도록 e2e 이름을 붙인다
@@ -210,6 +267,81 @@ test.describe("책 찾기", () => {
     await expect(page.locator("#books").getByText(title, { exact: true })).toBeVisible();
     await page.goto("/books");
     await expect(page.getByAltText(`${title} 표지`)).toBeVisible();
+  });
+});
+
+test.describe("등록된 책 찾아 고치기", () => {
+  test.skip(!process.env.E2E_BOOK_LOOKUP, "밖의 책 검색에 닿는 시험");
+
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await sweepBooks(page);
+  });
+
+  // 표지 없이 적어 둔 책을 나중에 찾아서 표지 · 지은이를 채운다
+  test("고치기 폼에서 찾아 고르면 칸이 바뀌고 표지가 붙는다", async ({ page }) => {
+    const title = `e2e 고칠 책 ${Date.now().toString(36)}`;
+    await addBook(page, { title, status: "읽는 중" });
+    const row = page.locator("#books li", { hasText: title });
+    await row.locator(":scope > details > summary").click();
+    const edit = page.getByRole("form", { name: `${title} 고치기` });
+    // 찾기 칸에는 그 책 제목이 미리 들어 있다
+    await expect(edit.getByLabel("책 찾기")).toHaveValue(title);
+    await edit.getByLabel("책 찾기").fill("9780136083221");
+    await edit.getByLabel("책 찾기").press("Enter");
+    await edit.getByRole("list", { name: "찾은 책" }).getByRole("button", { name: /눌러서 고르기/ }).first().click();
+    await expect(edit.getByLabel("지은이")).toHaveValue(/Robert C. Martin/);
+    // 이미 적은 소개는 덮지 않는다
+    await expect(edit.getByLabel("소개")).toHaveValue(`${title} 를 읽는다.`);
+    // sweepBooks 가 치우도록 제목은 e2e 이름으로 되돌린다
+    await edit.getByLabel("제목").fill(title);
+    await edit.getByRole("button", { name: "저장" }).click();
+    // 저장이 끝나 목록 줄의 지은이가 바뀐 뒤에 옮겨 간다
+    await expect(
+      page.locator("#books li", { hasText: title }).locator(":scope > details > summary"),
+    ).toContainText("Robert C. Martin", { timeout: 30_000 });
+    await page.goto("/books");
+    await expect(page.getByAltText(`${title} 표지`)).toBeVisible();
+    await expect(page.locator("li", { hasText: title })).toContainText("Robert C. Martin");
+  });
+});
+
+test.describe("AI 요약 견주기", () => {
+  // MYH-233. 카카오 키 · Gemini 키가 다 있어야 한다. 손으로 볼 때:
+  // E2E_BOOK_AI=1 npx playwright test books --workers=1
+  test.skip(!process.env.E2E_BOOK_AI, "카카오 · Gemini 에 닿는 시험");
+  test.setTimeout(120_000);
+
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await sweepBooks(page);
+  });
+
+  test("소개가 이미 있으면 AI 요약을 나란히 보여 주고, 고르면 바꾼다", async ({ page }) => {
+    const title = `e2e AI 요약 ${Date.now().toString(36)}`;
+    await addBook(page, { title, status: "읽는 중" });
+    const row = page.locator("#books li", { hasText: title });
+    await row.locator(":scope > details > summary").click();
+    const edit = page.getByRole("form", { name: `${title} 고치기` });
+    await edit.getByLabel("책 찾기").fill("9788936434120");
+    await edit.getByLabel("책 찾기").press("Enter");
+    await edit.getByRole("list", { name: "찾은 책" }).getByRole("button", { name: /눌러서 고르기/ }).first().click();
+    // 요약하는 동안 눈에 띄게 알린다
+    await expect(edit.getByRole("status").filter({ hasText: "AI 가 책 소개를 요약하는 중" })).toBeVisible();
+    const compare = edit.getByRole("region", { name: "AI 요약 견주기" });
+    await expect(compare).toBeVisible({ timeout: 60_000 });
+    await expect(compare).toContainText(`${title} 를 읽는다.`);
+    // 고르기 전에는 소개가 그대로다
+    await expect(edit.getByLabel("소개")).toHaveValue(`${title} 를 읽는다.`);
+    await compare.getByRole("button", { name: "AI 요약으로 바꾸기" }).click();
+    await expect(compare).toBeHidden();
+    await expect(edit.getByLabel("소개")).not.toHaveValue(`${title} 를 읽는다.`);
   });
 });
 
@@ -226,7 +358,7 @@ test.describe("책 표지 붙여넣기", () => {
   // 저장할 때 함께 올라간다
   test("표지 상자에 붙여넣으면 미리보기가 뜨고 저장된다", async ({ page }) => {
     const title = `e2e 붙인 표지 ${Date.now().toString(36)}`;
-    await page.goto("/admin/books");
+    await page.goto("/admin/books?add=1");
     const form = page.getByRole("form", { name: "책 추가" });
     await form.getByLabel("제목").fill(title);
     await form.getByLabel("지은이").fill("e2e 지은이");

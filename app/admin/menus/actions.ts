@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq, inArray, sql } from "drizzle-orm";
 import { getDb, menus, type Menu } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { defaultRows, invalidateMenus } from "@/lib/menus";
+import { requireAdmin } from "@/lib/security/auth";
+import { defaultRows, invalidateMenus } from "@/lib/site/menus";
 import {
   audienceFixes,
   liftedOrder,
@@ -14,7 +14,7 @@ import {
   resolveHref,
   siblingsOf,
   wouldCycle,
-} from "@/lib/menu-edit";
+} from "@/lib/site/menu-edit";
 import type { ActionState } from "@/app/admin/actions";
 
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
@@ -23,7 +23,7 @@ type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
  * 고친 것을 마무리한다. 모든 쓰기는 이것을 거친다.
  *
  * 보는 사람을 맞춘다 — 관리자만인 부모 아래 줄, 관리 화면으로 가는 줄은
- * 관리자만으로 적는다(lib/menu-edit.ts 의 audienceFixes). 어느 액션에서
+ * 관리자만으로 적는다(lib/site/menu-edit.ts 의 audienceFixes). 어느 액션에서
  * 고쳤든 여기서 한 번에 맞추니 빠뜨릴 데가 없다.
  */
 async function settle(tx: Tx) {

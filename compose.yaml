@@ -68,6 +68,9 @@ services:
       TELEGRAM_INBOX: ${TELEGRAM_INBOX:-}
       # 선택. 책 찾기를 카카오로 한다. 비우면 Open Library
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
+      # 선택. 고른 책의 소개를 Gemini 로 요약한다. 비우면 앞부분을 줄인다
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
       NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
       MONITORING_DASHBOARD: ${MONITORING_DASHBOARD:-}

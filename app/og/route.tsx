@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
-import { OG_SIZE, loadOgFont } from "@/lib/og";
+import { OG_SIZE, loadOgFont } from "@/lib/site/og";
 import { site } from "@/lib/site";
-import { getSite } from "@/lib/site-info";
+import { getSite } from "@/lib/site/info";
 
 /**
  * 사이트 대표 OG 이미지.

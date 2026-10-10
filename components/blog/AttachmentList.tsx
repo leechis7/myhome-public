@@ -1,4 +1,4 @@
-import { formatBytes, isImageType } from "@/lib/upload-limits";
+import { formatBytes, isImageType } from "@/lib/uploads/limits";
 
 export type PublicAttachment = {
   id: number;

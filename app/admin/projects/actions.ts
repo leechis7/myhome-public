@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb, projects } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/security/auth";
 import type { ActionState } from "@/app/admin/actions";
 
 /** 어느 쪽에 담을지. 폼이 숨은 칸으로 알려 준다 */
@@ -32,7 +32,7 @@ function parseForm(formData: FormData) {
 function refresh() {
   revalidatePath("/about");
   revalidatePath("/projects");
-  revalidatePath("/admin");
+  revalidatePath("/admin/profile");
   revalidatePath("/admin/projects");
 }
 

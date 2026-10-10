@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { estimateResized, type Estimate } from "@/lib/image-estimate";
+import { estimateResized, type Estimate } from "@/lib/uploads/image-estimate";
 import {
   MAX_UPLOAD_BYTES,
   formatBytes,
   oversizeMessage,
-} from "@/lib/upload-limits";
+} from "@/lib/uploads/limits";
 
 const ACCEPT = "image/png,image/jpeg,image/gif,image/webp,image/avif";
 /** 미리보기 한 변. CSS 와 HTML 속성 양쪽에 같은 값을 쓴다 */

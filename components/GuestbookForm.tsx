@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { leaveNote } from "@/app/guestbook/actions";
-import { AUTHOR_MAX, BODY_MAX as PUBLIC_MAX } from "@/lib/comment-limits";
-import { BODY_MAX as PRIVATE_MAX, NAME_MAX } from "@/lib/message-limits";
+import { AUTHOR_MAX, BODY_MAX as PUBLIC_MAX } from "@/lib/posts/comment-limits";
+import { BODY_MAX as PRIVATE_MAX, NAME_MAX } from "@/lib/posts/message-limits";
 
 const field =
   "w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm outline-none focus:border-foreground/40";

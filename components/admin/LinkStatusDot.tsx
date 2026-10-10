@@ -1,4 +1,4 @@
-import type { LinkStatus } from "@/lib/links";
+import type { LinkStatus } from "@/lib/my-space/links";
 
 /**
  * 살아 있는지 한 점으로 보여준다. 보기 목록과 관리 화면이 같이 쓴다.

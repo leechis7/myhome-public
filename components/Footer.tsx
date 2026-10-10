@@ -1,6 +1,6 @@
 import Container from "./Container";
-import { appVersion } from "@/lib/app-version";
-import { getSite } from "@/lib/site-info";
+import { appVersion } from "@/lib/site/app-version";
+import { getSite } from "@/lib/site/info";
 
 export default async function Footer() {
   const info = await getSite();

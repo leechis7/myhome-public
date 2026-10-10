@@ -3,11 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Container from "@/components/Container";
 import Markdown from "@/components/blog/Markdown";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/security/auth";
 import { formatDate } from "@/lib/posts";
-import { formatBytes } from "@/lib/upload-limits";
-import { hasSecretKey } from "@/lib/secret-crypto";
-import { findSecret, listSecretAttachments } from "@/lib/secrets";
+import { formatBytes } from "@/lib/uploads/limits";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { findSecret, listSecretAttachments } from "@/lib/my-space/secrets";
 
 export const metadata: Metadata = {
   title: "비밀글",

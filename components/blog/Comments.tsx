@@ -1,7 +1,7 @@
 import CommentForm from "./CommentForm";
 import DeleteCommentButton from "./DeleteCommentButton";
-import { formatDateTime, listComments } from "@/lib/comments";
-import { isAdmin } from "@/lib/auth";
+import { formatDateTime, listComments } from "@/lib/posts/comments";
+import { isAdmin } from "@/lib/security/auth";
 
 const errors: Record<string, string> = {
   required: "이름과 댓글을 모두 적어주세요.",

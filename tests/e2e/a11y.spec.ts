@@ -71,6 +71,7 @@ test.describe("접근성", () => {
   test("사이트 정보 화면도 확인한다", async ({ page }) => {
     await login(page);
     await scan(page, "/admin/site");
+    await scan(page, "/admin/settings");
   });
 
   // 트리와 고치는 칸이 나란히 있는 관리 화면이다. 줄을 고른 상태(끝에

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isVersion, versionChange } from "@/lib/post-version";
+import { isVersion, versionChange } from "@/lib/posts/version";
 import {
   listedAt,
   readingMinutes,

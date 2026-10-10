@@ -1,24 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import Container from "@/components/Container";
-import CareerEditor from "@/components/admin/CareerEditor";
 import LoginForm from "@/components/admin/LoginForm";
 import SetupForm from "@/components/admin/SetupForm";
-import ProfileForm from "@/components/admin/ProfileForm";
-import ContactInfoForm from "@/components/admin/ContactInfoForm";
-import ProjectEditor from "@/components/admin/ProjectEditor";
-import ResumeAdmin, { ResumeVisibility } from "@/components/admin/ResumeAdmin";
-import { saveAboutVisibility } from "@/app/admin/resume/actions";
-import { ABOUT_SECTION_LABELS, ABOUT_SECTIONS } from "@/lib/about-sections";
-import { readResume } from "@/lib/resume";
-import SkillEditor from "@/components/admin/SkillEditor";
-import { isAdmin, needsSetup } from "@/lib/auth";
-import { hasPasskey } from "@/lib/passkeys";
-import { listProjects } from "@/lib/projects";
-import { getDb, profile, careers } from "@/lib/db";
-import { listSkills } from "@/lib/skills";
-import { listCodes, SKILL_CATEGORY } from "@/lib/codes";
+import { isAdmin, needsSetup } from "@/lib/security/auth";
+import { hasPasskey } from "@/lib/security/passkeys";
+import { getDb, messages, posts } from "@/lib/db";
+import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { listTodos } from "@/lib/my-space/todos";
+import { rangeLabel, rangeState } from "@/lib/my-space/todo-dates";
+import { upcomingEvents } from "@/lib/my-space/calendar";
+import { todayInSeoul } from "@/lib/profile/resume-sections";
 
 export const metadata: Metadata = {
   title: "관리",
@@ -32,7 +25,17 @@ const loginErrors: Record<string, string> = {
   rate: "시도가 너무 많습니다. 10분 후에 다시 해주세요.",
 };
 
-export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
+/** 오늘부터 며칠 치 일정을 보이나 */
+const EVENT_DAYS = 2;
+/** 칸마다 몇 줄까지 */
+const ROWS = 5;
+
+/**
+ * 관리 첫 화면(MYH-234). 로그인 전에는 로그인(빈 DB 면 처음 비밀번호 정하기),
+ * 로그인 뒤에는 대시보드: 새 메시지 · 오늘 할 일 · 오늘과 내일 일정 ·
+ * 임시저장 글. 고치는 곳은 칸마다 링크로 간다. 프로필은 /admin/profile 로 옮겼다.
+ */
+export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   if (!(await isAdmin())) {
     // 빈 DB 로 처음 띄워 비밀번호가 아직 없다(MYH-172)
     if (await needsSetup()) {
@@ -54,137 +57,166 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     );
   }
 
-  const params = await searchParams;
-  const resumeError = typeof params.re === "string" ? params.re : undefined;
+  const today = todayInSeoul();
+  const secret = hasSecretKey();
   const db = getDb();
-  const [profileRows, careerRows, skillRows, projectRows, skillCodes, resume] =
-    await Promise.all([
-      db.select().from(profile).where(eq(profile.id, 1)).limit(1),
-      db.select().from(careers).orderBy(desc(careers.startedOn)),
-      listSkills(),
-      listProjects("work"),
-      listCodes(SKILL_CATEGORY, { all: true }),
-      readResume(),
-    ]);
-  const me = profileRows.at(0);
+  const from = new Date(`${today}T00:00:00+09:00`);
+  const to = new Date(from.getTime() + EVENT_DAYS * 24 * 60 * 60 * 1000);
 
-  // 맨 위는 보일 항목(소개 · 이력서), 그 아래는 사용자가 정한 순서(MYH-220)
-  const toc = [
-    ["visibility", "보일 항목"],
-    ["profile", "프로필"],
-    ["contacts", "연락 수단"],
-    ["personal", "인적 사항"],
-    ["schools", "학력"],
-    ["trainings", "교육"],
-    ["licenses", "자격증"],
-    ["careers", "경력"],
-    ["skills", "기술"],
-    ["work", "수행 업무"],
-  ];
+  const [[unread], latest, drafts, todos, agenda] = await Promise.all([
+    db.select({ n: count() }).from(messages).where(isNull(messages.readAt)),
+    db
+      .select({ id: messages.id, name: messages.name, createdAt: messages.createdAt })
+      .from(messages)
+      .where(isNull(messages.readAt))
+      .orderBy(desc(messages.createdAt))
+      .limit(ROWS),
+    db
+      .select({ id: posts.id, kind: posts.kind, title: posts.title, updatedAt: posts.updatedAt })
+      .from(posts)
+      .where(and(isNull(posts.publishedAt), eq(posts.kind, "post")))
+      .orderBy(desc(posts.updatedAt))
+      .limit(ROWS),
+    secret ? listTodos().catch(() => null) : Promise.resolve(null),
+    secret ? upcomingEvents(from, to).catch(() => null) : Promise.resolve(null),
+  ]);
+
+  // 할 일은 넘긴 것 · 오늘 것 · 진행 중인 것만. 날이 없는 것은 「할 일」 화면에서
+  const dueTodos = (todos?.open ?? [])
+    .map((t) => ({ ...t, state: rangeState(t, today) }))
+    .filter((t) => t.state === "late" || t.state === "today" || t.state === "ongoing")
+    .slice(0, ROWS);
 
   return (
     <Container>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">프로필</h1>
-        <p className="flex gap-4 text-sm">
-          <Link href="/about" className="text-muted transition-colors hover:text-foreground">
-            소개 보기 ↗
-          </Link>
-          <Link href="/resume" className="text-muted transition-colors hover:text-foreground">
-            이력서 보기 ↗
-          </Link>
-        </p>
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight">대시보드</h1>
+      <p className="mt-3 text-sm text-muted">{today} · 챙길 것만 모았습니다.</p>
 
-      {/* 소개와 이력서를 한 화면에서 고친다(MYH-218 · MYH-220) */}
-      <nav aria-label="이 화면 목차" className="sticky top-16 z-10 -mx-2 mt-6 flex flex-wrap gap-1 rounded-xl border border-border bg-background/95 px-2 py-2 text-sm backdrop-blur">
-        {toc.map(([id, label]) => (
-          <a key={id} href={`#${id}`} className="rounded-md px-2 py-1 text-foreground/70 hover:bg-foreground/5 hover:text-foreground">
-            {label}
-          </a>
-        ))}
-      </nav>
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <Card title="새 메시지" href="/admin/messages" count={Number(unread?.n ?? 0)}>
+          {latest.length === 0 ? (
+            <Empty>새 메시지가 없습니다.</Empty>
+          ) : (
+            <ul className="space-y-1 text-sm">
+              {latest.map((m) => (
+                <li key={m.id} className="flex justify-between gap-3">
+                  <span className="truncate">{m.name}</span>
+                  <time className="shrink-0 text-xs text-muted tabular-nums">
+                    {m.createdAt.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
 
-      <section id="visibility" aria-labelledby="visibility-h" className="mt-10 scroll-mt-32">
-        <h2 id="visibility-h" className="text-lg font-semibold">
-          방문자에게 보일 항목
-        </h2>
-        <p className="mt-1 text-sm text-muted">
-          로그인한 나에게는 늘 전부 보입니다. 끈 항목은 방문자에게 보내는 화면에 아예
-          넣지 않습니다.
-        </p>
-        <div className="mt-5 grid gap-6 sm:grid-cols-2">
-          <div className="rounded-xl border border-border p-4">
-            <p className="mb-3 text-sm font-medium">소개에 보일 항목</p>
-            {me ? (
-              <form action={saveAboutVisibility} aria-label="소개에 보일 항목" className="flex flex-wrap items-center gap-x-5 gap-y-3">
-                {ABOUT_SECTIONS.map((s) => (
-                  <label key={s} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      name="section"
-                      value={s}
-                      defaultChecked={me.aboutSections.includes(s)}
-                    />
-                    {ABOUT_SECTION_LABELS[s]}
-                  </label>
-                ))}
-                <button type="submit" className="rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-foreground/5">
-                  저장
-                </button>
-              </form>
+        {secret ? (
+          <Card title="할 일" href="/admin/todos" count={dueTodos.length}>
+            {dueTodos.length === 0 ? (
+              <Empty>오늘 챙길 할 일이 없습니다.</Empty>
             ) : (
-              <p className="text-sm text-muted">프로필을 먼저 저장하세요.</p>
+              <ul className="space-y-1 text-sm">
+                {dueTodos.map((t) => (
+                  <li key={t.id} className="flex justify-between gap-3">
+                    <span className="truncate">{t.title ?? "열 수 없음"}</span>
+                    <span
+                      className={`shrink-0 text-xs tabular-nums ${
+                        t.state === "late"
+                          ? "font-medium text-red-600 dark:text-red-400"
+                          : t.state === "today"
+                            ? "font-medium text-amber-700 dark:text-amber-400"
+                            : "text-emerald-700 dark:text-emerald-400"
+                      }`}
+                    >
+                      {t.state === "late" ? "넘김 · " : t.state === "today" ? "오늘 · " : ""}
+                      {rangeLabel(t)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
-          <div className="rounded-xl border border-border p-4">
-            <p className="mb-3 text-sm font-medium">이력서에 보일 항목</p>
-            <ResumeVisibility chosen={resume.publicSections} />
-          </div>
-        </div>
-      </section>
+          </Card>
+        ) : null}
 
-      <section id="profile" className="mt-14 scroll-mt-32">
-        <h2 className="mb-5 text-lg font-semibold">프로필</h2>
-        <ProfileForm me={me} />
-      </section>
+        {secret && agenda && agenda.calendars > 0 ? (
+          <Card title="오늘 · 내일 일정" href="/admin/calendar" count={agenda.events.length}>
+            {agenda.events.length === 0 ? (
+              <Empty>
+                일정이 없습니다.
+                {agenda.failed > 0 ? ` (캘린더 ${agenda.failed}개를 읽지 못했습니다)` : ""}
+              </Empty>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {agenda.events.slice(0, ROWS).map((e) => (
+                  <li key={`${e.key}-${e.start.toISOString()}`} className="flex gap-3">
+                    <span className="w-20 shrink-0 text-xs text-muted tabular-nums">
+                      {e.allDay
+                        ? e.startDay === today
+                          ? "오늘 종일"
+                          : "내일 종일"
+                        : e.start.toLocaleString("ko-KR", {
+                            timeZone: "Asia/Seoul",
+                            weekday: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                    </span>
+                    <span className="truncate">{e.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        ) : null}
 
-      {/* 연락 수단은 프로필에서 떼어 따로 저장한다(MYH-222). 소개 · 방명록에 나온다 */}
-      <section id="contacts" className="mt-14 scroll-mt-32">
-        <h2 className="mb-5 text-lg font-semibold">연락 수단</h2>
-        <ContactInfoForm me={me} />
-      </section>
-
-      {/* 인적 사항 · 학력 · 교육 · 자격증 - 이력서에만 나온다 */}
-      <ResumeAdmin errorCode={resumeError} />
-
-      <section id="careers" className="mt-14 scroll-mt-32">
-        <h2 className="mb-5 text-lg font-semibold">경력</h2>
-        <CareerEditor rows={careerRows} />
-      </section>
-
-      <section id="skills" className="mt-14 scroll-mt-32">
-        <h2 className="mb-5 text-lg font-semibold">기술</h2>
-        <SkillEditor rows={skillRows} codes={skillCodes} />
-      </section>
-
-      {/* 수행 업무. 공개 화면에서도 소개 안에 있으니 고치는 자리도 여기다 */}
-      <section id="work" className="mt-14 scroll-mt-32">
-        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4">
-          <h2 className="text-lg font-semibold">수행 업무</h2>
-          <Link
-            href="/about#work"
-            className="text-sm text-muted transition-colors hover:text-foreground"
-          >
-            공개 화면에서 보기 ↗
-          </Link>
-        </div>
-        <p className="mb-5 text-sm text-muted">
-          정렬 순서가 작을수록 위에 나옵니다. 같으면 최근 시작한 것부터. 종료일을
-          비우면 진행 중으로 보입니다.
-        </p>
-        <ProjectEditor rows={projectRows} kind="work" />
-      </section>
+        <Card title="임시저장 글" href="/admin/posts" count={drafts.length}>
+          {drafts.length === 0 ? (
+            <Empty>임시저장한 글이 없습니다.</Empty>
+          ) : (
+            <ul className="space-y-1 text-sm">
+              {drafts.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    href={`/admin/posts/${p.id}`}
+                    className="block truncate underline-offset-4 hover:underline"
+                  >
+                    {p.title || "제목 없음"}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
     </Container>
   );
+}
+
+/** 대시보드의 칸 하나. 제목을 누르면 그 화면으로 간다 */
+function Card({
+  title,
+  href,
+  count,
+  children,
+}: {
+  title: string;
+  href: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section aria-label={title} className="rounded-xl border border-border p-4">
+      <h2 className="mb-3 flex items-baseline justify-between gap-2">
+        <Link href={href} className="font-semibold underline-offset-4 hover:underline">
+          {title}
+        </Link>
+        <span className="text-sm text-muted tabular-nums">{count}</span>
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm text-muted">{children}</p>;
 }

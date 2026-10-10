@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { DEFAULT_POST_COUNT, POST_COUNTS } from "@/lib/post-counts";
+import { DEFAULT_POST_COUNT, POST_COUNTS } from "@/lib/posts/counts";
 
 /**
  * 홈에 몇 개를 보여줄지 고른다. 고른 값은 주소(`?posts=`)에 남는다.

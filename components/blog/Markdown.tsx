@@ -3,7 +3,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
 import CodeBlock from "./CodeBlock";
 import Mermaid from "./Mermaid";
-import { mermaidSource } from "@/lib/mermaid-block";
+import { mermaidSource } from "@/lib/posts/mermaid-block";
 import remarkGfm from "remark-gfm";
 
 /**

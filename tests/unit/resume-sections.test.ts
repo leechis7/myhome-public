@@ -4,7 +4,7 @@ import {
   careerYears,
   dotted,
   todayInSeoul,
-} from "@/lib/resume-sections";
+} from "@/lib/profile/resume-sections";
 
 describe("이력서 셈(MYH-198)", () => {
   it("만 나이는 생일이 지나야 오른다", () => {

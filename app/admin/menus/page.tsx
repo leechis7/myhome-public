@@ -8,8 +8,8 @@ import {
   MenuTree,
 } from "@/components/admin/MenuEditor";
 import { resetMenus } from "@/app/admin/menus/actions";
-import { isAdmin } from "@/lib/auth";
-import { listMenus } from "@/lib/menus";
+import { isAdmin } from "@/lib/security/auth";
+import { listMenus } from "@/lib/site/menus";
 
 export const metadata: Metadata = {
   title: "메뉴 관리",
