@@ -8,6 +8,10 @@ import ICAL from "ical.js";
  * - 종일 일정: 날짜만(DTSTART;VALUE=DATE). 끝 날은 그 날을 넣지 않는다(iCal 규칙)
  * - 반복: RRULE 을 창 안에서 펼친다. 한 번만 바꾼 회차(RECURRENCE-ID)와
  *   뺀 회차(EXDATE)도 따른다
+ * - 음력 반복(삼성 · 네이버에서 넘어온 것)은 RRULE 대신 해마다의 날을 RDATE 로
+ *   늘어놓는데, 종일 일정인데도 RDATE 를 「20261127T000000Z」 처럼 UTC 0시로 적는다.
+ *   그대로 두면 한국 시각 오전 9시부터 다음 날 9시까지의 일정이 되어 이틀에
+ *   걸쳐 보인다. 본 일정이 종일이면 회차도 그 날짜의 종일로 바로잡는다
  */
 
 export type CalendarEvent = {
@@ -29,6 +33,11 @@ const MAX_OCCURRENCES = 2000;
 
 function dayString(t: ICAL.Time) {
   return `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}`;
+}
+
+/** 시각의 날짜만 남긴 종일 값 */
+function allDayOf(t: ICAL.Time) {
+  return ICAL.Time.fromData({ year: t.year, month: t.month, day: t.day, isDate: true });
 }
 
 function seoulMidnight(day: string) {
@@ -94,10 +103,22 @@ export function eventsBetween(ics: string, from: Date, to: Date): CalendarEvent[
     }
 
     const it = event.iterator();
+    const seen = new Set<string>();
     for (let i = 0, next = it.next(); next && i < MAX_OCCURRENCES; i += 1, next = it.next()) {
       if (next.compare(toTime) >= 0) break;
       const d = event.getOccurrenceDetails(next);
-      const e = toEvent(d.item, d.startDate, d.endDate, `${event.uid}@${next.toString()}`);
+      let start = d.startDate;
+      let end = d.endDate;
+      if (event.startDate.isDate && !start.isDate) {
+        // 종일 일정의 회차가 UTC 0시 시각으로 왔다(음력 RDATE) - 그 날짜의 종일로
+        start = allDayOf(start.convertToZone(ICAL.Timezone.utcTimezone));
+        end = start.clone();
+        end.addDuration(event.duration);
+      }
+      const e = toEvent(d.item, start, end, `${event.uid}@${start.toString()}`);
+      // RDATE 가 DTSTART 와 같은 날을 한 번 더 적기도 한다
+      if (seen.has(e.key)) continue;
+      seen.add(e.key);
       if (d.item.component.getFirstPropertyValue("status") === "CANCELLED") continue;
       if (overlaps(e, from, to)) out.push(e);
     }

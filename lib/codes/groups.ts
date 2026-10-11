@@ -11,7 +11,7 @@ export const LINK_CATEGORY = "00001";
 export const SKILL_CATEGORY = "00002";
 /** 글의 연재(MYH-187) */
 export const SERIES = "00003";
-/** 책 종류(MYH-190): 종이책 · 이북 · 오디오북 */
+/** 책 종류(MYH-190): 종이책 · 전자책 · 오디오북 */
 export const BOOK_KIND = "00004";
 /** 책 분류(MYH-225): 컴퓨터 · 교양 · 소설 … */
 export const BOOK_CATEGORY = "00005";

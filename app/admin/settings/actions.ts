@@ -6,6 +6,8 @@ import { requireAdmin } from "@/lib/security/auth";
 import { configSources, saveConfig, type ConfigName } from "@/lib/site/settings";
 import { getDb, siteSettings } from "@/lib/db";
 import { isEditorKind } from "@/lib/posts/editor-kinds";
+import { isBookSource, moveSource, readSources, writeSources } from "@/lib/books/sources";
+import { isKakaoKey } from "@/lib/books/lookup-key";
 import { invalidateSite } from "@/lib/site/info";
 
 /**
@@ -17,7 +19,7 @@ export async function saveOutsideAction(formData: FormData) {
   await requireAdmin();
   // 돌아갈 서비스 칸. 정해 둔 것만
   const at = String(formData.get("anchor") ?? "");
-  const anchor = ["telegram", "google", "gemini", "stats"].includes(at) ? at : "settings";
+  const anchor = ["telegram", "google", "gemini", "stats", "calibre", "kakao", "book-search"].includes(at) ? at : "settings";
   const back = (out: string) => `/admin/settings?out=${out}&at=${anchor}#${anchor}`;
   const sources = await configSources();
   const take = (name: ConfigName, max: number) => {
@@ -39,6 +41,10 @@ export async function saveOutsideAction(formData: FormData) {
   };
   const token = secret("telegramBotToken", 200);
   if (token && !/^\d{5,15}:[\w-]{20,}$/.test(token)) redirect(back("token"));
+  const kakao = secret("kakaoRestKey", 100);
+  if (kakao && !isKakaoKey(kakao)) redirect(back("kakao"));
+  const calibreUrl = take("calibreUrl", 300);
+  if (calibreUrl && !/^https?:\/\/\S+$/.test(calibreUrl)) redirect(back("calibre"));
   const gemini = secret("geminiApiKey", 200);
   // 「AIza…」 꼴과 새 꼴(「AQ.…」, 점이 든다)이 다 있다
   if (gemini && !/^[\w.-]{20,200}$/.test(gemini)) redirect(back("gemini"));
@@ -50,8 +56,13 @@ export async function saveOutsideAction(formData: FormData) {
     googleSiteVerification: take("googleSiteVerification", 200),
     monitoringDashboard: dashboard,
     geminiApiKey: gemini,
+    kakaoRestKey: kakao,
+    calibreUrl,
+    calibreUser: take("calibreUser", 100),
+    calibrePassword: secret("calibrePassword", 200),
   });
   revalidatePath("/", "layout");
+  revalidatePath("/admin/books");
   redirect(back("saved"));
 }
 
@@ -71,4 +82,48 @@ export async function saveEditorAction(formData: FormData) {
   invalidateSite();
   revalidatePath("/admin", "layout");
   redirect("/admin/settings?out=saved&at=writing#writing");
+}
+
+/**
+ * 텔레그램 글을 AI 로 먼저 가르나(MYH-233). 보낸 글이 Google(Gemini 무료 등급)로
+ * 나가므로 사람이 켠다. Gemini 키가 없으면 켜도 규칙으로 간다.
+ */
+export async function saveTelegramAiAction(formData: FormData) {
+  await requireAdmin();
+  const on = formData.get("telegramAi") === "1";
+  await getDb()
+    .insert(siteSettings)
+    .values({ id: 1, telegramAi: on, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: siteSettings.id, set: { telegramAi: on, updatedAt: new Date() } });
+  invalidateSite();
+  redirect("/admin/settings?out=saved&at=telegram#telegram");
+}
+
+/**
+ * 책 찾기 출처의 차례 · 사용(MYH-226). 폼이 보낸 차례(order)와 켠 것(on)을
+ * 저장한다. ↑ · ↓ 단추(move=출처:up)로 한 칸씩 옮긴다 - 옮기면서 켜고 끈 것도
+ * 함께 저장된다.
+ */
+export async function saveBookSourcesAction(formData: FormData) {
+  await requireAdmin();
+  const on = new Set(formData.getAll("on").map(String));
+  let list = readSources(
+    formData
+      .getAll("order")
+      .map(String)
+      .map((s) => (on.has(s) ? s : `-${s}`))
+      .join(","),
+  );
+  const [source, dir] = String(formData.get("move") ?? "").split(":");
+  if (isBookSource(source) && (dir === "up" || dir === "down")) list = moveSource(list, source, dir);
+  await getDb()
+    .insert(siteSettings)
+    .values({ id: 1, bookSources: writeSources(list), updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: siteSettings.id,
+      set: { bookSources: writeSources(list), updatedAt: new Date() },
+    });
+  invalidateSite();
+  revalidatePath("/admin/books");
+  redirect("/admin/settings?out=saved&at=book-search#book-search");
 }

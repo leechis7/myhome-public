@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
-import KakaoSettings from "@/components/admin/settings/KakaoSettings";
+import BookSourceSettings from "@/components/admin/settings/BookSourceSettings";
 import CalendarSettings from "@/components/admin/settings/CalendarSettings";
 import ConfigFields from "@/components/admin/settings/ConfigFields";
 import TelegramSettings from "@/components/admin/settings/TelegramSettings";
 import { isAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { envSetting } from "@/lib/site/settings";
 import { getStoredSite } from "@/lib/site/info";
 import { saveEditorAction } from "@/app/admin/settings/actions";
 import { DEFAULT_EDITOR, EDITORS, EDITOR_LABELS, editorOf } from "@/lib/posts/editor-kinds";
@@ -29,7 +30,7 @@ export default async function AdminIntegrationsPage({
 }: PageProps<"/admin/settings">) {
   if (!(await isAdmin())) redirect("/admin");
 
-  const [{ cal, tg, kk, out, at }, site] = await Promise.all([searchParams, getStoredSite()]);
+  const [{ cal, tg, out, at }, site] = await Promise.all([searchParams, getStoredSite()]);
   // 값 칸의 알림은 저장한 서비스 칸에만
   const outNotice = (anchor: string) =>
     at === anchor && typeof out === "string" ? out : undefined;
@@ -49,6 +50,11 @@ export default async function AdminIntegrationsPage({
               저장했습니다.
             </p>
           ) : null}
+          {envSetting("editor") ? (
+            <p className="text-xs text-emerald-700 dark:text-emerald-400">
+              ● .env 의 DEFAULT_EDITOR 를 씁니다 · {EDITOR_LABELS[editorOf(envSetting("editor"))]}
+            </p>
+          ) : (
           <form action={saveEditorAction} aria-label="글쓰기" className="space-y-3">
             <label className="block">
               <span className="mb-1 block text-sm font-medium">기본 편집기</span>
@@ -77,6 +83,7 @@ export default async function AdminIntegrationsPage({
               편집기 저장
             </button>
           </form>
+          )}
         </Integration>
 
         <Integration id="telegram" title="텔레그램">
@@ -103,15 +110,27 @@ export default async function AdminIntegrationsPage({
           />
         </Integration>
 
-        <Integration id="book-search" title="카카오">
-          {hasSecretKey() ? (
-            <KakaoSettings notice={typeof kk === "string" ? kk : undefined} />
-          ) : (
-            <p className="text-sm text-muted">
-              키를 암호화할 열쇠(SECRETS_KEY)가 없어 화면에서 넣을 수 없습니다. .env 의
-              KAKAO_REST_API_KEY 에 넣으세요.
-            </p>
-          )}
+        {/* 책 찾기(MYH-226): 출처의 차례 · 사용, 카카오 키, 내 Calibre 서재 */}
+        <Integration id="book-search" title="책 찾기">
+          <BookSourceSettings notice={outNotice("book-search")} />
+          <div id="kakao" className="scroll-mt-24">
+            <h4 className="mb-2 text-sm font-medium">카카오</h4>
+            <ConfigFields
+              names={["kakaoRestKey"]}
+              anchor="kakao"
+              label="카카오 키"
+              notice={outNotice("kakao")}
+            />
+          </div>
+          <div id="calibre" className="scroll-mt-24">
+            <h4 className="mb-2 text-sm font-medium">내 서재 (Calibre)</h4>
+            <ConfigFields
+              names={["calibreUrl", "calibreUser", "calibrePassword"]}
+              anchor="calibre"
+              label="Calibre"
+              notice={outNotice("calibre")}
+            />
+          </div>
         </Integration>
 
         <Integration id="gemini" title="Gemini">

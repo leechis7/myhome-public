@@ -227,7 +227,7 @@ export const resumeLicenses = pgTable("resume_licenses", {
 });
 
 /**
- * 읽는 책(MYH-190). 산 책 · 이북 · 오디오북 가운데 읽고 있는 것을 직접 적고
+ * 읽는 책(MYH-190). 산 책 · 전자책 · 오디오북 가운데 읽고 있는 것을 직접 적고
  * 소개 화면에 보인다. 종류는 코드 그룹 00004(책 종류), 분류는 00005(책 분류)다.
  */
 export const books = pgTable(
@@ -240,7 +240,7 @@ export const books = pgTable(
     kindGroup: varchar("kind_group", { length: 20 })
       .notNull()
       .default("00004"),
-    /** 종류(codes): 종이책 · 이북 · 오디오북 … 비워도 된다 */
+    /** 종류(codes): 종이책 · 전자책 · 오디오북 … 비워도 된다 */
     kindCode: varchar("kind_code", { length: 20 }),
     /** 분류 그룹. 늘 00005(책 분류) - 외래 키가 그룹까지 보게 하려고 둔다 */
     categoryGroup: varchar("category_group", { length: 20 })
@@ -248,7 +248,7 @@ export const books = pgTable(
       .default("00005"),
     /** 분류(codes, MYH-225): 컴퓨터 · 교양 · 소설 … 비워도 된다 */
     categoryCode: varchar("category_code", { length: 20 }),
-    /** want(읽고 싶은 책, MYH-227) · reading(읽는 중) · read(다 읽음) */
+    /** want(읽고 싶은 책, MYH-227) · reading(읽는 중) · read(다 읽음) · stopped(읽다 만 책) */
     status: text("status").notNull().default("reading"),
     /** 한두 줄 소개. 내 말로 */
     note: text("note"),
@@ -274,7 +274,7 @@ export const books = pgTable(
       .defaultNow(),
   },
   (t) => [
-    check("books_status", sql`${t.status} in ('want', 'reading', 'read')`),
+    check("books_status", sql`${t.status} in ('want', 'reading', 'read', 'stopped')`),
     check("books_kind_group", sql`${t.kindGroup} = '00004'`),
     check("books_category_group", sql`${t.categoryGroup} = '00005'`),
     check("books_rating", sql`${t.rating} between 1 and 5`),
@@ -861,6 +861,14 @@ export const siteSettings = pgTable(
     monitoringDashboard: text("monitoring_dashboard"),
     /** 암호문. 책 소개를 요약할 Gemini API 키(MYH-233) */
     geminiApiKey: text("gemini_api_key"),
+    /** 내 Calibre 서재(MYH-226). 책 찾기가 소개 · 표지를 가져온다. 비밀번호는 암호문 */
+    calibreUrl: text("calibre_url"),
+    calibreUser: text("calibre_user"),
+    calibrePassword: text("calibre_password"),
+    /** 책 찾기 출처의 순서 · 사용(MYH-226). 「kakao,-calibre,openlibrary」 꼴 */
+    bookSources: text("book_sources"),
+    /** 텔레그램 글을 AI 로 먼저 가르나(MYH-233). 기본 끔 */
+    telegramAi: boolean("telegram_ai").notNull().default(false),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

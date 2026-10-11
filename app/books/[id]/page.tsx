@@ -26,7 +26,7 @@ export async function generateMetadata({
 }: PageProps<"/books/[id]">): Promise<Metadata> {
   const { id } = await params;
   const book = await findBook(Number(id));
-  if (!book) return { title: "책" };
+  if (!book || book.status === "stopped") return { title: "책" };
   return pageMetadata({
     title: book.title,
     description: book.note ?? `${book.author} 「${book.title}」 의 독서 노트`,
@@ -41,7 +41,8 @@ export async function generateMetadata({
 export default async function BookPage({ params }: PageProps<"/books/[id]">) {
   const { id } = await params;
   const book = await findBook(Number(id));
-  if (!book) notFound();
+  // 읽다 만 책은 공개 화면에 내놓지 않는다(MYH-227)
+  if (!book || book.status === "stopped") notFound();
 
   const cover = coverUrl(book);
   const started = day(book.startedOn);

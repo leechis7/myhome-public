@@ -414,6 +414,41 @@
       "when": 1791580313411,
       "tag": "0058_admin_home",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1791609806324,
+      "tag": "0059_telegram_ai",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1791613061218,
+      "tag": "0060_book_stopped",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1791615506827,
+      "tag": "0061_site_calibre",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1791620730314,
+      "tag": "0062_book_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1791622286126,
+      "tag": "0063_ebook_label",
+      "breakpoints": true
     }
   ]
 }

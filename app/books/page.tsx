@@ -39,7 +39,7 @@ export default async function BooksPage({ searchParams }: PageProps<"/books">) {
     <Container>
       <PageHeader
         title="읽는 책"
-        description="요즘 읽는 책과 다 읽은 책입니다. 종이책 · 이북 · 오디오북을 가리지 않습니다."
+        description="요즘 읽는 책과 다 읽은 책입니다. 종이책 · 전자책 · 오디오북을 가리지 않습니다."
         action={<AdminLinkButton href="/admin/books" label="고치기" />}
       />
 

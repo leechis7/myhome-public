@@ -4,6 +4,14 @@ import { useRef, useState, useTransition } from "react";
 import { lookupBooks, summarizeBookAction } from "@/app/admin/books/actions";
 import type { FoundBook } from "@/lib/books/lookup";
 import type { SummaryMiss } from "@/lib/books/summary";
+import { BOOK_SOURCES, type BookSource } from "@/lib/books/sources";
+
+/** 출처 딱지 색. 새 출처는 색을 정하지 않으면 회색 */
+const SOURCE_TONE: Partial<Record<BookSource, string>> = {
+  kakao: "bg-yellow-400/20 text-yellow-800 dark:text-yellow-300",
+  calibre: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  openlibrary: "bg-foreground/[0.06] text-foreground/60",
+};
 
 /** AI 요약을 못 받았을 때의 말. nokey 는 키를 안 넣은 것이라 알리지 않는다 */
 const MISS_TEXT: Partial<Record<SummaryMiss, string>> = {
@@ -38,6 +46,8 @@ export default function BookLookup({
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState(initial);
+  // 기본은 제목에서만. 켜면 그번만 지은이 · 내용까지 넓게
+  const [wide, setWide] = useState(false);
   const [found, setFound] = useState<FoundBook[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [picked, setPicked] = useState<FoundBook | null>(null);
@@ -69,7 +79,7 @@ export default function BookLookup({
   function search() {
     if (!query.trim()) return;
     start(async () => {
-      const result = await lookupBooks(query);
+      const result = await lookupBooks(query, wide);
       if ("error" in result) {
         setError(result.error);
         setFound(null);
@@ -147,6 +157,11 @@ export default function BookLookup({
           {pending ? "찾는 중…" : "찾기"}
         </button>
       </div>
+      {/* 이름에 「제목」 · 「지은이」 · 「소개」 를 넣지 않는다 - 아래 칸들과 이름이 겹친다 */}
+      <label className="flex items-center gap-1.5 text-xs text-muted">
+        <input type="checkbox" checked={wide} onChange={(e) => setWide(e.target.checked)} />
+        넓게 찾기 (저자 · 내용 포함)
+      </label>
       <p className="text-xs text-faint">
         {source} 에서 찾습니다. 고르면 제목 · 지은이 · 링크 · 표지와 소개 밑그림(카카오)을
         채웁니다. 소개는 비어 있을 때만 채우니 내 말로 고쳐 쓰세요. 저장해야 바뀝니다.
@@ -193,8 +208,19 @@ export default function BookLookup({
                   className="min-w-0 flex-1 rounded-md px-2 py-1 text-left text-sm transition-colors hover:bg-foreground/5"
                 >
                   <span className="block truncate font-medium">{book.title}</span>
+                  {/* 출처 딱지. 같은 ISBN 을 합친 줄이면 여럿이다 */}
+                  <span className="mt-0.5 flex flex-wrap gap-1">
+                    {(book.sources ?? [book.source]).map((s) => (
+                      <span
+                        key={s}
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${SOURCE_TONE[s] ?? SOURCE_TONE.openlibrary}`}
+                      >
+                        {BOOK_SOURCES[s].label}
+                      </span>
+                    ))}
+                  </span>
                   <span className="block truncate text-xs text-muted">
-                    {[book.author, book.publisher, book.isbn].filter(Boolean).join(" · ")}
+                    {[book.author, book.publisher, book.published, book.isbn].filter(Boolean).join(" · ")}
                   </span>
                   <span className="mt-0.5 block text-xs text-faint">눌러서 고르기</span>
                 </button>

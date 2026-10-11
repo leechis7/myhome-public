@@ -165,7 +165,9 @@ function BookItem({
                 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                 : book.status === "want"
                   ? "bg-sky-500/10 text-sky-700 dark:text-sky-400"
-                  : "bg-foreground/[0.06] text-foreground/60"
+                  : book.status === "stopped"
+                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                    : "bg-foreground/[0.06] text-foreground/60"
             }`}
           >
             {BOOK_STATUS_LABELS[book.status as BookStatus]}
@@ -257,6 +259,7 @@ export default function BookEditor({
   const sections: { status: BookStatus; title: string }[] = [
     { status: "reading", title: "읽는 중" },
     { status: "want", title: "읽고 싶은 책" },
+    { status: "stopped", title: "읽다 만 책" },
     { status: "read", title: "다 읽음" },
   ];
 
@@ -341,6 +344,19 @@ export default function BookEditor({
           {sections.map(({ status, title }) => {
             const list = shown.filter((b) => b.status === status);
             if (list.length === 0) return null;
+            // 읽다 만 책은 접어 둔다. 거르는 중이면 펼친다
+            if (status === "stopped") {
+              return (
+                <section key={status} aria-label={title}>
+                  <details open={filtering}>
+                    <summary className="mb-2 cursor-pointer text-sm font-semibold text-muted">
+                      {title} <span className="tabular-nums">{list.length}</span>
+                    </summary>
+                    <ul className="space-y-2">{list.map(item)}</ul>
+                  </details>
+                </section>
+              );
+            }
             if (status !== "read") {
               return (
                 <section key={status} aria-label={title}>

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { getDb, siteSettings } from "@/lib/db";
 import { eventsBetween, type CalendarEvent } from "@/lib/my-space/calendar-ical";
 import { decryptText, encryptText } from "@/lib/security/secret-crypto";
+import { envSetting } from "@/lib/site/settings";
 
 /**
  * 일정(MYH-214). 구글 캘린더의 iCal 비공개 주소를 읽어 보여 준다. 일정을
@@ -27,8 +28,23 @@ export function parseCalendarLine(line: string): CalendarSource | null {
   return { name: m[1].trim().slice(0, 20), url: m[2] };
 }
 
-/** 저장된 캘린더들. 없거나 열 수 없으면 빈 배열 */
+/**
+ * .env 의 GOOGLE_CALENDAR_ICAL(MYH-232). 「이름 https://…」 을 ; 나 줄바꿈으로
+ * 잇는다. 읽을 수 없는 조각은 버린다. 없으면 null - 화면에서 넣은 것을 쓴다.
+ */
+export function calendarsFromEnv(): CalendarSource[] | null {
+  const env = envSetting("calendar");
+  if (!env) return null;
+  return env
+    .split(/[;\n]/)
+    .map((part) => parseCalendarLine(part))
+    .filter((c): c is CalendarSource => c !== null);
+}
+
+/** 쓸 캘린더들. .env 가 먼저, 없으면 화면에서 넣은 것. 없거나 열 수 없으면 빈 배열 */
 export async function getCalendars(): Promise<CalendarSource[]> {
+  const fromEnv = calendarsFromEnv();
+  if (fromEnv) return fromEnv;
   const [row] = await getDb()
     .select({ calendarIcal: siteSettings.calendarIcal })
     .from(siteSettings)

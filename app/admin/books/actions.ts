@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/security/auth";
 import { forgetUploadIfUnused } from "@/lib/uploads/attachments";
 import { isBookStatus, parseRating } from "@/lib/books";
 import { fetchCover, searchBooks, type FoundBook } from "@/lib/books/lookup";
-import { isKakaoKey, kakaoKey, saveKakaoKey } from "@/lib/books/lookup-key";
+import { calibreAccess, lookupAccess } from "@/lib/books/lookup-key";
 import { summarizeBook } from "@/lib/books/summary";
 import { siteConfig } from "@/lib/site/settings";
 import { BOOK_CATEGORY, BOOK_KIND, readCode } from "@/lib/codes";
@@ -67,7 +67,7 @@ export async function saveBook(formData: FormData) {
   } else {
     // 책 찾기로 고른 표지(MYH-226). 받지 못하면 표지 없이 저장한다
     const found = text(formData, "coverUrl");
-    const fetched = found ? await fetchCover(found).catch(() => null) : null;
+    const fetched = found ? await fetchCover(found, await calibreAccess()).catch(() => null) : null;
     if (fetched && ALLOWED_TYPES.has(fetched.type)) {
       coverId = (await saveUpload(fetched)).id;
     }
@@ -165,37 +165,16 @@ export async function saveReadingNote(formData: FormData) {
  */
 export async function lookupBooks(
   query: string,
+  wide = false,
 ): Promise<{ books: FoundBook[] } | { error: string }> {
   await requireAdmin();
   const q = String(query ?? "").trim().slice(0, 100);
   if (!q) return { books: [] };
   try {
-    return { books: await searchBooks(q, await kakaoKey()) };
+    return { books: await searchBooks(q, { ...(await lookupAccess()), wide: wide === true }) };
   } catch {
     return { error: "책을 찾지 못했습니다. 잠시 뒤에 다시 해 보세요." };
   }
-}
-
-/**
- * 카카오 책 검색 키(MYH-231). 관리 › 설정 › 환경설정 에서 넣고 뺀다. 넣은 키는
- * 암호화해 두고 다시 보여 주지 않는다.
- */
-export async function saveKakaoKeyAction(formData: FormData) {
-  await requireAdmin();
-  const key = String(formData.get("key") ?? "").trim();
-  if (!isKakaoKey(key)) redirect("/admin/settings?kk=invalid#book-search");
-  await saveKakaoKey(key);
-  revalidatePath("/admin/settings");
-  revalidatePath(BACK);
-  redirect("/admin/settings?kk=saved#book-search");
-}
-
-export async function clearKakaoKeyAction() {
-  await requireAdmin();
-  await saveKakaoKey(null);
-  revalidatePath("/admin/settings");
-  revalidatePath(BACK);
-  redirect("/admin/settings?kk=cleared#book-search");
 }
 
 /**

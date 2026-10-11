@@ -1,5 +1,6 @@
 import { isAdmin } from "@/lib/security/auth";
 import { fetchCover } from "@/lib/books/lookup";
+import { calibreAccess } from "@/lib/books/lookup-key";
 
 export const dynamic = "force-dynamic";
 
@@ -10,13 +11,14 @@ export const dynamic = "force-dynamic";
  * Caddy 가 CSP 를 따로 걸어 그것까지 고쳐야 하고, 보는 사람의 주소도 바깥에
  * 알려진다. 여기서 받아 넘기면 img-src 는 'self' 그대로다.
  *
- * 관리자만, 정해 둔 곳(lib/books/lookup.ts 의 COVER_HOSTS)의 그림만 받는다 -
+ * 관리자만, 정해 둔 곳(lib/books/lookup.ts 의 COVER_HOSTS)과 내 Calibre 서재
+ * (calibre:번호, 로그인해서)의 그림만 받는다 -
  * 아무 주소나 서버가 대신 열어 주는 통로가 되지 않게.
  */
 export async function GET(request: Request) {
   if (!(await isAdmin())) return new Response("not found", { status: 404 });
   const address = new URL(request.url).searchParams.get("u") ?? "";
-  const file = await fetchCover(address).catch(() => null);
+  const file = await fetchCover(address, await calibreAccess()).catch(() => null);
   if (!file || file.type === "image/svg+xml") {
     return new Response("not found", { status: 404 });
   }

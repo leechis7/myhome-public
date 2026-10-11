@@ -1,12 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { addMemo } from "@/lib/my-space/memos";
 import { addTodo } from "@/lib/my-space/todos";
-import { rangeLabel, readTodoDates, type TodoRange } from "@/lib/my-space/todo-dates";
-import { guessTodo } from "@/lib/my-space/todo-intent";
+import { rangeLabel, type TodoRange } from "@/lib/my-space/todo-dates";
 import { todayInSeoul } from "@/lib/profile/resume-sections";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import { inboxDisabled, reply } from "@/lib/telegram/bot";
-import { siteConfig } from "@/lib/site/settings";
+import { siteConfig, telegramAiOn } from "@/lib/site/settings";
+import { classify } from "@/lib/telegram/classify";
 import { matchesSecret, readUpdate } from "@/lib/telegram/inbox";
 
 export const dynamic = "force-dynamic";
@@ -41,36 +41,35 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  if (message.kind === "todo") {
-    // 글 속의 날짜는 날짜 칸으로(MYH-229). 「할일 10/15 보고서」 → 보고서, 마감 10/15
-    const { title, ...range } = readTodoDates(message.text.slice(0, MAX_MEMO), todayInSeoul());
-    await saveTodo(message.chatId, title, range);
-    return Response.json({ ok: true });
-  }
+  // 할 일 · 메모 · 저장 안 함을 가른다(MYH-233). 「AI 로 판정」 을 켰고 Gemini 키가
+  // 있으면 AI 가 먼저, 실패하면 규칙. 말을 붙여 보낸 글은 그 말을 따른다
+  const config = await siteConfig();
+  const key = (await telegramAiOn()) ? config.geminiApiKey : null;
+  const fixed = message.kind === "free" ? null : message.kind;
+  const decision = await classify(message.text.slice(0, MAX_MEMO), todayInSeoul(), fixed, key);
+  const by = key ? (decision.how === "ai" ? " (AI)" : " (규칙)") : "";
 
-  if (message.kind === "free") {
-    // 말 없이 온 글(MYH-230). 「내일 우유 사기」 는 할 일, 「오늘 날씨 좋다」 는 아니다
-    const todo = guessTodo(message.text.slice(0, MAX_MEMO), todayInSeoul());
-    if (todo) {
-      await saveTodo(message.chatId, todo.title, todo);
-    } else {
-      await reply(
-        message.chatId,
-        "저장하지 않았습니다. 「메모 …」 · 「… 메모해줘」 는 메모로, 「할일 …」 · 「리마인드 …」 나 「내일 우유 사기」 처럼 할 일로 보이는 글은 할 일로 넣습니다.",
-      );
-    }
-    return Response.json({ ok: true });
+  if (decision.kind === "todo") {
+    await saveTodo(message.chatId, decision.title, decision, by);
+  } else if (decision.kind === "memo") {
+    await addMemo(decision.text, "telegram");
+    revalidatePath("/admin/memos");
+    await reply(message.chatId, `📝 메모했습니다.${by}`);
+  } else {
+    await reply(
+      message.chatId,
+      `저장하지 않았습니다${by}. 「메모 …」 · 「… 메모해줘」 는 메모로, 「할일 …」 · 「리마인드 …」 나 「내일 우유 사기」 처럼 할 일로 보이는 글은 할 일로 넣습니다.`,
+    );
   }
-
-  await addMemo(message.text.slice(0, MAX_MEMO), "telegram");
-  revalidatePath("/admin/memos");
-  await reply(message.chatId, "📝 메모했습니다.");
   return Response.json({ ok: true });
 }
 
-async function saveTodo(chatId: string, title: string, range: TodoRange) {
+async function saveTodo(chatId: string, title: string, range: TodoRange, by: string) {
   await addTodo(title, { startOn: range.startOn, dueOn: range.dueOn, source: "telegram" });
   revalidatePath("/admin/todos");
   const when = rangeLabel(range);
-  await reply(chatId, when ? `✅ 할 일에 넣었습니다. 「${title}」 · ${when}` : `✅ 할 일에 넣었습니다. 「${title}」`);
+  await reply(
+    chatId,
+    when ? `✅ 할 일에 넣었습니다. 「${title}」 · ${when}${by}` : `✅ 할 일에 넣었습니다. 「${title}」${by}`,
+  );
 }

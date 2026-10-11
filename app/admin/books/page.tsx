@@ -6,7 +6,7 @@ import BookEditor from "@/components/admin/BookEditor";
 import { isAdmin } from "@/lib/security/auth";
 import { listBooks, readBookFilter } from "@/lib/books";
 import { lookupSource } from "@/lib/books/lookup";
-import { kakaoKey } from "@/lib/books/lookup-key";
+import { lookupAccess } from "@/lib/books/lookup-key";
 import { BOOK_CATEGORY, BOOK_KIND, listCodes } from "@/lib/codes";
 
 export const metadata: Metadata = {
@@ -32,11 +32,11 @@ export default async function AdminBooksPage({
 
   const params = await searchParams;
   const error = typeof params.be === "string" ? errors[params.be] : undefined;
-  const [rows, kinds, categories, key] = await Promise.all([
+  const [rows, kinds, categories, access] = await Promise.all([
     listBooks(),
     listCodes(BOOK_KIND, { all: true }),
     listCodes(BOOK_CATEGORY, { all: true }),
-    kakaoKey(),
+    lookupAccess(),
   ]);
 
   return (
@@ -63,7 +63,12 @@ export default async function AdminBooksPage({
           rows={rows}
           kinds={kinds}
           categories={categories}
-          lookupSource={lookupSource(key)}
+          // 키 · 계정이 있는 출처만 적는다
+          lookupSource={lookupSource(
+            access.order.filter(
+              (s) => (s !== "kakao" || access.kakaoKey) && (s !== "calibre" || access.calibre),
+            ),
+          )}
           filter={readBookFilter(params)}
           // 저장하다 막혀 돌아왔거나(?be=) ?add=1 이면 「책 추가」 를 펼쳐 둔다
           addOpen={params.add === "1" || Boolean(error)}

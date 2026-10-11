@@ -14,13 +14,18 @@
 - **글**: 블로그(목차 · 태그 · 검색 · 연재 · 관련 글 · 예약 발행 · 개정 표시),
   짧은 글, 나만 보는 비밀글(서버에서 암호화해 저장). 마크다운이고 위지윅 편집기 셋
   가운데 고른다. 그림은 붙여넣기 · 끌어놓기로 올린다
-- **책**: 읽는 책 · 다 읽은 책, 책마다 독서 노트와 별점
+- **책**: 읽는 중 · 읽고 싶은 책 · 다 읽음 · 읽다 만 책, 분류, 책마다 독서 노트와
+  별점. 제목 · ISBN 으로 찾아 채운다 — 카카오 · 내 Calibre 서재 · Open Library 에서
+  찾고(차례와 사용은 고른다), 고른 책의 소개는 AI(Gemini)가 한두 줄로 요약한다
 - **사람들과**: 댓글 · 방명록(「나에게만 보내기」 로 연락도). 텔레그램으로
   알림을 받을 수 있다
 - **내 공간**(나만 봄, 암호화해 저장): 하루 한 편 일기장, 메모, 할 일, 구글
   캘린더 일정(월간 · 주간). 텔레그램 봇에게 「메모 …」 · 「할일 …」 로 보내도
-  들어가고, 어느 화면에서나 ＋ 단추로 바로 적는다
-- **관리**: 메뉴 · 사이트 정보 · 코드(분류)를 화면에서 고친다. 패스키 로그인
+  들어가고(「내일 우유 사기」 처럼 말 없이 보내도 할 일로, AI 판정도 고른다),
+  어느 화면에서나 ＋ 단추로 바로 적는다
+- **관리**: 로그인하면 대시보드(새 메시지 · 오늘 할 일 · 일정 · 임시저장 글).
+  메뉴 · 사이트 정보 · 코드(분류) · 환경설정(바깥 서비스 연결)을 화면에서 고친다.
+  패스키 로그인
 - **바깥**: 사이트맵 · RSS · 링크 미리보기 이미지 · 검색엔진 등록
 
 한국어로 쓰인 사이트다. 화면 글자와 날짜는 한국어 · 한국 시간이다.
@@ -240,7 +245,8 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 
 두 묶음이다. **1** 은 `.env` 에만 둔다 — DB 를 열고 푸는 열쇠와 서버마다 다른
 값이라 화면에서 바꿀 수 없다. **2** 는 관리 › 설정 › 환경설정 에서도 넣을 수 있다.
-`.env` 에 값이 있으면 그것이 먼저이고, 비워 두고 화면에서 넣어도 된다(휴대폰에서도).
+`.env` 에 값이 있으면 그것이 먼저이고(화면의 그 칸은 잠긴다), 비워 두고 화면에서
+넣어도 된다(휴대폰에서도). 환경설정 화면의 모든 칸이 여기에 있다.
 화면에서 넣은 토큰 · 키는 `SECRETS_KEY` 로 암호화해 둔다.
 
 **1. `.env` 에만**
@@ -255,19 +261,24 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | `PORT` | 여는 포트. 기본 `3000` |
 | `MYHOME_VERSION` | 쓸 이미지 판. 기본 `latest` |
 | `TELEGRAM_INBOX` | `off` 면 이 서버에서는 텔레그램 메모 · 할 일을 받지 않는다(같은 봇을 쓰는 개발기 등). 봇 하나에 받는 곳은 하나뿐이다 |
-| `GEMINI_MODEL` | 책 소개 요약에 쓸 Gemini 모델. 기본 `gemini-flash-latest` |
+| `GEMINI_MODEL` | 쓸 Gemini 모델 하나. 비우면 `gemini-flash-lite-latest`, 한도를 넘으면 `gemini-flash-latest` |
 | `TZ` | 시간대. 기본 `Asia/Seoul` |
 
-**2. 관리 › 설정 › 환경설정 에서도**
+**2. 관리 › 설정 › 환경설정 에서도** (화면의 칸 차례대로)
 
-| 변수 | 설명 |
-| --- | --- |
-| `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | 댓글 · 방명록 알림과 텔레그램으로 메모 · 할 일 적기 |
-| `KAKAO_REST_API_KEY` | 관리 › 책 의 책 찾기를 카카오 책 검색으로 한다([developers.kakao.com](https://developers.kakao.com) 앱의 REST API 키). 비우면 열쇠가 필요 없는 Open Library 로 찾는다 — 한국 책은 적다 |
-| `GEMINI_API_KEY` | 책 찾기로 고른 책의 소개를 한두 줄로 요약한다([aistudio.google.com](https://aistudio.google.com) 의 무료 API 키). 비우면 소개 앞부분을 줄인다. 보내는 것은 공개된 책 소개뿐 |
-| `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 나가지 않는다 |
-| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console 소유 확인 |
-| `MONITORING_DASHBOARD` | 관리 › 감시 화면에 끼울 Grafana 대시보드 경로. 비우면 메뉴에서 빠진다 |
+| 칸 | 변수 | 설명 |
+| --- | --- | --- |
+| 글쓰기 | `DEFAULT_EDITOR` | 기본 편집기: `milkdown` · `tiptap` · `toast` |
+| 텔레그램 | `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | 댓글 · 방명록 알림과 텔레그램으로 메모 · 할 일 적기 |
+| 텔레그램 | `TELEGRAM_AI` | 텔레그램 글을 AI(Gemini)로 먼저 가르나: `on` · `off`. 보낸 글이 Gemini 로 나간다 |
+| 구글 | `GOOGLE_CALENDAR_ICAL` | 구글 캘린더 iCal 비공개 주소. `이름 https://…` 을 `;` 로 잇는다 |
+| 구글 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console 소유 확인 |
+| 책 찾기 | `BOOK_SOURCES` | 찾는 곳의 차례 · 사용. 앞이 먼저, 끄려면 앞에 `-` (예: `kakao,-calibre,openlibrary`). 비우면 카카오 → 내 서재 → Open Library |
+| 책 찾기 | `KAKAO_REST_API_KEY` | 카카오 책 검색([developers.kakao.com](https://developers.kakao.com) 앱의 REST API 키). 비우면 카카오는 건너뛴다 |
+| 책 찾기 | `CALIBRE_URL` · `CALIBRE_USER` · `CALIBRE_PASSWORD` | 내 [Calibre](https://calibre-ebook.com) 콘텐츠 서버에서도 찾아 소개 · 표지 · ISBN 을 가져온다(원서도). 앱 전용 읽기 계정을 권한다 |
+| Gemini | `GEMINI_API_KEY` | 책 소개 요약과 텔레그램 AI 판정([aistudio.google.com](https://aistudio.google.com) 의 무료 API 키). 비우면 요약은 소개 앞부분을 줄이고, 판정은 규칙으로 |
+| 통계 · 감시 | `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 나가지 않는다 |
+| 통계 · 감시 | `MONITORING_DASHBOARD` | 관리 › 감시 화면에 끼울 Grafana 대시보드 경로. 비우면 메뉴에서 빠진다 |
 
 ## 소스로 고쳐 쓰기
 

@@ -3,6 +3,8 @@ import {
   disconnectTelegramAction,
 } from "@/app/admin/memos/actions";
 import { currentWebhook, inboxDisabled, inboxReady, webhookUrl } from "@/lib/telegram/bot";
+import { saveTelegramAiAction } from "@/app/admin/settings/actions";
+import { envSetting, siteConfig, telegramAiOn } from "@/lib/site/settings";
 
 const button =
   "rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:bg-foreground/5";
@@ -27,9 +29,37 @@ export default async function TelegramSettings({ notice }: { notice?: string }) 
   const here = webhookUrl();
   const connected = hook?.url === here;
   const message = notice ? notices[notice] : undefined;
+  const [aiOn, { geminiApiKey }] = await Promise.all([telegramAiOn(), siteConfig()]);
   return (
     <div>
       <h4 className="text-sm font-medium">메모 · 할 일 받기</h4>
+      {/* AI 로 판정(MYH-233). 받기와 상관없이 정해 둘 수 있다 */}
+      {envSetting("telegramAi") ? (
+        <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-400">
+          ● .env 의 TELEGRAM_AI 를 씁니다 · AI 로 판정 {aiOn ? "켬" : "끔"}
+        </p>
+      ) : (
+      <form action={saveTelegramAiAction} aria-label="AI 로 판정" className="mt-3 rounded-lg border border-border p-3">
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="telegramAi" value="1" defaultChecked={aiOn} className="mt-1" />
+          <span>
+            <span className="font-medium">AI 로 판정</span>
+            <span className="mt-0.5 block text-xs text-muted">
+              할 일 · 메모 · 저장 안 함을 Gemini 가 먼저 가르고, 제목 · 날짜(「다음 주 화요일까지」
+              · 「월말」)도 읽습니다. 실패하면 지금 규칙으로 가릅니다. 「할일 …」 · 「메모 …」 처럼
+              말을 붙인 글은 그 말을 따릅니다. 보낸 글이 Google(Gemini 무료 등급)로 나갑니다.
+              {geminiApiKey ? "" : " 아래 Gemini 칸에 키가 있어야 합니다."}
+            </span>
+          </span>
+        </label>
+        <button
+          type="submit"
+          className="mt-2 rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:bg-foreground/5"
+        >
+          AI 판정 저장
+        </button>
+      </form>
+      )}
       {message ? (
         <p role="status" className="mt-3 text-sm text-foreground/80">
           {message}

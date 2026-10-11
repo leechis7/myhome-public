@@ -71,6 +71,15 @@ services:
       # 선택. 고른 책의 소개를 Gemini 로 요약한다. 비우면 앞부분을 줄인다
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-}
+      # 선택. 책 찾기가 내 Calibre 서재에서도 찾는다(환경설정에서도 넣는다)
+      CALIBRE_URL: ${CALIBRE_URL:-}
+      CALIBRE_USER: ${CALIBRE_USER:-}
+      CALIBRE_PASSWORD: ${CALIBRE_PASSWORD:-}
+      # 환경설정 화면의 나머지 값(MYH-232). 적으면 화면보다 먼저다
+      DEFAULT_EDITOR: ${DEFAULT_EDITOR:-}
+      TELEGRAM_AI: ${TELEGRAM_AI:-}
+      BOOK_SOURCES: ${BOOK_SOURCES:-}
+      GOOGLE_CALENDAR_ICAL: ${GOOGLE_CALENDAR_ICAL:-}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
       NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
       MONITORING_DASHBOARD: ${MONITORING_DASHBOARD:-}

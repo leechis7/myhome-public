@@ -24,21 +24,22 @@ async function addBook(
     status,
     cover = false,
     category,
-  }: { title: string; status: "읽는 중" | "다 읽음" | "읽고 싶은 책"; cover?: boolean; category?: string },
+  }: { title: string; status: "읽는 중" | "다 읽음" | "읽고 싶은 책" | "읽다 만 책"; cover?: boolean; category?: string },
 ) {
   // 「책 추가」 는 평소 접혀 있다. ?add=1 이면 펼쳐 둔다(MYH-226)
   await page.goto("/admin/books?add=1");
   const form = page.getByRole("form", { name: "책 추가" });
   await form.getByLabel("제목").fill(title);
   await form.getByLabel("지은이").fill("e2e 지은이");
-  await form.getByLabel("종류").selectOption({ label: "이북" });
+  await form.getByLabel("종류").selectOption({ label: "전자책" });
   if (category) await form.getByLabel("분류", { exact: true }).selectOption({ label: category });
   await form.getByLabel("상태").selectOption({ label: status });
   await form.getByLabel("소개").fill(`${title} 를 읽는다.`);
   if (status === "다 읽음") await form.getByLabel("다 읽은 날").fill("2026-09-20");
   if (cover) await form.getByLabel("표지", { exact: true }).setInputFiles(COVER);
   await form.getByRole("button", { name: "추가" }).click();
-  await expect(page.locator("#books").getByText(title, { exact: true })).toBeVisible();
+  // 접힌 절(읽다 만 책)에 들어가기도 하니 보이는지가 아니라 생겼는지 본다
+  await expect(page.locator("#books").getByText(title, { exact: true })).toHaveCount(1);
 }
 
 test.describe("읽는 책", () => {
@@ -161,12 +162,12 @@ test.describe("책 분류", () => {
     // 관리 목록의 줄에도 분류가 붙는다
     await expect(
       page.locator("#books li", { hasText: novel }).locator(":scope > details > summary"),
-    ).toContainText("소설 · 이북");
+    ).toContainText("소설 · 전자책");
 
     const context = await browser.newContext();
     const visitor = await context.newPage();
     await visitor.goto("/books");
-    await expect(visitor.locator("li", { hasText: novel })).toContainText("e2e 지은이 · 소설 · 이북");
+    await expect(visitor.locator("li", { hasText: novel })).toContainText("e2e 지은이 · 소설 · 전자책");
     const filters = visitor.getByRole("navigation", { name: "분류" });
     await filters.getByRole("link", { name: /^소설/ }).click();
     await expect(visitor).toHaveURL(/\/books\?category=/);
@@ -221,6 +222,33 @@ test.describe("읽고 싶은 책", () => {
       visitor.getByRole("region", { name: "지금 읽는 책" }).getByText(title, { exact: true }),
     ).toBeVisible();
     await expect(visitor.getByRole("region", { name: /읽고 싶은 책/ }).getByText(title)).toHaveCount(0);
+    await context.close();
+  });
+});
+
+test.describe("읽다 만 책", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await sweepBooks(page);
+  });
+
+  // MYH-227. 관리에서는 「다 읽음」 위에 접어 두고, 공개 화면에는 내놓지 않는다
+  test("읽다 만 책은 관리에서 접혀 있고 공개 화면에는 없다", async ({ page, browser }) => {
+    const title = `e2e 읽다 만 책 ${Date.now().toString(36)}`;
+    await addBook(page, { title, status: "읽다 만 책" });
+    await page.goto("/admin/books");
+    const section = page.getByRole("region", { name: "읽다 만 책" });
+    await expect(section.getByText(title, { exact: true })).toBeHidden();
+    await section.locator("summary").first().click();
+    await expect(section.getByText(title, { exact: true })).toBeVisible();
+
+    const context = await browser.newContext();
+    const visitor = await context.newPage();
+    await visitor.goto("/books");
+    await expect(visitor.getByText(title, { exact: true })).toHaveCount(0);
     await context.close();
   });
 });

@@ -22,6 +22,9 @@ export const CONFIG_FIELDS = {
   monitoringDashboard: { env: "MONITORING_DASHBOARD", secret: false },
   kakaoRestKey: { env: "KAKAO_REST_API_KEY", secret: true },
   geminiApiKey: { env: "GEMINI_API_KEY", secret: true },
+  calibreUrl: { env: "CALIBRE_URL", secret: false },
+  calibreUser: { env: "CALIBRE_USER", secret: false },
+  calibrePassword: { env: "CALIBRE_PASSWORD", secret: true },
 } as const;
 
 export type ConfigName = keyof typeof CONFIG_FIELDS;
@@ -101,4 +104,31 @@ export async function saveConfig(values: Partial<SiteConfig>) {
       set: { ...set, updatedAt: new Date() },
     });
   invalidateSite();
+}
+
+/**
+ * 환경설정의 나머지 값(글 · 켜기/끄기 · 목록)도 .env 로 정할 수 있다(MYH-232).
+ * 값이 있으면 그것이 먼저고 화면은 잠근다. 이름은 여기 한 곳.
+ *   DEFAULT_EDITOR       milkdown · tiptap · toast
+ *   TELEGRAM_AI          on · off
+ *   BOOK_SOURCES         kakao,-calibre,openlibrary (앞이 먼저, - 는 끔)
+ *   GOOGLE_CALENDAR_ICAL 「이름 https://…」 을 ; 로 이어서
+ */
+export const ENV_SETTINGS = {
+  editor: "DEFAULT_EDITOR",
+  telegramAi: "TELEGRAM_AI",
+  bookSources: "BOOK_SOURCES",
+  calendar: "GOOGLE_CALENDAR_ICAL",
+} as const;
+
+/** .env 에 적힌 값. 없으면 null */
+export function envSetting(key: keyof typeof ENV_SETTINGS) {
+  return process.env[ENV_SETTINGS[key]]?.trim() || null;
+}
+
+/** 텔레그램 글을 AI 로 먼저 가르나(MYH-233). .env 의 TELEGRAM_AI 가 먼저 */
+export async function telegramAiOn() {
+  const env = envSetting("telegramAi");
+  if (env) return /^(on|true|1|yes)$/i.test(env);
+  return Boolean((await getCachedSiteRow())?.telegramAi);
 }

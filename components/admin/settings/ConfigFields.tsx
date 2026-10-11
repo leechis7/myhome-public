@@ -17,6 +17,8 @@ const notices: Record<string, string> = {
   chat: "대화방 번호는 숫자입니다(그룹이면 앞에 - 가 붙습니다).",
   token: "봇 토큰은 「123456789:AA…」 처럼 생겼습니다. @BotFather 가 준 것을 그대로 붙여 넣어 주세요.",
   dashboard: "대시보드 경로는 / 로 시작합니다(예: /grafana/d/myhome/myhome).",
+  calibre: "Calibre 서버 주소는 http:// 나 https:// 로 시작합니다.",
+  kakao: "카카오 키는 영문 · 숫자 32자 안팎입니다. 「REST API 키」 를 그대로 붙여 넣어 주세요.",
   gemini: "Gemini API 키는 「AIza…」 나 「AQ.…」 처럼 생겼습니다. AI Studio 에서 받은 것을 그대로 붙여 넣어 주세요.",
 };
 
@@ -57,6 +59,30 @@ const ROWS: Row[] = [
     label: "Gemini API 키",
     hint: "책 찾기로 고른 책의 소개를 한두 줄로 요약합니다. aistudio.google.com 에서 무료로 받습니다. 비우면 소개 앞부분을 줄여 넣습니다.",
     placeholder: "AIza… / AQ.…",
+  },
+  {
+    name: "kakaoRestKey",
+    label: "카카오 REST API 키",
+    hint: "카카오 책 검색. developers.kakao.com → 내 애플리케이션 → 앱 키 → REST API 키. 암호화해서 두고 다시 보여 주지 않습니다.",
+    placeholder: "REST API 키",
+  },
+  {
+    name: "calibreUrl",
+    label: "Calibre 서버 주소",
+    hint: "Calibre 콘텐츠 서버(calibre-server). 책 찾기가 내 서재에서도 찾아 소개 · 표지 · ISBN 을 가져옵니다(원서도).",
+    placeholder: "https://books.example.com",
+  },
+  {
+    name: "calibreUser",
+    label: "Calibre 아이디",
+    hint: "앱 전용 읽기 계정을 권합니다.",
+    placeholder: "myhome",
+  },
+  {
+    name: "calibrePassword",
+    label: "Calibre 비밀번호",
+    hint: "암호화해서 두고 다시 보여 주지 않습니다.",
+    placeholder: "",
   },
   {
     name: "monitoringDashboard",

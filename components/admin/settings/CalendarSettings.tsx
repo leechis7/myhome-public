@@ -3,7 +3,7 @@ import {
   clearCalendarAction,
   saveCalendarAction,
 } from "@/app/admin/calendar/actions";
-import { getCalendars } from "@/lib/my-space/calendar";
+import { calendarsFromEnv, getCalendars } from "@/lib/my-space/calendar";
 
 const field =
   "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40";
@@ -26,6 +26,18 @@ const notices: Record<string, string> = {
 export default async function CalendarSettings({ notice }: { notice?: string }) {
   const urls = await getCalendars();
   const message = notice ? notices[notice] : undefined;
+  // .env 의 GOOGLE_CALENDAR_ICAL 이 있으면 그것이 먼저 - 화면은 잠근다(MYH-232)
+  if (calendarsFromEnv()) {
+    return (
+      <div id="calendar" className="scroll-mt-24">
+        <h4 className="text-sm font-medium">캘린더 (내 공간 › 일정)</h4>
+        <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-400">
+          ● .env 의 GOOGLE_CALENDAR_ICAL 을 씁니다 · 캘린더 {urls.length}개
+          {urls.some((c) => c.name) ? `(${urls.map((c) => c.name || "이름 없음").join(", ")})` : ""}
+        </p>
+      </div>
+    );
+  }
   return (
     <div id="calendar" className="scroll-mt-24">
       <h4 className="text-sm font-medium">캘린더 (내 공간 › 일정)</h4>

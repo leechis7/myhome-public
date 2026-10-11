@@ -72,3 +72,27 @@ describe("캘린더 주소 줄 읽기(MYH-214)", async () => {
     expect(parseCalendarLine("회사 http://a.example/b.ics")).toBeNull();
   });
 });
+
+describe("음력 반복(RDATE 를 UTC 0시로 적은 종일 일정)", () => {
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:test
+BEGIN:VEVENT
+UID:lunar1
+DTSTART;VALUE=DATE:20251117
+DTEND;VALUE=DATE:20251118
+RDATE:20251117T000000Z
+RDATE:20261127T000000Z
+SUMMARY:음력 생일
+END:VEVENT
+END:VCALENDAR`;
+
+  it("그 날 하루의 종일 일정이고, DTSTART 와 같은 RDATE 는 한 번만", () => {
+    const ev = eventsBetween(ics, new Date("2025-11-01T00:00:00+09:00"), new Date("2026-12-31T00:00:00+09:00"));
+    expect(ev.map((e) => [e.allDay, e.startDay, e.endDay])).toEqual([
+      [true, "2025-11-17", "2025-11-18"],
+      [true, "2026-11-27", "2026-11-28"],
+    ]);
+    expect(groupByDay(ev, ["2026-11-27", "2026-11-28"]).map((g) => g.events.length)).toEqual([1, 0]);
+  });
+});

@@ -9,18 +9,20 @@ import { extensionFor } from "@/lib/uploads";
  *   want     읽고 싶은 책(MYH-227). 아직 시작하지 않았다
  *   reading  읽는 중
  *   read     다 읽음
+ *   stopped  읽다 만 책. 공개 화면에는 내놓지 않는다
  */
-export type BookStatus = "want" | "reading" | "read";
+export type BookStatus = "want" | "reading" | "read" | "stopped";
 
 /** 고르는 칸의 순서이기도 하다 */
 export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
   reading: "읽는 중",
   read: "다 읽음",
   want: "읽고 싶은 책",
+  stopped: "읽다 만 책",
 };
 
 export function isBookStatus(value: unknown): value is BookStatus {
-  return value === "want" || value === "reading" || value === "read";
+  return value === "want" || value === "reading" || value === "read" || value === "stopped";
 }
 
 /** 분류(MYH-225)도 codes 에서 이름을 가져온다. 종류와 같은 테이블이라 별칭을 둔다 */
@@ -81,7 +83,7 @@ export function coverUrl(row: { coverId: string | null; coverType: string | null
  */
 export async function listBooks() {
   return query().orderBy(
-    sql`case ${books.status} when 'reading' then 0 when 'want' then 1 else 2 end`,
+    sql`case ${books.status} when 'reading' then 0 when 'want' then 1 when 'stopped' then 2 else 3 end`,
     desc(sql`coalesce(${books.finishedOn}, ${books.startedOn})`),
     desc(books.id),
   );
@@ -228,5 +230,6 @@ export async function listBooksWithNotes() {
   return getDb()
     .select({ id: books.id, noteUpdatedAt: books.noteUpdatedAt })
     .from(books)
-    .where(sql`coalesce(${books.readingNote}, '') <> ''`);
+    // 읽다 만 책은 공개 화면에 내놓지 않는다
+    .where(sql`coalesce(${books.readingNote}, '') <> '' and ${books.status} <> 'stopped'`);
 }

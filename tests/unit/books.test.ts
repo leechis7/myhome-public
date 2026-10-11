@@ -67,7 +67,7 @@ describe("책장의 분류(MYH-225)", () => {
 
 describe("책 상태(MYH-227)", () => {
   it("읽고 싶은 책 · 읽는 중 · 다 읽음만 받는다", () => {
-    for (const s of ["want", "reading", "read"]) expect(isBookStatus(s)).toBe(true);
+    for (const s of ["want", "reading", "read", "stopped"]) expect(isBookStatus(s)).toBe(true);
     for (const s of ["", "wish", null]) expect(isBookStatus(s)).toBe(false);
   });
 });
