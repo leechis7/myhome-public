@@ -19,7 +19,7 @@ import {
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 /**
- * 여기 적은 설명은 DB 에도 COMMENT 로 붙어 있다(0023). psql 에서 `\d+ 테이블`
+ * 여기 적은 설명은 DB 에도 COMMENT 로 붙어 있다(기준선 0000_baseline). psql 에서 `\d+ 테이블`
  * 로 보면 나온다. drizzle-kit 은 COMMENT 를 만들어 주지 않으므로, 테이블이나
  * 컬럼을 더할 때 마이그레이션에 `COMMENT ON` 한 줄을 손으로 함께 적는다.
  */

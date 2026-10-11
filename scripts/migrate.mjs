@@ -11,6 +11,10 @@
  *   hash       = 마이그레이션 파일 내용의 sha256
  *   created_at = _journal.json 의 when 값
  * 그래서 이 실행기와 drizzle-kit 을 섞어 써도 어긋나지 않는다.
+ *
+ * 기준선(MYH-234): 0000 ~ 0063 을 0000_baseline 하나로 합쳤다. 이미 0063 까지 돈
+ * DB(v1.4.x - 운영 · 개발기)는 기준선을 돌리지 않고 「이미 적용」 으로 기록만 한다.
+ * 그보다 옛 DB 는 멈추고 v1.4.x 를 먼저 거치라고 알린다. 빈 DB 는 기준선을 돈다.
  */
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -42,6 +46,12 @@ if (!url) {
 }
 
 const dir = process.env.MIGRATIONS_DIR ?? path.join(process.cwd(), "drizzle");
+
+/** 기준선과, 그것이 대신하는 옛 마지막 마이그레이션(0063_ebook_label)의 sha256 */
+const BASELINE = {
+  tag: "0000_baseline",
+  replaces: "d61b3de8d1ed82bd3dc53882b254c449693d6d99bf3b5a0983977e6a9595b3d0",
+};
 
 const sql = postgres(url, {
   max: 1,
@@ -78,6 +88,29 @@ try {
       (r) => r.hash,
     ),
   );
+
+  // 기준선: 옛 이력이 있는 DB 를 가른다
+  const baseline = journal.entries.find((e) => e.tag === BASELINE.tag);
+  if (baseline && applied.size > 0) {
+    const text = await readFile(path.join(dir, `${baseline.tag}.sql`), "utf8");
+    const hash = createHash("sha256").update(text).digest("hex");
+    if (!applied.has(hash)) {
+      if (!applied.has(BASELINE.replaces)) {
+        console.error(
+          "이 DB 는 v1.4.0 보다 옛 판입니다. 마이그레이션을 하나로 합친 뒤라 바로 올릴 수 없습니다.\n" +
+            "먼저 v1.4.x 판으로 한 번 올려(그 판의 마이그레이션이 다 돈 뒤) 다시 이 판으로 올리세요.",
+        );
+        process.exit(1);
+      }
+      // 0063 까지 돈 DB - 기준선은 이미 적용된 것과 같다. 기록만 한다
+      await sql`
+        insert into drizzle.__drizzle_migrations (hash, created_at)
+        values (${hash}, ${baseline.when})
+      `;
+      applied.add(hash);
+      console.log(`기록 ${baseline.tag} (0063 까지 돈 DB - 돌리지 않음)`);
+    }
+  }
 
   let count = 0;
   for (const entry of journal.entries) {

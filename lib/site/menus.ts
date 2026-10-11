@@ -28,9 +28,8 @@ type DefaultMenu = {
  * 처음 메뉴. 코드에 흩어져 있던 것을 옮기고(MYH-123), 따로 있던 관리 화면
  * 메뉴를 "관리" 그룹으로 넣었다.
  *
- * 0029 마이그레이션이 이 값을 넣고(뒤의 0030 · 0031 · 0037 · 0039 · 0040 이 줄을 더하고
- * 0042 가 「내 공간」 으로 묶고 0043 ~ 0046 이 일기장 · 메모 · 할 일 · 일정을 더하고, 0047 · 0048 이 합친 줄을 뺀다),
- * "처음 상태로" 가 이 값으로 되돌린다.
+ * 새 설치는 기준선 마이그레이션(0000_baseline, MYH-234)이 이 값을 넣고 -
+ * 운영(leechis.dev)의 메뉴에 맞췄다 - "처음 상태로" 가 이 값으로 되돌린다.
  * **둘이 어긋나면 안 된다** — tests/unit/menus.test.ts 가 본다.
  * 순서는 배열 순서이고, DB 에는 10, 20, 30 … 으로 들어간다.
  *
@@ -42,27 +41,19 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
   { label: "블로그", href: "/blog", audience: "all" },
   { label: "짧은 글", href: "/notes", audience: "all" },
   { label: "프로젝트", href: "/projects", audience: "all" },
-  // 0039 가 더한다(MYH-190)
   { label: "책", href: "/books", audience: "all" },
-  // 0037 이 더한다(MYH-191)
   { label: "방명록", href: "/guestbook", audience: "all" },
-  // 연락처는 방명록으로 합쳤다. 0048 이 뺀다(MYH-216)
-  // 0042 가 묶는다(MYH-212). 나만 보는 것 — 날마다 여는 것들이다. 전에는
-  // 첫 단에 공개 메뉴와 섞여 있었다. 관리는 사이트를 고치는 것만 남는다.
+  // 나만 보는 것 — 날마다 여는 것들이다(MYH-212). 관리는 사이트를 고치는 것만
   {
     label: "내 공간",
     href: null,
     audience: "admin",
     children: [
-      // 0043 이 더한다(MYH-213)
-      { label: "일기장", href: "/admin/diary", audience: "admin" },
-      // 0046 이 더한다(MYH-214)
       { label: "일정", href: "/admin/calendar", audience: "admin" },
-      // 0044 가 더한다(MYH-215)
-      { label: "메모", href: "/admin/memos", audience: "admin" },
-      // 0045 가 더한다(MYH-217)
       { label: "할 일", href: "/admin/todos", audience: "admin" },
+      { label: "메모", href: "/admin/memos", audience: "admin" },
       { label: "비밀글", href: "/admin/secrets", audience: "admin" },
+      { label: "일기장", href: "/admin/diary", audience: "admin" },
       { label: "내 서비스", href: "/admin/links", audience: "admin" },
       { label: "감시", href: "/admin/monitoring", audience: "admin" },
     ],
@@ -72,17 +63,13 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
     href: null,
     audience: "admin",
     /**
-     * 여덟 줄이 늘어서 있던 것을 둘로 묶었다(MYH-126). 첫 단은 넷이다.
-     *
-     * - 메시지가 맨 앞이다. 남이 보낸 것이라 늦게 보면 곤란한 것은 이것뿐이다.
+     * - 대시보드가 맨 앞이다(MYH-234). 새 메시지 · 오늘 할 일 · 일정 · 임시저장 글.
      * - 비밀글 · 내 서비스 · 감시는 여기 없다. 「내 공간」 에 있다(MYH-212).
-     * - 설정 안에서는 "소개" 를 "프로필" 로 부른다. 무엇의 소개인지는 설정
-     *   안이라는 자리가 말해 준다. 이력서도 이 화면에서 고친다. "암호설정" 은 설정 안이라 "암호" 였다가, 패스키까지 있어 "보안" 이 됐다(0057).
+     * - 설정 안에서는 "소개" 를 "프로필" 로 부른다. 비밀번호 · 패스키는 "보안".
      * - 메뉴 줄을 지워도 /admin/menus 주소로는 늘 들어간다. 막기보다 빠져나갈
      *   길을 남긴다.
      */
     children: [
-      // 관리 첫 화면(MYH-234). 0058
       { label: "대시보드", href: "/admin", audience: "admin" },
       { label: "메시지", href: "/admin/messages", audience: "admin" },
       {
@@ -92,7 +79,6 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
         children: [
           { label: "블로그", href: "/admin/posts", audience: "admin" },
           { label: "짧은 글", href: "/admin/notes", audience: "admin" },
-          // 0039 가 더한다(MYH-190)
           { label: "책", href: "/admin/books", audience: "admin" },
         ],
       },
@@ -102,16 +88,12 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
         href: null,
         audience: "admin",
         children: [
-          { label: "사이트", href: "/admin/site", audience: "admin" },
-          // 0040 이 이력서를 더했고 0047 이 한 줄로 합쳤다(MYH-218).
-          // 이름은 0049 가 다시 「프로필」 로(MYH-220)
-          { label: "프로필", href: "/admin/profile", audience: "admin" },
-          // 0057 이 사이트 화면에서 떼어 냈다. .env 값을 화면에서도 정하는 곳(MYH-232)
-          { label: "환경설정", href: "/admin/settings", audience: "admin" },
-          // 비밀번호 · 패스키라 「보안」(0057)
-          { label: "보안", href: "/admin/security", audience: "admin" },
-          { label: "메뉴", href: "/admin/menus", audience: "admin" },
           { label: "코드", href: "/admin/codes", audience: "admin" },
+          { label: "메뉴", href: "/admin/menus", audience: "admin" },
+          { label: "사이트", href: "/admin/site", audience: "admin" },
+          { label: "프로필", href: "/admin/profile", audience: "admin" },
+          { label: "환경설정", href: "/admin/settings", audience: "admin" },
+          { label: "보안", href: "/admin/security", audience: "admin" },
         ],
       },
     ],
@@ -120,7 +102,7 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
 
 /**
  * 처음 메뉴를 테이블에 넣을 줄로 편다. 번호는 트리를 위에서 아래로 편
- * 순서다 — 0029 가 넣는 번호와 같다.
+ * 순서다.
  */
 export function defaultRows() {
   const rows: Menu[] = [];

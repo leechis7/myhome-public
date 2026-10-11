@@ -1,1 +1,0 @@
-ALTER TABLE "uploads" ALTER COLUMN "data" DROP NOT NULL;

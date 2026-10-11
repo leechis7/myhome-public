@@ -223,7 +223,7 @@ export async function moveMenu(formData: FormData) {
 
 /**
  * 처음 상태로. 이리저리 옮기다 엉켰을 때 코드에 있는 구성(DEFAULT_MENUS)으로
- * 되돌린다. 번호까지 0029 가 넣은 것과 같게 넣는다.
+ * 되돌린다.
  */
 export async function resetMenus() {
   await requireAdmin();

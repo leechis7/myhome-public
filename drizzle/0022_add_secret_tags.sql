@@ -1,1 +1,0 @@
-ALTER TABLE "secrets" ADD COLUMN "tags" text;

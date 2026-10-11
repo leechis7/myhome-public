@@ -282,7 +282,7 @@ export async function addGroup(
 
 /**
  * 그룹 이름과 코드를 고친다. 코드를 바꾸면 그 안의 코드들이 따라간다
- * (codes.group_code 외래 키 ON UPDATE CASCADE, 마이그레이션 0033).
+ * (codes.group_code 외래 키 ON UPDATE CASCADE).
  */
 export async function updateGroup(
   _prev: ActionState,
