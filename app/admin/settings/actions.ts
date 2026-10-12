@@ -3,12 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/security/auth";
-import { configSources, saveConfig, type ConfigName } from "@/lib/site/settings";
-import { getDb, siteSettings } from "@/lib/db";
+import { configSources, saveConfig, type SettingName } from "@/lib/site/settings";
 import { isEditorKind } from "@/lib/posts/editor-kinds";
 import { isBookSource, moveSource, readSources, writeSources } from "@/lib/books/sources";
 import { isKakaoKey } from "@/lib/books/lookup-key";
-import { invalidateSite } from "@/lib/site/info";
+import { DEFAULT_SUMMARY_PROMPT } from "@/lib/books/summary";
 
 /**
  * 환경설정(MYH-232). .env 에 값이 있는 칸은 화면에 없으니 보내지도 않는다.
@@ -22,7 +21,7 @@ export async function saveOutsideAction(formData: FormData) {
   const anchor = ["telegram", "google", "gemini", "stats", "calibre", "kakao", "book-search"].includes(at) ? at : "settings";
   const back = (out: string) => `/admin/settings?out=${out}&at=${anchor}#${anchor}`;
   const sources = await configSources();
-  const take = (name: ConfigName, max: number) => {
+  const take = (name: SettingName, max: number) => {
     if (sources[name] === "env" || !formData.has(name)) return undefined;
     const value = String(formData.get(name) ?? "").trim();
     return value ? value.slice(0, max) : null;
@@ -34,7 +33,7 @@ export async function saveOutsideAction(formData: FormData) {
   if (dashboard && !dashboard.startsWith("/")) redirect(back("dashboard"));
 
   // 다시 보여 주지 않는 값: 빈 칸은 「그대로」, 「지우기」 를 체크해야 지운다
-  const secret = (name: ConfigName, max: number) => {
+  const secret = (name: SettingName, max: number) => {
     const value = take(name, max);
     if (value !== null) return value;
     return formData.get(`clear-${name}`) === "1" ? null : undefined;
@@ -75,11 +74,7 @@ export async function saveEditorAction(formData: FormData) {
   // 모르는 값이면 비운다 - 비우면 기본 편집기다
   const value = formData.get("editor");
   const editor = isEditorKind(value) ? String(value) : null;
-  await getDb()
-    .insert(siteSettings)
-    .values({ id: 1, editor, updatedAt: new Date() })
-    .onConflictDoUpdate({ target: siteSettings.id, set: { editor, updatedAt: new Date() } });
-  invalidateSite();
+  await saveConfig({ editor });
   revalidatePath("/admin", "layout");
   redirect("/admin/settings?out=saved&at=writing#writing");
 }
@@ -91,11 +86,8 @@ export async function saveEditorAction(formData: FormData) {
 export async function saveTelegramAiAction(formData: FormData) {
   await requireAdmin();
   const on = formData.get("telegramAi") === "1";
-  await getDb()
-    .insert(siteSettings)
-    .values({ id: 1, telegramAi: on, updatedAt: new Date() })
-    .onConflictDoUpdate({ target: siteSettings.id, set: { telegramAi: on, updatedAt: new Date() } });
-  invalidateSite();
+  // 끔은 처음 값이라 줄을 지운다
+  await saveConfig({ telegramAi: on ? "on" : null });
   redirect("/admin/settings?out=saved&at=telegram#telegram");
 }
 
@@ -116,14 +108,20 @@ export async function saveBookSourcesAction(formData: FormData) {
   );
   const [source, dir] = String(formData.get("move") ?? "").split(":");
   if (isBookSource(source) && (dir === "up" || dir === "down")) list = moveSource(list, source, dir);
-  await getDb()
-    .insert(siteSettings)
-    .values({ id: 1, bookSources: writeSources(list), updatedAt: new Date() })
-    .onConflictDoUpdate({
-      target: siteSettings.id,
-      set: { bookSources: writeSources(list), updatedAt: new Date() },
-    });
-  invalidateSite();
+  await saveConfig({ bookSources: writeSources(list) });
   revalidatePath("/admin/books");
   redirect("/admin/settings?out=saved&at=book-search#book-search");
+}
+
+/**
+ * 책 소개 요약 프롬프트(MYH-233). 비우거나 「처음 값으로」 면 지운다 - 코드의
+ * 처음 값(DEFAULT_SUMMARY_PROMPT)을 쓴다.
+ */
+export async function saveSummaryPromptAction(formData: FormData) {
+  await requireAdmin();
+  const reset = formData.get("reset") === "1";
+  const value = reset ? "" : String(formData.get("prompt") ?? "").trim().slice(0, 4000);
+  const prompt = value && value !== DEFAULT_SUMMARY_PROMPT ? value : null;
+  await saveConfig({ bookSummaryPrompt: prompt });
+  redirect("/admin/settings?out=saved&at=summary#summary");
 }

@@ -74,3 +74,20 @@ describe("책 소개 요약(MYH-233)", () => {
     expect(cleanSummary("가".repeat(300))!.length).toBeLessThanOrEqual(121);
   });
 });
+
+describe("요약 프롬프트(환경설정)", () => {
+  it("자리에 그 책의 것을 넣고, {소개글} 이 없으면 맨 끝에 붙인다", async () => {
+    const { renderSummaryPrompt } = await import("@/lib/books/summary");
+    expect(renderSummaryPrompt("「{제목}」({지은이}) 요약:\n{소개글}", { title: "책", author: "", description: "소개" })).toBe(
+      "「책」(지은이 모름) 요약:\n소개",
+    );
+    expect(renderSummaryPrompt("짧게 요약하라", { title: "책", author: "A", description: "소개" })).toBe(
+      "짧게 요약하라\n\n소개",
+    );
+  });
+
+  it("「이 책은」 으로 시작하면 떼어 낸다", () => {
+    expect(cleanSummary("이 책은 맨먼스의 함정을 다룬다.")).toBe("맨먼스의 함정을 다룬다.");
+    expect(cleanSummary("본서는 소프트웨어 관리를 다룬다.")).toBe("소프트웨어 관리를 다룬다.");
+  });
+});

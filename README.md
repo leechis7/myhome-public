@@ -280,6 +280,7 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | 책 찾기 | `BOOK_SOURCES` | 찾는 곳의 차례 · 사용. 앞이 먼저, 끄려면 앞에 `-` (예: `kakao,-calibre,openlibrary`). 비우면 카카오 → 내 서재 → Open Library |
 | 책 찾기 | `KAKAO_REST_API_KEY` | 카카오 책 검색([developers.kakao.com](https://developers.kakao.com) 앱의 REST API 키). 비우면 카카오는 건너뛴다 |
 | 책 찾기 | `CALIBRE_URL` · `CALIBRE_USER` · `CALIBRE_PASSWORD` | 내 [Calibre](https://calibre-ebook.com) 콘텐츠 서버에서도 찾아 소개 · 표지 · ISBN 을 가져온다(원서도). 앱 전용 읽기 계정을 권한다 |
+| Gemini | `BOOK_SUMMARY_PROMPT` | 책 소개 요약 프롬프트. `{제목}` · `{지은이}` · `{소개글}` 자리에 그 책의 것이 든다. 줄바꿈은 `\n`. 비우면 처음 값 |
 | Gemini | `GEMINI_API_KEY` | 책 소개 요약과 텔레그램 AI 판정([aistudio.google.com](https://aistudio.google.com) 의 무료 API 키). 비우면 요약은 소개 앞부분을 줄이고, 판정은 규칙으로 |
 | 통계 · 감시 | `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 나가지 않는다 |
 | 통계 · 감시 | `MONITORING_DASHBOARD` | 관리 › 감시 화면에 끼울 Grafana 대시보드 경로. 비우면 메뉴에서 빠진다 |

@@ -261,9 +261,12 @@ export async function sweepBooks(page: Page, tally: Tally = {}) {
     await page.goto("/admin/books?q=e2e");
     const row = page.locator("#books li").filter({ hasText: TEST_NAME }).first();
     if ((await row.count()) === 0) return false;
-    const title = (await row.locator(":scope > details > summary span").first().textContent()) ?? "";
-    if (!TEST_NAME.test(title)) return false;
+    // 제목은 펼친 고치기 폼의 이름(「… 고치기」)에서 읽는다. 줄에는 표지 ·
+    // 상태 같은 것이 함께 있어 글자로는 제목만 떼기 어렵다
     await row.locator(":scope > details > summary").click();
+    const form = row.locator('form[aria-label$=" 고치기"]');
+    const title = ((await form.getAttribute("aria-label")) ?? "").replace(/ 고치기$/, "");
+    if (!TEST_NAME.test(title)) return false;
     await pressDelete(row, `${title} 삭제`);
     await expect(
       page.locator("#books summary span", { hasText: title }),

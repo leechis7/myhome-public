@@ -1,12 +1,11 @@
-import { envSetting, siteConfig } from "@/lib/site/settings";
+import { siteConfig } from "@/lib/site/settings";
 import type { CalibreAccess } from "@/lib/books/calibre";
 import { readSources, type SourceSetting } from "@/lib/books/sources";
-import { getCachedSiteRow } from "@/lib/site/info";
 
 /**
  * 카카오 책 검색 키(MYH-231). .env 의 KAKAO_REST_API_KEY 가 먼저, 없으면 관리 ›
  * 설정 › 환경설정 에서 넣은 것(암호화해 DB 에). 둘 다 없으면 null - 책 찾기는
- * Open Library 로 간다. 읽고 쓰는 것은 lib/site-config.ts 가 한다.
+ * Open Library 로 간다. 읽고 쓰는 것은 lib/site/settings.ts 가 한다.
  */
 
 export async function kakaoKey() {
@@ -28,7 +27,7 @@ export async function calibreAccess(): Promise<CalibreAccess | null> {
 /** 책 찾기 출처의 순서 · 사용(MYH-226) */
 export async function bookSources(): Promise<SourceSetting[]> {
   // .env 의 BOOK_SOURCES 가 먼저(MYH-232)
-  return readSources(envSetting("bookSources") ?? (await getCachedSiteRow())?.bookSources);
+  return readSources((await siteConfig()).bookSources);
 }
 
 /** 책 찾기에 넘길 것 한 묶음: 키 · 계정 · 켠 출처의 차례 */

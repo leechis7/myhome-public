@@ -1,8 +1,5 @@
-import { eq } from "drizzle-orm";
-import { getDb, siteSettings } from "@/lib/db";
 import { eventsBetween, type CalendarEvent } from "@/lib/my-space/calendar-ical";
-import { decryptText, encryptText } from "@/lib/security/secret-crypto";
-import { envSetting } from "@/lib/site/settings";
+import { envSetting, saveConfig, storedSetting } from "@/lib/site/settings";
 
 /**
  * 일정(MYH-214). 구글 캘린더의 iCal 비공개 주소를 읽어 보여 준다. 일정을
@@ -33,7 +30,7 @@ export function parseCalendarLine(line: string): CalendarSource | null {
  * 잇는다. 읽을 수 없는 조각은 버린다. 없으면 null - 화면에서 넣은 것을 쓴다.
  */
 export function calendarsFromEnv(): CalendarSource[] | null {
-  const env = envSetting("calendar");
+  const env = envSetting("calendarIcal");
   if (!env) return null;
   return env
     .split(/[;\n]/)
@@ -45,14 +42,11 @@ export function calendarsFromEnv(): CalendarSource[] | null {
 export async function getCalendars(): Promise<CalendarSource[]> {
   const fromEnv = calendarsFromEnv();
   if (fromEnv) return fromEnv;
-  const [row] = await getDb()
-    .select({ calendarIcal: siteSettings.calendarIcal })
-    .from(siteSettings)
-    .where(eq(siteSettings.id, 1))
-    .limit(1);
-  if (!row?.calendarIcal) return [];
+  // 암호화해 둔 JSON 을 settings.ts 가 풀어 준다(풀 수 없으면 null)
+  const stored = await storedSetting("calendarIcal");
+  if (!stored) return [];
   try {
-    const parsed: unknown = JSON.parse(decryptText(row.calendarIcal));
+    const parsed: unknown = JSON.parse(stored);
     if (!Array.isArray(parsed)) return [];
     return parsed.flatMap((item): CalendarSource[] => {
       if (typeof item === "string") return [{ name: "", url: item }];
@@ -79,14 +73,7 @@ export function isIcalUrl(value: string) {
 
 /** 캘린더들을 암호화해 둔다. 빈 배열이면 지운다 */
 export async function saveCalendars(list: CalendarSource[]) {
-  const value = list.length > 0 ? encryptText(JSON.stringify(list)) : null;
-  await getDb()
-    .insert(siteSettings)
-    .values({ id: 1, calendarIcal: value })
-    .onConflictDoUpdate({
-      target: siteSettings.id,
-      set: { calendarIcal: value, updatedAt: new Date() },
-    });
+  await saveConfig({ calendarIcal: list.length > 0 ? JSON.stringify(list) : null });
   cache.clear();
 }
 

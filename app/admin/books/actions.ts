@@ -9,7 +9,7 @@ import { isBookStatus, parseRating } from "@/lib/books";
 import { fetchCover, searchBooks, type FoundBook } from "@/lib/books/lookup";
 import { calibreAccess, lookupAccess } from "@/lib/books/lookup-key";
 import { summarizeBook } from "@/lib/books/summary";
-import { siteConfig } from "@/lib/site/settings";
+import { siteConfig, summaryPrompt } from "@/lib/site/settings";
 import { BOOK_CATEGORY, BOOK_KIND, readCode } from "@/lib/codes";
 import { books, getDb } from "@/lib/db";
 import { ALLOWED_TYPES, MAX_UPLOAD_BYTES, saveUpload } from "@/lib/uploads";
@@ -183,11 +183,12 @@ export async function lookupBooks(
  */
 export async function summarizeBookAction(title: string, description: string, author = "") {
   await requireAdmin();
-  const { geminiApiKey } = await siteConfig();
+  const [{ geminiApiKey }, template] = await Promise.all([siteConfig(), summaryPrompt()]);
   return summarizeBook(
     String(title ?? "").slice(0, 200),
     String(description ?? "").slice(0, 4000),
     geminiApiKey,
     String(author ?? "").slice(0, 200),
+    template ?? undefined,
   );
 }

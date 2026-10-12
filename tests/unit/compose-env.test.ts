@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CONFIG_FIELDS, ENV_SETTINGS } from "@/lib/site/settings";
+import { SETTINGS } from "@/lib/site/settings";
 
 /**
  * compose 파일 둘(공개용 compose.yaml · 운영 infra/docker-compose.yml)이 앱에
@@ -12,8 +12,7 @@ const FILES = ["compose.yaml", "infra/docker-compose.yml"].filter((f) => existsS
 
 /** 환경설정(lib/site/settings.ts) 값과, 그 밖에 앱이 읽는 선택 값 */
 const MUST = [
-  ...Object.values(CONFIG_FIELDS).map((f) => f.env),
-  ...Object.values(ENV_SETTINGS),
+  ...Object.values(SETTINGS).map((f) => f.env),
   "SECRETS_KEY",
   "SESSION_SECRET",
   "SITE_URL",
@@ -32,7 +31,7 @@ describe("compose 파일이 앱에 넘기는 환경변수", () => {
 
 /** .env.example 셋에도 환경설정 값이 다 적혀 있다(주석으로라도) */
 describe(".env.example 이 환경설정 값을 다 적는다", () => {
-  const names = [...Object.values(CONFIG_FIELDS).map((f) => f.env), ...Object.values(ENV_SETTINGS)];
+  const names = Object.values(SETTINGS).map((f) => f.env);
   for (const file of [".env.example", "infra/.env.example", "export/overlay/.env.example"].filter((f) =>
     existsSync(f),
   )) {

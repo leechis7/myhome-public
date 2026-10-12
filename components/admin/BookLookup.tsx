@@ -207,7 +207,7 @@ export default function BookLookup({
                   onClick={() => pick(book)}
                   className="min-w-0 flex-1 rounded-md px-2 py-1 text-left text-sm transition-colors hover:bg-foreground/5"
                 >
-                  <span className="block truncate font-medium">{book.title}</span>
+                  <span className="block break-words font-medium">{book.title}</span>
                   {/* 출처 딱지. 같은 ISBN 을 합친 줄이면 여럿이다 */}
                   <span className="mt-0.5 flex flex-wrap gap-1">
                     {(book.sources ?? [book.source]).map((s) => (
@@ -219,7 +219,7 @@ export default function BookLookup({
                       </span>
                     ))}
                   </span>
-                  <span className="block truncate text-xs text-muted">
+                  <span className="block break-words text-xs text-muted">
                     {[book.author, book.publisher, book.published, book.isbn].filter(Boolean).join(" · ")}
                   </span>
                   <span className="mt-0.5 block text-xs text-faint">눌러서 고르기</span>

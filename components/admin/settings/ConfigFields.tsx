@@ -1,10 +1,10 @@
 import { saveOutsideAction } from "@/app/admin/settings/actions";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import {
-  CONFIG_FIELDS,
+  SETTINGS,
   configSources,
   siteConfig,
-  type ConfigName,
+  type SettingName,
 } from "@/lib/site/settings";
 
 const field =
@@ -23,7 +23,7 @@ const notices: Record<string, string> = {
 };
 
 type Row = {
-  name: ConfigName;
+  name: SettingName;
   label: string;
   hint: string;
   placeholder: string;
@@ -103,7 +103,7 @@ export default async function ConfigFields({
   label,
   notice,
 }: {
-  names: ConfigName[];
+  names: SettingName[];
   /** 저장한 뒤 돌아올 서비스 칸(#telegram …). 알림도 이 칸에만 뜬다 */
   anchor: string;
   /** 폼 · 저장 단추 이름. 「텔레그램」 → 「텔레그램 저장」 */
@@ -126,8 +126,8 @@ export default async function ConfigFields({
       <form action={saveOutsideAction} aria-label={label} className="space-y-4">
         <input type="hidden" name="anchor" value={anchor} />
         {rows.map((row) => {          const source = sources[row.name];
-          const secret = CONFIG_FIELDS[row.name].secret;
-          const env = CONFIG_FIELDS[row.name].env;
+          const secret = SETTINGS[row.name].kind === "secret";
+          const env = SETTINGS[row.name].env;
           return (
             <div key={row.name}>
               <label htmlFor={`out-${row.name}`} className="text-sm font-medium">

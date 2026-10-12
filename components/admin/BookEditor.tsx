@@ -3,6 +3,7 @@ import DeleteButton from "@/components/admin/DeleteButton";
 import CodePicker from "@/components/admin/CodePicker";
 import CoverInput from "@/components/admin/CoverInput";
 import BookLookup from "@/components/admin/BookLookup";
+import LazyDetails from "@/components/admin/LazyDetails";
 import { deleteBook, saveBook } from "@/app/admin/books/actions";
 import {
   BOOK_STATUS_LABELS,
@@ -86,8 +87,9 @@ function Fields({
         defaultValue={book?.note ?? ""}
         placeholder="한두 줄 소개"
         aria-label="소개"
-        rows={2}
-        className={`${field} sm:col-span-2`}
+        rows={4}
+        // 글 길이만큼 늘어난다(되는 브라우저에서). 휴대폰에서 요약이 다 보이게
+        className={`${field} min-h-24 field-sizing-content sm:col-span-2`}
       />
       <input
         name="url"
@@ -141,38 +143,63 @@ function BookItem({
   categories: Code[];
   lookupSource: string;
 }) {
+  const cover = coverUrl(book);
   return (
     <li className="rounded-lg border border-border">
-      <details>
-        <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
-          <span className="font-medium">{book.title}</span>
-          <span className="text-muted">{book.author}</span>
-          {book.category || book.kind ? (
-            <span className="text-xs text-faint">
-              {[book.category, book.kind].filter(Boolean).join(" · ")}
+      {/* 고치기 폼은 펼칠 때 그린다 - 책이 많으면 미리 다 그리기에 무겁다 */}
+      <LazyDetails
+        summaryClassName="flex cursor-pointer list-none items-center gap-3 px-4 py-2 text-sm [&::-webkit-details-marker]:hidden"
+        summary={
+          <>
+            {/* 작은 표지. 없으면 빈 자리만 두어 줄이 가지런하게 */}
+            {cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={cover}
+                alt=""
+                loading="lazy"
+                className="h-12 w-8 shrink-0 rounded-sm border border-border object-cover"
+              />
+            ) : (
+              <span aria-hidden className="h-12 w-8 shrink-0 rounded-sm border border-dashed border-border" />
+            )}
+            {/* 휴대폰에서는 노트 · 상태를 제목 아래 줄로 - 제목이 눌리지 않게 */}
+            <span className="flex min-w-0 flex-1 flex-col gap-x-3 gap-y-1.5 sm:flex-row sm:items-center">
+              <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 sm:flex-1">
+                <span className="font-medium">{book.title}</span>
+                <span className="text-muted">{book.author}</span>
+                {book.category || book.kind ? (
+                  <span className="text-xs text-faint">
+                    {[book.category, book.kind].filter(Boolean).join(" · ")}
+                  </span>
+                ) : null}
+              </span>
+              <span className="flex shrink-0 items-center gap-2">
+                {/* 펼치지 않아도 바로 노트로 간다(MYH-211) */}
+                <Link
+                  href={`/admin/books/${book.id}`}
+                  className="shrink-0 rounded-md border border-border px-2 py-0.5 text-xs transition-colors hover:bg-foreground/5"
+                >
+                  {book.hasNote ? "📖 독서 노트" : "＋ 독서 노트"}
+                </Link>
+                <span
+                  className={`shrink-0 rounded px-2 py-0.5 text-xs ${
+                    book.status === "reading"
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : book.status === "want"
+                        ? "bg-sky-500/10 text-sky-700 dark:text-sky-400"
+                        : book.status === "stopped"
+                          ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                          : "bg-foreground/[0.06] text-foreground/60"
+                  }`}
+                >
+                  {BOOK_STATUS_LABELS[book.status as BookStatus]}
+                </span>
+              </span>
             </span>
-          ) : null}
-          {/* 펼치지 않아도 바로 노트로 간다(MYH-211) */}
-          <Link
-            href={`/admin/books/${book.id}`}
-            className="ml-auto rounded-md border border-border px-2 py-0.5 text-xs transition-colors hover:bg-foreground/5"
-          >
-            {book.hasNote ? "📖 독서 노트" : "＋ 독서 노트"}
-          </Link>
-          <span
-            className={`rounded px-2 py-0.5 text-xs ${
-              book.status === "reading"
-                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                : book.status === "want"
-                  ? "bg-sky-500/10 text-sky-700 dark:text-sky-400"
-                  : book.status === "stopped"
-                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                    : "bg-foreground/[0.06] text-foreground/60"
-            }`}
-          >
-            {BOOK_STATUS_LABELS[book.status as BookStatus]}
-          </span>
-        </summary>
+          </>
+        }
+      >
         <div className="border-t border-border p-4">
           <form action={saveBook} aria-label={`${book.title} 고치기`}>
             <input type="hidden" name="id" value={book.id} />
@@ -187,18 +214,21 @@ function BookItem({
               <Link href={`/admin/books/${book.id}`} className={button}>
                 {book.hasNote ? "독서 노트 고치기 →" : "독서 노트 쓰기 →"}
               </Link>
+              {/* 저장 · 노트와 한 줄에, 떨어뜨려 오른쪽 끝에 둔다. 지우기는 폼
+                  내용을 안 본다(formNoValidate) */}
+              <div className="ml-auto">
+                <DeleteButton
+                  formAction={deleteBook}
+                  formNoValidate
+                  aria-label={`${book.title} 삭제`}
+                  className={`${button} text-red-600 dark:text-red-400`}
+                  confirmMessage={`「${book.title}」 을 지울까요?`}
+                />
+              </div>
             </div>
           </form>
-          <form action={deleteBook} className="mt-2">
-            <input type="hidden" name="id" value={book.id} />
-            <DeleteButton
-              aria-label={`${book.title} 삭제`}
-              className={`${button} text-red-600 dark:text-red-400`}
-              confirmMessage={`「${book.title}」 을 지울까요?`}
-            />
-          </form>
         </div>
-      </details>
+      </LazyDetails>
     </li>
   );
 }

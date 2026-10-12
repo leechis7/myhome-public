@@ -28,19 +28,6 @@ const readSite = unstable_cache(
   { tags: [SITE_TAG], revalidate: 3600 },
 );
 
-/**
- * 캐시한 날 값 한 줄(환경설정의 암호문 칸까지). lib/site/settings.ts 가 쓴다 -
- * 모든 화면이 레이아웃 · 통계에서 환경설정을 읽으므로 매번 DB 에 가지 않게.
- * 못 읽으면 null.
- */
-export async function getCachedSiteRow() {
-  try {
-    return await readSite();
-  } catch {
-    return null;
-  }
-}
-
 /** 화면이 쓰는 사이트 정보. 빈 칸은 보기 값으로 채워져 있다 */
 export async function getSite(): Promise<SiteInfo> {
   try {

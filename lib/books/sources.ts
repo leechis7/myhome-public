@@ -3,7 +3,7 @@
  * lib/books/lookup.ts 의 searchBooks 에서 그 출처를 묻는 길을 더한다 - 환경설정 ›
  * 책 찾기 의 순서 · 사용 칸에는 저절로 나온다.
  *
- * 순서와 사용 여부는 site_settings.book_sources 에 「kakao,-calibre,openlibrary」
+ * 순서와 사용 여부는 settings 테이블의 book_sources 에 「kakao,-calibre,openlibrary」
  * 꼴로 둔다(앞이 먼저, - 는 끔). 여기 있는데 저장된 것에 없는 출처(새로 붙인
  * 것)는 맨 뒤에 켠 채로 붙는다.
  *

@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import BookSourceSettings from "@/components/admin/settings/BookSourceSettings";
+import SummaryPromptSettings from "@/components/admin/settings/SummaryPromptSettings";
 import CalendarSettings from "@/components/admin/settings/CalendarSettings";
 import ConfigFields from "@/components/admin/settings/ConfigFields";
 import TelegramSettings from "@/components/admin/settings/TelegramSettings";
 import { isAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
-import { envSetting } from "@/lib/site/settings";
-import { getStoredSite } from "@/lib/site/info";
+import { envSetting, storedSetting } from "@/lib/site/settings";
 import { saveEditorAction } from "@/app/admin/settings/actions";
 import { DEFAULT_EDITOR, EDITORS, EDITOR_LABELS, editorOf } from "@/lib/posts/editor-kinds";
 
@@ -30,7 +30,7 @@ export default async function AdminIntegrationsPage({
 }: PageProps<"/admin/settings">) {
   if (!(await isAdmin())) redirect("/admin");
 
-  const [{ cal, tg, out, at }, site] = await Promise.all([searchParams, getStoredSite()]);
+  const [{ cal, tg, out, at }, storedEditor] = await Promise.all([searchParams, storedSetting("editor")]);
   // 값 칸의 알림은 저장한 서비스 칸에만
   const outNotice = (anchor: string) =>
     at === anchor && typeof out === "string" ? out : undefined;
@@ -43,7 +43,7 @@ export default async function AdminIntegrationsPage({
         .env 에 값이 있으면 그것이 먼저이고, 여기서 넣은 뒤 .env 에서 빼면 여기 값을
         씁니다. 토큰 · 키는 암호화해서 두고 다시 보여 주지 않습니다.
       </p>
-      <div className="max-w-xl">
+      <div>
         <Integration id="writing" title="글쓰기">
           {outNotice("writing") ? (
             <p role="status" className="mb-3 text-sm text-foreground/80">
@@ -60,7 +60,7 @@ export default async function AdminIntegrationsPage({
               <span className="mb-1 block text-sm font-medium">기본 편집기</span>
               <select
                 name="editor"
-                defaultValue={editorOf(site?.editor)}
+                defaultValue={editorOf(storedEditor)}
                 className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40"
               >
                 {EDITORS.map((e) => (
@@ -140,6 +140,7 @@ export default async function AdminIntegrationsPage({
             label="Gemini"
             notice={outNotice("gemini")}
           />
+          <SummaryPromptSettings notice={outNotice("summary")} />
         </Integration>
 
         <Integration id="stats" title="통계 · 감시">

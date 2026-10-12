@@ -79,7 +79,8 @@ test.describe("읽는 책", () => {
     await context.close();
 
     // 고치기: 읽는 중 → 다 읽음
-    await page.goto("/admin/books");
+    // 책이 많아도 빨리 열리게 이번 시험의 책만 찾아 연다
+    await page.goto(`/admin/books?q=${stamp}`);
     const row = page.locator("#books li", { hasText: reading });
     await row.locator(":scope > details > summary").click();
     const edit = page.getByRole("form", { name: `${reading} 고치기` });
@@ -438,7 +439,7 @@ test.describe("독서 노트", () => {
     await expect(card.getByRole("link", { name: "독서 노트 읽기 →" })).toHaveCount(0);
 
     // 관리: 줄을 펼쳐 「독서 노트 쓰기」
-    await page.goto("/admin/books");
+    await page.goto(`/admin/books?q=${encodeURIComponent(title)}`);
     const row = page.locator("#books li", { hasText: title });
     await row.locator(":scope > details > summary").click();
     await row.getByRole("link", { name: "독서 노트 쓰기 →" }).click();

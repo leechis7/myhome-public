@@ -833,54 +833,28 @@ export const siteSettings = pgTable(
     description: text("description"),
     /** 대표 메일. 구조화 데이터(JSON-LD)처럼 하나만 적어야 하는 곳에 쓴다 */
     email: text("email"),
-    /** 글 편집기: milkdown / tiptap / toast. 비우면 milkdown(MYH-118) */
-    editor: text("editor"),
-    /**
-     * 암호문. 구글 캘린더 iCal 비공개 주소들(JSON 배열, MYH-214). 주소만
-     * 알면 일정을 읽을 수 있어 암호화해 둔다. 비우면 일정이 꺼진다.
-     */
-    calendarIcal: text("calendar_ical"),
-    /**
-     * 암호문. 카카오 책 검색 REST API 키(MYH-231). 휴대폰에서도 넣으려고 화면에
-     * 둔다. .env 의 KAKAO_REST_API_KEY 가 있으면 그것이 먼저다.
-     */
-    kakaoRestKey: text("kakao_rest_key"),
-    /*
-     * .env 에만 있던 환경설정(MYH-232). .env 에 값이 있으면 그것이 먼저다.
-     * lib/site-config.ts 가 둘을 합쳐 읽는다.
-     */
-    /** 암호문. 텔레그램 알림 봇 토큰 */
-    telegramBotToken: text("telegram_bot_token"),
-    /** 텔레그램 내 대화방 번호 */
-    telegramChatId: text("telegram_chat_id"),
-    /** umami 사이트 ID */
-    umamiWebsiteId: text("umami_website_id"),
-    /** Search Console 소유 확인 값 */
-    googleSiteVerification: text("google_site_verification"),
-    /** 감시 화면의 Grafana 대시보드 경로 */
-    monitoringDashboard: text("monitoring_dashboard"),
-    /** 암호문. 책 소개를 요약할 Gemini API 키(MYH-233) */
-    geminiApiKey: text("gemini_api_key"),
-    /** 내 Calibre 서재(MYH-226). 책 찾기가 소개 · 표지를 가져온다. 비밀번호는 암호문 */
-    calibreUrl: text("calibre_url"),
-    calibreUser: text("calibre_user"),
-    calibrePassword: text("calibre_password"),
-    /** 책 찾기 출처의 순서 · 사용(MYH-226). 「kakao,-calibre,openlibrary」 꼴 */
-    bookSources: text("book_sources"),
-    /** 텔레그램 글을 AI 로 먼저 가르나(MYH-233). 기본 끔 */
-    telegramAi: boolean("telegram_ai").notNull().default(false),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
     check("site_settings_single_row", sql`${t.id} = 1`),
-    check(
-      "site_settings_editor",
-      sql`${t.editor} is null or ${t.editor} in ('milkdown', 'tiptap', 'toast')`,
-    ),
   ],
 );
+
+/**
+ * 환경설정(MYH-232). 키 하나에 줄 하나. 어떤 키가 있고 어떤 종류(글 · 비밀 ·
+ * 켜기/끄기 · 목록)인지, .env 이름이 무엇인지는 lib/site/settings.ts 의
+ * SETTINGS 한 곳에 적는다 - 설정을 더해도 마이그레이션이 없다.
+ * 비밀인 값은 암호문(SECRETS_KEY). 없는 키는 줄이 없다.
+ */
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 /**
  * 빠른 메모(MYH-215). 텔레그램 봇으로 보낸 글이나 화면에서 쓴 한 줄을 쌓아

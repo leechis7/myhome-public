@@ -1,7 +1,6 @@
 import { EditorChoiceProvider } from "@/components/admin/markdown/editor-choice";
 import { editorOf } from "@/lib/posts/editor-kinds";
-import { getStoredSite } from "@/lib/site/info";
-import { envSetting } from "@/lib/site/settings";
+import { siteConfig } from "@/lib/site/settings";
 
 /**
  * 관리 화면들의 틀.
@@ -15,11 +14,6 @@ import { envSetting } from "@/lib/site/settings";
  */
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   // .env 의 DEFAULT_EDITOR 가 먼저(MYH-232)
-  const editor =
-    envSetting("editor") !== null
-      ? editorOf(envSetting("editor"))
-      : await getStoredSite()
-          .then((row) => editorOf(row?.editor))
-          .catch(() => editorOf(null));
+  const editor = editorOf((await siteConfig()).editor);
   return <EditorChoiceProvider value={editor}>{children}</EditorChoiceProvider>;
 }
