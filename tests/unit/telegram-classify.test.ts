@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { byRule, classify, fromAi } from "@/lib/telegram/classify";
+import { byRule, classify, DEFAULT_TODO_PROMPT, fromAi, renderTodoPrompt } from "@/lib/telegram/classify";
 
 // 2026-10-10 은 토요일이다
 const today = "2026-10-10";
@@ -23,6 +23,8 @@ describe("텔레그램 판정 - AI 먼저(MYH-233)", () => {
       title: "우유 사기",
       startOn: null,
       dueOn: "2026-10-11",
+      startTime: null,
+      endTime: null,
       how: "rule",
     });
     expect(fetch).not.toHaveBeenCalled();
@@ -38,6 +40,8 @@ describe("텔레그램 판정 - AI 먼저(MYH-233)", () => {
       title: "보고서 내기",
       startOn: null,
       dueOn: "2026-10-31",
+      startTime: null,
+      endTime: null,
       how: "ai",
     });
   });
@@ -80,5 +84,63 @@ describe("텔레그램 판정 - AI 먼저(MYH-233)", () => {
 
   it("규칙: 말 없이 온 이야기는 저장하지 않는다", () => {
     expect(byRule("오늘 날씨 좋다", today, null)).toEqual({ kind: "skip", how: "rule" });
+  });
+
+  it("시각을 읽는다 - 규칙이 읽은 것이 먼저, 못 읽으면 AI 의 것(MYH-245)", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    // 키가 없으면 규칙. 날이 없으면 오늘
+    expect(await classify("오후 7시~9시 운동", today, null, null, "17:00")).toMatchObject({
+      kind: "todo",
+      title: "운동",
+      dueOn: today,
+      startTime: "19:00",
+      endTime: "21:00",
+    });
+    // AI 가 다른 시각을 말해도 규칙이 읽은 것을 쓴다
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        gemini({ kind: "todo", title: "운동", start_on: "", due_on: "", start_time: "07:00", end_time: "" }),
+      ),
+    );
+    expect(await classify("7시 운동", today, "todo", KEY, "17:00")).toMatchObject({
+      dueOn: today,
+      startTime: "19:00",
+      endTime: null,
+      how: "ai",
+    });
+    // 규칙이 못 읽는 말은 AI 의 시각
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        gemini({ kind: "todo", title: "운동", start_on: "", due_on: "", start_time: "19:00", end_time: "21:00" }),
+      ),
+    );
+    expect(await classify("저녁 일곱 시부터 아홉 시까지 운동", today, "todo", KEY, "17:00")).toMatchObject({
+      title: "운동",
+      dueOn: today,
+      startTime: "19:00",
+      endTime: "21:00",
+    });
+  });
+});
+
+describe("판정 프롬프트(MYH-245)", () => {
+  it("자리 표시를 채우고, {글} 이 없으면 끝에 붙인다", () => {
+    const p = renderTodoPrompt(DEFAULT_TODO_PROMPT, { text: "내일 운동", today, now: "17:00", fixed: null });
+    expect(p).toContain("오늘은 2026-10-10(토요일), 지금은 17:00");
+    expect(p).toContain("kind 를 정한다");
+    expect(p).toContain("글: 내일 운동");
+    expect(renderTodoPrompt("{종류}", { text: "x", today, now: "1", fixed: "todo" })).toBe(
+      "이 글은 할 일이다(kind 는 todo).\n\n글: x",
+    );
+  });
+
+  it("바꾼 프롬프트로 묻는다", async () => {
+    const fetch = vi.fn().mockResolvedValue(gemini({ kind: "skip", title: "", start_on: "", due_on: "", start_time: "", end_time: "" }));
+    vi.stubGlobal("fetch", fetch);
+    await classify("안녕", today, null, KEY, "17:00", "내 프롬프트 {글}");
+    expect(JSON.stringify(fetch.mock.calls[0][1].body)).toContain("내 프롬프트 안녕");
   });
 });

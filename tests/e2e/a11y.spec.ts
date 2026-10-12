@@ -79,12 +79,16 @@ test.describe("접근성", () => {
   test("메뉴 관리 화면도 확인한다", async ({ page }) => {
     await login(page);
     await page.goto("/admin/menus");
-    await page
-      .getByRole("navigation", { name: "메뉴 트리" })
-      .getByRole("link")
-      .first()
-      .click();
-    await expect(page).toHaveURL(/\?id=\d+/);
+    // 여러 시험을 이어 돌리면 화면이 다 살아나기 전에 눌려 주소가 안 바뀔 때가
+    // 있다 - 바뀔 때까지 다시 누른다
+    await expect(async () => {
+      await page
+        .getByRole("navigation", { name: "메뉴 트리" })
+        .getByRole("link")
+        .first()
+        .click();
+      await expect(page).toHaveURL(/\?id=\d+/, { timeout: 3000 });
+    }).toPass({ timeout: 20000 });
     const selected = new URL(page.url());
     await scan(page, `${selected.pathname}${selected.search}`);
     await scan(page, "/admin/menus?add=1");

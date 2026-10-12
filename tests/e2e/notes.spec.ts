@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
   login,
+  noteRow,
+  openNote,
   pressDelete,
 } from "./helpers";
 import { sweepNotes } from "./sweep";
@@ -141,9 +143,8 @@ test.describe("짧은 글", () => {
 
     // 지운다
     await page.goto("/admin/notes");
-    const 줄 = page
-      .locator("li")
-      .filter({ has: page.locator(`textarea:has-text("${본문}")`) });
+    const 줄 = noteRow(page, 본문);
+    await openNote(줄);
     await pressDelete(줄);
     await expect(page.getByText("저장했습니다")).toBeVisible();
 
@@ -172,14 +173,13 @@ test.describe("짧은 글", () => {
     await expect(page.getByText("저장했습니다")).toBeVisible();
 
     // 글은 하나다 — 그림을 올릴 때 만든 초안에 그대로 담겼다
-    const 그줄 = page
-      .locator("li")
-      .filter({ has: page.locator(`textarea:has-text("${본문}")`) });
-    await expect(그줄).toHaveCount(1);
+    await expect(page.locator("li[id^='note-']").filter({ hasText: 본문 })).toHaveCount(1);
+    const 그줄 = noteRow(page, 본문);
+    await openNote(그줄);
 
     // 올린 이미지 목록에 남는다
     // 「이미지」 와 안쪽 「올린 이미지」 둘이라 바깥 것만 누른다
-    await 그줄.locator("summary").first().click();
+    await 그줄.locator("summary", { hasText: /^이미지/ }).first().click();
     await expect(
       그줄.locator("section", { hasText: "올린 이미지" }).locator("img"),
     ).toHaveCount(1);
@@ -198,9 +198,8 @@ test.describe("짧은 글", () => {
 
     // 지운다
     await page.goto("/admin/notes");
-    await pressDelete(page
-      .locator("li")
-      .filter({ has: page.locator(`textarea:has-text("${본문}")`) }));
+    await openNote(noteRow(page, 본문));
+    await pressDelete(noteRow(page, 본문));
     await expect(page.getByText("저장했습니다")).toBeVisible();
   });
 
@@ -229,9 +228,8 @@ test.describe("짧은 글", () => {
     // 지운다
     await login(page);
     await page.goto("/admin/notes");
-    await pressDelete(page
-      .locator("li")
-      .filter({ has: page.locator(`textarea:has-text("${본문}")`) }));
+    await openNote(noteRow(page, 본문));
+    await pressDelete(noteRow(page, 본문));
     await expect(page.getByText("저장했습니다")).toBeVisible();
   });
 
@@ -245,9 +243,7 @@ test.describe("짧은 글", () => {
     await expect(page.getByText("저장했습니다")).toBeVisible();
 
     // "임시저장" 은 새로 쓰기 단추에도 있다. 그 글 줄 안에서만 찾는다
-    const 줄 = page
-      .locator("li")
-      .filter({ has: page.locator(`textarea:has-text("${본문}")`) });
+    const 줄 = noteRow(page, 본문);
     await expect(줄.getByText("임시저장", { exact: true })).toBeVisible();
 
     await page.goto("/notes");
@@ -255,6 +251,7 @@ test.describe("짧은 글", () => {
 
     // 올리면 나온다
     await page.goto("/admin/notes");
+    await openNote(줄);
     await 줄.getByRole("button", { name: "글 올리기" }).click();
     await expect(page.getByText("저장했습니다")).toBeVisible();
 
@@ -262,9 +259,8 @@ test.describe("짧은 글", () => {
     await expect(page.getByText(본문)).toBeVisible();
 
     await page.goto("/admin/notes");
-    await pressDelete(page
-      .locator("li")
-      .filter({ has: page.locator(`textarea:has-text("${본문}")`) }));
+    await openNote(noteRow(page, 본문));
+    await pressDelete(noteRow(page, 본문));
     await expect(page.getByText("저장했습니다")).toBeVisible();
   });
 });

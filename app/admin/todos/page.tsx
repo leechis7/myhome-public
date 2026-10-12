@@ -14,7 +14,7 @@ import { isAdmin } from "@/lib/security/auth";
 import { todayInSeoul } from "@/lib/profile/resume-sections";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import { listTodos } from "@/lib/my-space/todos";
-import { rangeLabel, rangeState } from "@/lib/my-space/todo-dates";
+import { rangeLabel, rangeState, seoulTime } from "@/lib/my-space/todo-dates";
 
 export const metadata: Metadata = {
   title: "할 일",
@@ -30,18 +30,25 @@ const button =
 const primary =
   "rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90";
 
-/** 기간 칸 둘. 더하기 · 고치기가 같이 쓴다(MYH-228) */
+/**
+ * 기간 칸 둘(MYH-228)과 시각 칸 둘(MYH-245). 더하기 · 고치기가 같이 쓴다. 시각만
+ * 넣고 날을 비우면 오늘 할 일이 된다
+ */
 function RangeInputs({
   startOn,
   dueOn,
+  startTime,
+  endTime,
   edit = false,
 }: {
   startOn?: string | null;
   dueOn?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
   edit?: boolean;
 }) {
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="flex flex-wrap items-center gap-1.5">
       <input
         type="date"
         name="startOn"
@@ -59,6 +66,25 @@ function RangeInputs({
         defaultValue={dueOn ?? ""}
         aria-label={edit ? "마감일 고치기" : "마감일"}
         title="마감일"
+        className={field}
+      />
+      <input
+        type="time"
+        name="startTime"
+        defaultValue={startTime ?? ""}
+        aria-label={edit ? "시작 시각 고치기" : "시작 시각"}
+        title="시작 시각. 날을 비우면 오늘"
+        className={field}
+      />
+      <span aria-hidden className="text-muted">
+        ~
+      </span>
+      <input
+        type="time"
+        name="endTime"
+        defaultValue={endTime ?? ""}
+        aria-label={edit ? "끝 시각 고치기" : "끝 시각"}
+        title="끝 시각"
         className={field}
       />
     </span>
@@ -83,6 +109,7 @@ export default async function TodosPage() {
   if (!hasSecretKey()) notFound();
 
   const today = todayInSeoul();
+  const now = seoulTime();
   const { open, done } = await listTodos();
 
   return (
@@ -94,7 +121,9 @@ export default async function TodosPage() {
           메모
         </Link>
         에서 연결). 「할일 10/15 보고서 내기」 · 「내일 우유 사기」 · 「10/12~10/15 출장」 처럼
-        날짜를 쓰면 그 날이 기간에 들어갑니다. 「내일 우유 사기」 처럼 할 일로 보이면 「할일」 을 빼도 받습니다.
+        날짜를 쓰면 그 날이 기간에 들어갑니다. 「오후 7시 운동」 · 「7시~9시 회의」 처럼 시각을 쓰면 시각도 들어가고, 날이 없으면
+        오늘입니다. 「내일 우유 사기」 처럼 할 일로 보이면 「할일」 을 빼도 받습니다. 여기와 떠 있는 「+」
+        창에서 적을 때도 날짜 · 시각 칸을 비워 두면 글에서 읽습니다(Gemini 키가 있으면 AI 가).
       </p>
 
       <form
@@ -106,7 +135,7 @@ export default async function TodosPage() {
           name="title"
           required
           aria-label="새 할 일"
-          placeholder="할 일"
+          placeholder="할 일 (「내일 오후 7시 운동」 처럼 쓰면 날짜 · 시각을 읽습니다)"
           className={`${field} min-w-0 flex-1`}
         />
         <RangeInputs />
@@ -121,7 +150,7 @@ export default async function TodosPage() {
         <ul className="mt-8 divide-y divide-border" aria-label="남은 할 일">
           {open.map((todo) => {
             const label = rangeLabel(todo);
-            const [prefix, tone] = STATE_STYLE[rangeState(todo, today)];
+            const [prefix, tone] = STATE_STYLE[rangeState(todo, today, now)];
             return (
               <li key={todo.id} className="flex flex-wrap items-center gap-3 py-3">
                 <form action={toggleTodoAction}>
@@ -157,7 +186,13 @@ export default async function TodosPage() {
                         aria-label="할 일 고치기"
                         className={`${field} min-w-0 flex-1`}
                       />
-                      <RangeInputs startOn={todo.startOn} dueOn={todo.dueOn} edit />
+                      <RangeInputs
+                        startOn={todo.startOn}
+                        dueOn={todo.dueOn}
+                        startTime={todo.startTime}
+                        endTime={todo.endTime}
+                        edit
+                      />
                       <button type="submit" className={primary}>
                         저장
                       </button>

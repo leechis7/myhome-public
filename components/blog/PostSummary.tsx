@@ -36,34 +36,35 @@ export default function PostSummary({
 
   return (
     <>
-      <p className="text-sm text-muted">
+      {/* 줄이 좁으면 칸 단위로 넘어간다. 넘어간 줄도 왼쪽에 붙게 간격은 gap 으로 */}
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
         <time dateTime={post.publishedAt?.toISOString()}>
           {formatDate(post.publishedAt)}
         </time>
         {/* 나만 보는 글 · 예약 글은 목록에서도 밝힌다. 관리자에게만 목록에 선다 */}
         {needsBadge(post) ? (
-          <span className="ml-3 rounded bg-amber-500/10 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-400">
+          <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-400">
             {stateLabel(post)}
           </span>
         ) : null}
         {/* 목록에서도 개정·고침을 알 수 있게 한다. 글 화면과 같은 규칙이다 */}
         {revision ? (
-          <time dateTime={revision.at.toISOString()} className="ml-3">
+          <time dateTime={revision.at.toISOString()}>
             {revision.label}
           </time>
         ) : null}
         {/* 문서 버전은 테두리를 둘러 눈에 띄게. 태그와 헷갈리지 않게 앞에
             "버전" 을 붙인다 */}
         {post.version ? (
-          <span className="ml-3 rounded border border-border px-2 py-0.5 text-xs tabular-nums">
+          <span className="rounded border border-border px-2 py-0.5 text-xs tabular-nums">
             {`버전 ${post.version}`}
           </span>
         ) : null}
         {post.viewCount > 0 ? (
-          <span className="ml-3">{`조회 ${post.viewCount}`}</span>
+          <span>{`조회 ${post.viewCount}`}</span>
         ) : null}
         {commentCount ? (
-          <span className="ml-3">{`댓글 ${commentCount}`}</span>
+          <span>{`댓글 ${commentCount}`}</span>
         ) : null}
       </p>
       <h2 className="mt-1 text-xl font-semibold tracking-tight">

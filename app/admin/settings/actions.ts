@@ -8,6 +8,7 @@ import { isEditorKind } from "@/lib/posts/editor-kinds";
 import { isBookSource, moveSource, readSources, writeSources } from "@/lib/books/sources";
 import { isKakaoKey } from "@/lib/books/lookup-key";
 import { DEFAULT_SUMMARY_PROMPT } from "@/lib/books/summary";
+import { DEFAULT_TODO_PROMPT } from "@/lib/telegram/classify";
 
 /**
  * 환경설정(MYH-232). .env 에 값이 있는 칸은 화면에 없으니 보내지도 않는다.
@@ -80,18 +81,6 @@ export async function saveEditorAction(formData: FormData) {
 }
 
 /**
- * 텔레그램 글을 AI 로 먼저 가르나(MYH-233). 보낸 글이 Google(Gemini 무료 등급)로
- * 나가므로 사람이 켠다. Gemini 키가 없으면 켜도 규칙으로 간다.
- */
-export async function saveTelegramAiAction(formData: FormData) {
-  await requireAdmin();
-  const on = formData.get("telegramAi") === "1";
-  // 끔은 처음 값이라 줄을 지운다
-  await saveConfig({ telegramAi: on ? "on" : null });
-  redirect("/admin/settings?out=saved&at=telegram#telegram");
-}
-
-/**
  * 책 찾기 출처의 차례 · 사용(MYH-226). 폼이 보낸 차례(order)와 켠 것(on)을
  * 저장한다. ↑ · ↓ 단추(move=출처:up)로 한 칸씩 옮긴다 - 옮기면서 켜고 끈 것도
  * 함께 저장된다.
@@ -124,4 +113,17 @@ export async function saveSummaryPromptAction(formData: FormData) {
   const prompt = value && value !== DEFAULT_SUMMARY_PROMPT ? value : null;
   await saveConfig({ bookSummaryPrompt: prompt });
   redirect("/admin/settings?out=saved&at=summary#summary");
+}
+
+/**
+ * 할 일 · 메모 판정 프롬프트(MYH-245). 비우거나 「처음 값으로」 면 지운다 - 코드의
+ * 처음 값(DEFAULT_TODO_PROMPT)을 쓴다.
+ */
+export async function saveTodoPromptAction(formData: FormData) {
+  await requireAdmin();
+  const reset = formData.get("reset") === "1";
+  const value = reset ? "" : String(formData.get("prompt") ?? "").trim().slice(0, 4000);
+  const prompt = value && value !== DEFAULT_TODO_PROMPT ? value : null;
+  await saveConfig({ todoAiPrompt: prompt });
+  redirect("/admin/settings?out=saved&at=todo-prompt#todo-prompt");
 }

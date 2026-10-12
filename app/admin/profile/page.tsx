@@ -162,7 +162,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/admin/pr
           정렬 순서가 작을수록 위에 나옵니다. 같으면 최근 시작한 것부터. 종료일을
           비우면 진행 중으로 보입니다.
         </p>
-        <ProjectEditor rows={projectRows} kind="work" />
+        <ProjectEditor rows={projectRows} kind="work" collapsed />
       </section>
     </Container>
   );

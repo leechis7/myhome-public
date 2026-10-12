@@ -15,6 +15,13 @@
       "when": 1791768204065,
       "tag": "0001_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791794200931,
+      "tag": "0002_todo_time",
+      "breakpoints": true
     }
   ]
 }

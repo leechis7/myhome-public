@@ -57,7 +57,7 @@ const ROWS: Row[] = [
   {
     name: "geminiApiKey",
     label: "Gemini API 키",
-    hint: "책 찾기로 고른 책의 소개를 한두 줄로 요약합니다. aistudio.google.com 에서 무료로 받습니다. 비우면 소개 앞부분을 줄여 넣습니다.",
+    hint: "있으면 책 소개 요약과 할 일 · 메모 가르기(텔레그램 · 할 일 화면 · 떠 있는 창의 날짜 · 시각 읽기)를 Gemini 가 합니다. 그 글이 Google(Gemini 무료 등급)로 나갑니다. aistudio.google.com 에서 무료로 받습니다. 비우면 요약은 소개 앞부분을 줄이고, 가르기는 규칙으로 합니다.",
     placeholder: "AIza… / AQ.…",
   },
   {

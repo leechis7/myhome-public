@@ -1,11 +1,11 @@
 import { revalidatePath } from "next/cache";
 import { addMemo } from "@/lib/my-space/memos";
 import { addTodo } from "@/lib/my-space/todos";
-import { rangeLabel, type TodoRange } from "@/lib/my-space/todo-dates";
+import { rangeLabel, seoulTime, type TodoRange } from "@/lib/my-space/todo-dates";
 import { todayInSeoul } from "@/lib/profile/resume-sections";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import { inboxDisabled, reply } from "@/lib/telegram/bot";
-import { siteConfig, telegramAiOn } from "@/lib/site/settings";
+import { siteConfig, todoAiPrompt } from "@/lib/site/settings";
 import { classify } from "@/lib/telegram/classify";
 import { matchesSecret, readUpdate } from "@/lib/telegram/inbox";
 
@@ -41,12 +41,19 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  // 할 일 · 메모 · 저장 안 함을 가른다(MYH-233). 「AI 로 판정」 을 켰고 Gemini 키가
+  // 할 일 · 메모 · 저장 안 함을 가른다(MYH-233). Gemini 키가
   // 있으면 AI 가 먼저, 실패하면 규칙. 말을 붙여 보낸 글은 그 말을 따른다
   const config = await siteConfig();
-  const key = (await telegramAiOn()) ? config.geminiApiKey : null;
+  const key = config.geminiApiKey;
   const fixed = message.kind === "free" ? null : message.kind;
-  const decision = await classify(message.text.slice(0, MAX_MEMO), todayInSeoul(), fixed, key);
+  const decision = await classify(
+    message.text.slice(0, MAX_MEMO),
+    todayInSeoul(),
+    fixed,
+    key,
+    seoulTime(),
+    (await todoAiPrompt()) ?? undefined,
+  );
   const by = key ? (decision.how === "ai" ? " (AI)" : " (규칙)") : "";
 
   if (decision.kind === "todo") {
@@ -65,7 +72,13 @@ export async function POST(request: Request) {
 }
 
 async function saveTodo(chatId: string, title: string, range: TodoRange, by: string) {
-  await addTodo(title, { startOn: range.startOn, dueOn: range.dueOn, source: "telegram" });
+  await addTodo(title, {
+    startOn: range.startOn,
+    dueOn: range.dueOn,
+    startTime: range.startTime,
+    endTime: range.endTime,
+    source: "telegram",
+  });
   revalidatePath("/admin/todos");
   const when = rangeLabel(range);
   await reply(

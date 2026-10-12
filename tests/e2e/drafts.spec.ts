@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { login, TEST_PREFIX } from "./helpers";
+import { login, noteRow, openNote, TEST_PREFIX } from "./helpers";
 import { sweepNotes, sweepPosts } from "./sweep";
 
 /**
@@ -149,10 +149,8 @@ test.describe("쓰던 글 보관", () => {
     await 새로.getByRole("button", { name: "올리기" }).click();
     await expect(page.getByText("저장했습니다")).toBeVisible();
 
-    const row = page
-      .locator("li[id^='note-']")
-      .filter({ has: page.locator(`textarea:text("${stamp}")`) })
-      .first();
+    const row = noteRow(page, stamp);
+    await openNote(row);
     const id = (await row.getAttribute("id"))!.replace("note-", "");
     const key = `myhome:draft:note:${id}`;
     const field = page.locator(`#note-content-${id}`);
@@ -160,6 +158,7 @@ test.describe("쓰던 글 보관", () => {
     await kept(page, key, "고치는 중");
 
     await page.reload();
+    // 보관된 고침이 있는 줄은 접혀 있지 않고 펼쳐서 연다
     const mine = page.locator(`#note-${id}`);
     await expect(banner(page)).toHaveCount(1);
     await mine.getByRole("button", { name: "되살리기" }).click();

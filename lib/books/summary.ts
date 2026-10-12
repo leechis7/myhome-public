@@ -36,7 +36,7 @@ export async function summarizeBook(
 }
 
 /**
- * 책 소개 요약 프롬프트의 처음 값. 환경설정 › Gemini(.env 의 BOOK_SUMMARY_PROMPT)
+ * 책 소개 요약 프롬프트의 처음 값. 환경설정 › AI 프롬프트(.env 의 BOOK_SUMMARY_PROMPT)
  * 에서 바꿀 수 있다. {제목} · {지은이} · {소개글} 자리에 그 책의 것이 들어간다.
  * {소개글} 을 빼면 맨 끝에 붙인다.
  *

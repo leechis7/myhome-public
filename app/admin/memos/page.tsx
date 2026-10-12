@@ -147,8 +147,8 @@ export default async function MemosPage({
       )}
 
       <p className="mt-12 border-t border-border pt-6 text-sm text-muted">
-        텔레그램 봇에게 「메모 …」 로 보낸 글도 여기로 옵니다.{" "}
-        {ready ? (connected ? "● 연결됨 · " : "○ 연결 안 됨 · ") : null}
+        {/* 같은 안내는 위에 있다. 여기는 연결 상태만 */}
+        텔레그램 {ready ? (connected ? "● 연결됨 · " : "○ 연결 안 됨 · ") : "· "}
         <Link href="/admin/settings#telegram" className="underline underline-offset-4">
           연결 설정
         </Link>

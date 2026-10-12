@@ -9,7 +9,7 @@ import { hasPasskey } from "@/lib/security/passkeys";
 import { getDb, messages, posts } from "@/lib/db";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import { listTodos } from "@/lib/my-space/todos";
-import { rangeLabel, rangeState } from "@/lib/my-space/todo-dates";
+import { rangeLabel, rangeState, seoulTime } from "@/lib/my-space/todo-dates";
 import { upcomingEvents } from "@/lib/my-space/calendar";
 import { todayInSeoul } from "@/lib/profile/resume-sections";
 
@@ -83,7 +83,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
 
   // 할 일은 넘긴 것 · 오늘 것 · 진행 중인 것만. 날이 없는 것은 「할 일」 화면에서
   const dueTodos = (todos?.open ?? [])
-    .map((t) => ({ ...t, state: rangeState(t, today) }))
+    .map((t) => ({ ...t, state: rangeState(t, today, seoulTime()) }))
     .filter((t) => t.state === "late" || t.state === "today" || t.state === "ongoing")
     .slice(0, ROWS);
 

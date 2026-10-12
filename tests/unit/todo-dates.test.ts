@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { orderRange, rangeLabel, rangeState, readTodoDates } from "@/lib/my-space/todo-dates";
+import {
+  orderRange,
+  parseTime,
+  rangeLabel,
+  rangeState,
+  readTodo,
+  readTodoDates,
+  readTodoTime,
+} from "@/lib/my-space/todo-dates";
 
 describe("할 일의 기간(MYH-228)", () => {
   it("거꾸로 적은 기간은 바로잡는다", () => {
@@ -92,5 +100,95 @@ describe("텔레그램 할 일의 날짜 읽기(MYH-229)", () => {
 
   it("날짜만 보내면 제목은 글 그대로", () => {
     expect(read("내일")).toEqual({ title: "내일", startOn: null, dueOn: "2026-10-10" });
+  });
+});
+
+describe("글 속의 시각(MYH-245)", () => {
+  const today = "2026-10-12";
+  const at = (text: string, now = "17:00", day = today) => readTodoTime(text, { day, today, now });
+
+  it("오전 · 오후 · 저녁 · 밤 · 낮을 읽는다", () => {
+    expect(at("오후 7시 운동")).toEqual({ title: "운동", startTime: "19:00", endTime: null });
+    expect(at("저녁 7시에 밥")).toEqual({ title: "밥", startTime: "19:00", endTime: null });
+    expect(at("밤 11시 빨래")).toMatchObject({ startTime: "23:00" });
+    expect(at("밤 12시 정리")).toMatchObject({ startTime: "00:00" });
+    expect(at("낮 2시 회의")).toMatchObject({ startTime: "14:00" });
+    expect(at("오전 9시 회의")).toMatchObject({ startTime: "09:00" });
+    expect(at("오후 12시 점심")).toMatchObject({ startTime: "12:00" });
+    expect(at("오전 12시 출발")).toMatchObject({ startTime: "00:00" });
+  });
+
+  it("반 · 분 · 24시간 · 19:30", () => {
+    expect(at("19시 운동")).toMatchObject({ title: "운동", startTime: "19:00" });
+    expect(at("오후 2시 반 회의")).toMatchObject({ startTime: "14:30" });
+    expect(at("오후 2시 15분 회의")).toMatchObject({ startTime: "14:15" });
+    expect(at("19:30 저녁 약속")).toMatchObject({ title: "저녁 약속", startTime: "19:30" });
+  });
+
+  it("오전 · 오후 없는 1 ~ 11시는 오늘 이미 지났으면 오후", () => {
+    expect(at("7시 운동", "17:00")).toMatchObject({ startTime: "19:00" });
+    expect(at("7시 운동", "06:00")).toMatchObject({ startTime: "07:00" });
+    // 다른 날이면 쓴 그대로
+    expect(at("7시 운동", "17:00", "2026-10-13")).toMatchObject({ startTime: "07:00" });
+  });
+
+  it("범위 · 끝만", () => {
+    expect(at("오후 7시~9시 운동")).toEqual({ title: "운동", startTime: "19:00", endTime: "21:00" });
+    expect(at("7시부터 9시까지 회의", "06:00")).toEqual({
+      title: "회의",
+      startTime: "07:00",
+      endTime: "09:00",
+    });
+    expect(at("19:00-21:00 저녁")).toMatchObject({ startTime: "19:00", endTime: "21:00" });
+    // 끝이 시작보다 앞이면 오후로
+    expect(at("11시~1시 점심", "06:00")).toMatchObject({ startTime: "11:00", endTime: "13:00" });
+    // 끝만
+    expect(at("오후 6시까지 보고서")).toEqual({ title: "보고서", startTime: null, endTime: "18:00" });
+  });
+
+  it("시각이 아닌 것", () => {
+    expect(at("3시간 공부")).toEqual({ title: "3시간 공부", startTime: null, endTime: null });
+    expect(at("우유 사기")).toEqual({ title: "우유 사기", startTime: null, endTime: null });
+    expect(at("25시 영화")).toMatchObject({ startTime: null });
+  });
+
+  it("날짜와 함께 - 날이 없으면 오늘", () => {
+    expect(readTodo("오후 7시 운동", today, "17:00")).toEqual({
+      title: "운동",
+      startOn: null,
+      dueOn: today,
+      startTime: "19:00",
+      endTime: null,
+    });
+    expect(readTodo("내일 오전 9시 회의", today, "17:00")).toEqual({
+      title: "회의",
+      startOn: null,
+      dueOn: "2026-10-13",
+      startTime: "09:00",
+      endTime: null,
+    });
+    expect(readTodo("10/15 7시 보고", today, "17:00")).toMatchObject({
+      dueOn: "2026-10-15",
+      startTime: "07:00",
+    });
+  });
+
+  it("목록 글자 · 넘김 · 폼 값", () => {
+    expect(rangeLabel({ startOn: null, dueOn: "2026-10-12", startTime: "19:00:00" })).toBe("10.12 19:00");
+    expect(rangeLabel({ startOn: null, dueOn: "2026-10-12", startTime: "19:00", endTime: "21:00" })).toBe(
+      "10.12 19:00~21:00",
+    );
+    expect(rangeLabel({ startOn: null, dueOn: "2026-10-12", endTime: "18:00" })).toBe("10.12 ~18:00");
+    expect(rangeLabel({ startOn: null, dueOn: null, startTime: "19:00" })).toBe("19:00");
+    // 넘김은 끝 시각(없으면 시작 시각)을 지났을 때
+    expect(rangeState({ startOn: null, dueOn: today, startTime: "19:00" }, today, "20:00")).toBe("late");
+    expect(rangeState({ startOn: null, dueOn: today, startTime: "19:00" }, today, "18:00")).toBe("today");
+    expect(
+      rangeState({ startOn: null, dueOn: today, startTime: "19:00", endTime: "21:00" }, today, "20:00"),
+    ).toBe("today");
+    expect(parseTime("7:05")).toBe("07:05");
+    expect(parseTime("19:00:00")).toBe("19:00");
+    expect(parseTime("24:00")).toBeNull();
+    expect(parseTime("")).toBeNull();
   });
 });

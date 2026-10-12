@@ -178,3 +178,20 @@ export async function openAllCodes(page: Page) {
       }),
   );
 }
+
+/**
+ * 짧은 글 관리의 한 줄(MYH-241). 줄은 접혀 있고 제목(본문 첫 줄)만 보인다.
+ * 본문 첫 줄에 든 글자로 찾는다.
+ */
+export function noteRow(page: Page, text: string) {
+  return page.locator("li[id^='note-']").filter({ hasText: text }).first();
+}
+
+/** 접힌 짧은 글 줄을 펼친다. 이미 펼쳐 있으면 그대로 */
+export async function openNote(row: Locator) {
+  const details = row.locator(":scope > details");
+  if (!(await details.evaluate((d) => (d as HTMLDetailsElement).open))) {
+    await row.locator(":scope > details > summary").click();
+  }
+  await expect(row.locator("textarea").first()).toBeAttached();
+}

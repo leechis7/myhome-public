@@ -12,6 +12,7 @@ import {
   serial,
   smallint,
   text,
+  time,
   timestamp,
   unique,
   varchar,
@@ -894,6 +895,12 @@ export const todos = pgTable(
     startOn: date("start_on"),
     /** 마감일(선택) */
     dueOn: date("due_on"),
+    /**
+     * 시각(선택, MYH-245). 시작 시각은 첫날(시작일, 없으면 마감일), 끝 시각은
+     * 마지막 날(마감일)의 것. 시각만 적고 날이 없으면 오늘이 마감일이 된다
+     */
+    startTime: time("start_time"),
+    endTime: time("end_time"),
     /** 끝낸 때. 안 끝났으면 null */
     doneAt: timestamp("done_at", { withTimezone: true }),
     /** 어디서 왔나: telegram · web */

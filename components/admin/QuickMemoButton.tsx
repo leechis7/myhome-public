@@ -103,10 +103,10 @@ export default function QuickMemoButton() {
                 required
                 rows={2}
                 aria-label="할 일"
-                placeholder="할 일 (Ctrl+Enter 로 저장)"
+                placeholder="할 일 (「내일 오후 7시 운동」 처럼 쓰면 날짜 · 시각을 읽습니다. Ctrl+Enter 로 저장)"
                 className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40"
               />
-              {/* 기간(MYH-228). 둘 다 비워도 된다 */}
+              {/* 기간(MYH-228). 다 비워도 된다 */}
               <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
                 <input
                   type="date"
@@ -121,6 +121,22 @@ export default function QuickMemoButton() {
                   name="dueOn"
                   aria-label="마감일"
                   title="마감일"
+                  className="rounded-lg border border-border bg-transparent px-2 py-1 text-sm outline-none focus:border-foreground/40"
+                />
+                {/* 시각(MYH-245). 날을 비우면 오늘 */}
+                <input
+                  type="time"
+                  name="startTime"
+                  aria-label="시작 시각"
+                  title="시작 시각. 날을 비우면 오늘"
+                  className="rounded-lg border border-border bg-transparent px-2 py-1 text-sm outline-none focus:border-foreground/40"
+                />
+                ~
+                <input
+                  type="time"
+                  name="endTime"
+                  aria-label="끝 시각"
+                  title="끝 시각"
                   className="rounded-lg border border-border bg-transparent px-2 py-1 text-sm outline-none focus:border-foreground/40"
                 />
               </div>

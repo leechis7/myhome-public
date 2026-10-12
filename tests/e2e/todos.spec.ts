@@ -12,6 +12,8 @@ test.describe("할 일", () => {
     const stamp = Date.now().toString(36);
     const first = `${TEST_PREFIX}할 일 ${stamp}`;
     const late = `${TEST_PREFIX}넘긴 일 ${stamp}`;
+    const timed = `${TEST_PREFIX}시각 일 ${stamp}`;
+    const said = `${TEST_PREFIX}운동 ${stamp}`;
 
     // 내 공간 › 할 일
     await page.goto("/");
@@ -36,6 +38,23 @@ test.describe("할 일", () => {
     await expect(lateRow.getByText("넘김 · 1.2")).toBeVisible();
     await expect(open.locator("li").first()).toContainText(late);
 
+    // 시각만 넣으면 오늘 그 시각의 할 일(MYH-245)
+    await expect(lateRow).toBeVisible();
+    await form.getByLabel("새 할 일").fill(timed);
+    await form.getByLabel("시작 시각").fill("23:00");
+    await form.getByLabel("끝 시각").fill("23:59");
+    await form.getByRole("button", { name: "더하기" }).click();
+    const timedRow = open.locator("li", { hasText: timed });
+    await expect(timedRow).toContainText(/오늘 · \d+\.\d+ 23:00~23:59/);
+
+    // 칸을 비우고 글에 날짜 · 시각을 쓰면 글에서 읽고 제목에서는 뺀다
+    await expect(timedRow).toBeVisible();
+    await form.getByLabel("새 할 일").fill(`${said} 내일 오후 7시~9시`);
+    await form.getByRole("button", { name: "더하기" }).click();
+    const saidRow = open.locator("li", { hasText: said });
+    await expect(saidRow).toContainText(/\d+\.\d+ 19:00~21:00/);
+    await expect(saidRow).not.toContainText("내일");
+
     // 끝내기 → 끝낸 일로
     await open.getByRole("button", { name: `${first} 끝냄` }).click();
     await expect(open.locator("li", { hasText: first })).toHaveCount(0);
@@ -56,7 +75,7 @@ test.describe("할 일", () => {
     await expect(open.locator("li", { hasText: late })).toContainText("3.1 부터");
 
     // 지우기
-    for (const title of [first, late]) {
+    for (const title of [first, late, timed, said]) {
       await pressDelete(open.locator("li", { hasText: title }), "할 일 삭제");
       await expect(open.locator("li", { hasText: title })).toHaveCount(0);
     }

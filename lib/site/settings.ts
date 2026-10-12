@@ -31,8 +31,6 @@ export const SETTINGS = {
   editor: { env: "DEFAULT_EDITOR", kind: "text" },
   telegramBotToken: { env: "TELEGRAM_BOT_TOKEN", kind: "secret" },
   telegramChatId: { env: "TELEGRAM_CHAT_ID", kind: "text" },
-  /** 텔레그램 글을 AI 로 먼저 가르나(MYH-233). 처음은 끔 */
-  telegramAi: { env: "TELEGRAM_AI", kind: "onoff" },
   /** 구글 캘린더 iCal 비공개 주소들. DB 에는 JSON, .env 는 「이름 https://…」 을 ; 로 */
   calendarIcal: { env: "GOOGLE_CALENDAR_ICAL", kind: "secret" },
   googleSiteVerification: { env: "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION", kind: "text" },
@@ -47,6 +45,8 @@ export const SETTINGS = {
   geminiApiKey: { env: "GEMINI_API_KEY", kind: "secret" },
   /** 책 소개 요약 프롬프트. .env 는 줄바꿈을 \n 으로 */
   bookSummaryPrompt: { env: "BOOK_SUMMARY_PROMPT", kind: "text" },
+  /** 할 일 · 메모 판정 프롬프트(MYH-245). .env 는 줄바꿈을 \n 으로 */
+  todoAiPrompt: { env: "TODO_AI_PROMPT", kind: "text" },
 } as const satisfies Record<string, { env: string; kind: "text" | "secret" | "onoff" | "list" }>;
 
 export type SettingName = keyof typeof SETTINGS;
@@ -167,16 +167,6 @@ export async function saveConfig(values: Partial<Settings>) {
   updateTag(SETTINGS_TAG);
 }
 
-/** 켜기/끄기 값을 읽는다 */
-export function isOn(value: string | null) {
-  return value !== null && /^(on|true|1|yes)$/i.test(value);
-}
-
-/** 텔레그램 글을 AI 로 먼저 가르나(MYH-233). .env 의 TELEGRAM_AI 가 먼저 */
-export async function telegramAiOn() {
-  return isOn((await siteConfig()).telegramAi);
-}
-
 /**
  * 책 소개 요약 프롬프트(MYH-233). .env 의 BOOK_SUMMARY_PROMPT(줄바꿈은 \n) →
  * 화면에서 넣은 것 → 없으면 null(코드의 처음 값을 쓴다).
@@ -185,4 +175,15 @@ export async function summaryPrompt() {
   const env = envSetting("bookSummaryPrompt");
   if (env) return env.replaceAll("\\n", "\n");
   return (await storedSetting("bookSummaryPrompt"))?.trim() || null;
+}
+
+/**
+ * 할 일 · 메모 판정 프롬프트(MYH-245). 텔레그램 · 할 일 화면 · 떠 있는 창이 함께
+ * 쓴다. .env 의 TODO_AI_PROMPT(줄바꿈은 \n) → 화면에서 넣은 것 → 없으면 null
+ * (코드의 처음 값을 쓴다).
+ */
+export async function todoAiPrompt() {
+  const env = envSetting("todoAiPrompt");
+  if (env) return env.replaceAll("\\n", "\n");
+  return (await storedSetting("todoAiPrompt"))?.trim() || null;
 }

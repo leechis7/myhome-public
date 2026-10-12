@@ -313,8 +313,10 @@ test.describe("관리 화면", () => {
     await form.getByLabel("시작일").fill("2026-01-01");
     await form.getByRole("button", { name: "추가" }).click();
     // 클릭은 서버 액션이 끝나기 전에 반환된다. 바로 다른 곳으로 옮겨 가면
-    // 전송이 취소된다. 목록에 나타난 것을 보고 넘어간다.
-    await expect(page.locator(`input[value="${PROJECT}"]`)).toBeVisible();
+    // 전송이 취소된다. 목록에 나타난 것을 보고 넘어간다. 줄은 이름만 보이게
+    // 접혀 있다(MYH-242)
+    const row = page.locator("#work li").filter({ hasText: PROJECT });
+    await expect(row).toBeVisible();
 
     await page.goto("/about");
     const card = page.locator("li").filter({ hasText: PROJECT });
@@ -322,13 +324,11 @@ test.describe("관리 화면", () => {
     await expect(card.getByText("2026.01 — 진행 중")).toBeVisible();
     await expect(card.getByText("Playwright")).toBeVisible();
 
-    // 관리 화면에서는 이름이 입력칸 안에 있어 글자 검색으로는 못 찾는다
+    // 줄을 펼쳐 지운다
     await page.goto("/admin/profile");
-    const row = page.locator("li").filter({
-      has: page.locator(`input[value="${PROJECT}"]`),
-    });
+    await row.locator(":scope > details > summary").click();
     await pressDelete(row);
-    await expect(page.locator(`input[value="${PROJECT}"]`)).toHaveCount(0);
+    await expect(row).toHaveCount(0);
 
     await page.goto("/about");
     await expect(page.getByRole("heading", { name: PROJECT })).toHaveCount(0);

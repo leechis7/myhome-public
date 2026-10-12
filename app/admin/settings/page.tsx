@@ -6,6 +6,7 @@ import SummaryPromptSettings from "@/components/admin/settings/SummaryPromptSett
 import CalendarSettings from "@/components/admin/settings/CalendarSettings";
 import ConfigFields from "@/components/admin/settings/ConfigFields";
 import TelegramSettings from "@/components/admin/settings/TelegramSettings";
+import TodoPromptSettings from "@/components/admin/settings/TodoPromptSettings";
 import { isAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import { envSetting, storedSetting } from "@/lib/site/settings";
@@ -133,13 +134,18 @@ export default async function AdminIntegrationsPage({
           </div>
         </Integration>
 
-        <Integration id="gemini" title="Gemini">
+        <Integration id="gemini" title="AI 사용">
           <ConfigFields
             names={["geminiApiKey"]}
             anchor="gemini"
             label="Gemini"
             notice={outNotice("gemini")}
           />
+        </Integration>
+
+        {/* Gemini 에게 보내는 글들. 키는 위 「AI 사용」 칸에 */}
+        <Integration id="prompts" title="AI 프롬프트">
+          <TodoPromptSettings notice={outNotice("todo-prompt")} />
           <SummaryPromptSettings notice={outNotice("summary")} />
         </Integration>
 

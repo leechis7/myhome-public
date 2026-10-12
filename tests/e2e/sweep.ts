@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import { deleteControl, openAllCodes, pressDelete } from "./helpers";
+import { deleteControl, openAllCodes, openNote, pressDelete } from "./helpers";
 
 /**
  * 시험이 남긴 것을 치운다(MYH-158).
@@ -81,7 +81,10 @@ export async function sweepPosts(page: Page, tally: Tally = {}) {
   return tally;
 }
 
-/** 짧은 글. 목록의 줄마다 본문 칸이 있고, 그 줄의 「삭제」 */
+/**
+ * 짧은 글. 목록의 줄은 접혀 있고 제목(본문 첫 줄)이 보인다(MYH-241). 시험
+ * 이름으로 시작하는 줄을 펼쳐 「삭제」
+ */
 export async function sweepNotes(page: Page, tally: Tally = {}) {
   await loop("짧은 글", tally, async () => {
     await page.goto("/admin/notes");
@@ -89,9 +92,10 @@ export async function sweepNotes(page: Page, tally: Tally = {}) {
     const count = await rows.count();
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
-      const body = await row.locator("textarea").first().inputValue().catch(() => "");
-      if (!TEST_NAME.test(body)) continue;
+      const title = (await row.locator(":scope > details > summary span").first().textContent()) ?? "";
+      if (!TEST_NAME.test(title.trim())) continue;
       const id = await row.getAttribute("id");
+      await openNote(row);
       await pressDelete(row);
       await expect(page.locator(`li[id="${id}"]`)).toHaveCount(0);
       return true;

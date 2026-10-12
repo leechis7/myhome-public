@@ -1,4 +1,4 @@
-import { readTodoDates } from "@/lib/my-space/todo-dates";
+import { readTodo } from "@/lib/my-space/todo-dates";
 
 /**
  * 「할일」 · 「메모」 말 없이 온 텔레그램 글이 할 일인가(MYH-230).
@@ -10,7 +10,13 @@ import { readTodoDates } from "@/lib/my-space/todo-dates";
  * 글은 이미 내 대화방에서 온 것만 여기 온다(lib/telegram/inbox.ts).
  */
 
-export type TodoGuess = { title: string; startOn: string | null; dueOn: string | null };
+export type TodoGuess = {
+  title: string;
+  startOn: string | null;
+  dueOn: string | null;
+  startTime: string | null;
+  endTime: string | null;
+};
 
 /** 이야기로 끝나는 말. 「좋다」 · 「했네」 · 「맞죠」 · 「ㅋㅋ」 · 물음 */
 const CHAT_END = /(?:[다네요군죠]|구나|ㅋ+|ㅎ+|ㅠ+|ㅜ+|[?？!~.…])$/;
@@ -26,11 +32,12 @@ export function looksLikeTask(text: string) {
 }
 
 /**
- * 규칙으로 가르기. 날짜가 있고 할 일처럼 생겼으면 할 일이다.
- * 「오늘 날씨 좋다」(이야기) · 「내일 비 오네」 는 아니다.
+ * 규칙으로 가르기. 날짜나 시각(MYH-245)이 있고 할 일처럼 생겼으면 할 일이다.
+ * 「오늘 날씨 좋다」(이야기) · 「내일 비 오네」 는 아니다. now 는 서울의 지금
+ * 시각 - 오전 · 오후 없이 쓴 시각을 가를 때 쓴다.
  */
-export function guessTodo(text: string, today: string): TodoGuess | null {
-  const read = readTodoDates(text, today);
+export function guessTodo(text: string, today: string, now = "00:00"): TodoGuess | null {
+  const read = readTodo(text, today, now);
   if (!read.startOn && !read.dueOn) return null;
   return looksLikeTask(read.title) ? read : null;
 }

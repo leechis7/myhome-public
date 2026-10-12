@@ -8,6 +8,7 @@ import {
 } from "@/app/admin/projects/actions";
 import ActionForm from "@/components/admin/ActionForm";
 import DeleteButton from "@/components/admin/DeleteButton";
+import LazyDetails from "@/components/admin/LazyDetails";
 import type { Project } from "@/lib/db";
 import type { ProjectKind } from "@/lib/profile/projects";
 
@@ -152,26 +153,64 @@ function Fields({ project }: { project?: Project }) {
   );
 }
 
-/** 목록의 한 줄 */
-function Row({ project }: { project: Project }) {
+/** 2019-03-01 → 2019.03 */
+function month(day: string | null) {
+  return day ? day.slice(0, 7).replace("-", ".") : "";
+}
+
+/** 접힌 줄에 보이는 것: 이름과 기간 */
+function RowSummary({ project }: { project: Project }) {
+  const period =
+    project.startedOn || project.endedOn
+      ? `${month(project.startedOn)} ~ ${project.endedOn ? month(project.endedOn) : "진행 중"}`
+      : null;
   return (
-    <li className="rounded-xl border border-border p-4">
-      <ActionForm
-        action={updateProject}
-        submit="수정"
-        className="space-y-3"
-        buttonClassName={button}
-        extra={
-          <DeleteButton
-            formAction={deleteProject}
-            className={`${button} text-red-600 dark:text-red-400`}
-            confirmMessage={`"${project.name}" 을 지울까요?`}
-          />
-        }
+    <>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+        {project.name}
+      </span>
+      {period ? (
+        <span className="shrink-0 text-xs text-muted tabular-nums">
+          {period}
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * 목록의 한 줄. collapsed 면 이름 · 기간만 보이게 접어 두고 펼칠 때 폼을
+ * 그린다(MYH-242) - 프로필의 수행 업무는 줄이 많고 줄마다 칸이 아홉이다.
+ */
+function Row({ project, collapsed }: { project: Project; collapsed: boolean }) {
+  const form = (
+    <ActionForm
+      action={updateProject}
+      submit="수정"
+      className="space-y-3"
+      buttonClassName={button}
+      extra={
+        <DeleteButton
+          formAction={deleteProject}
+          className={`${button} text-red-600 dark:text-red-400`}
+          confirmMessage={`"${project.name}" 을 지울까요?`}
+        />
+      }
+    >
+      <input type="hidden" name="id" value={project.id} />
+      <Fields project={project} />
+    </ActionForm>
+  );
+  if (!collapsed)
+    return <li className="rounded-xl border border-border p-4">{form}</li>;
+  return (
+    <li className="rounded-xl border border-border">
+      <LazyDetails
+        summaryClassName="flex cursor-pointer list-none items-baseline gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden"
+        summary={<RowSummary project={project} />}
       >
-        <input type="hidden" name="id" value={project.id} />
-        <Fields project={project} />
-      </ActionForm>
+        <div className="border-t border-border p-4">{form}</div>
+      </LazyDetails>
     </li>
   );
 }
@@ -197,16 +236,19 @@ function AddForm({ kind }: { kind: ProjectKind }) {
 export default function ProjectEditor({
   rows,
   kind,
+  collapsed = false,
 }: {
   rows: Project[];
   /** 새로 넣는 줄을 어느 쪽에 담을지 */
   kind: ProjectKind;
+  /** 줄을 접어 둘까(이름 · 기간만 보이고 펼쳐서 고친다) */
+  collapsed?: boolean;
 }) {
   return (
     <>
-      <ul className="space-y-4">
+      <ul className={collapsed ? "space-y-2" : "space-y-4"}>
         {rows.map((project) => (
-          <Row key={project.id} project={project} />
+          <Row key={project.id} project={project} collapsed={collapsed} />
         ))}
       </ul>
 

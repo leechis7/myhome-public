@@ -6,7 +6,13 @@ const today = "2026-10-10";
 
 describe("말 없이 온 글이 할 일인가 - 규칙(MYH-230)", () => {
   it("날짜가 있고 할 일처럼 생기면 할 일", () => {
-    expect(guessTodo("내일 우유 사기", today)).toEqual({ title: "우유 사기", startOn: null, dueOn: "2026-10-11" });
+    expect(guessTodo("내일 우유 사기", today)).toEqual({
+      title: "우유 사기",
+      startOn: null,
+      dueOn: "2026-10-11",
+      startTime: null,
+      endTime: null,
+    });
     expect(guessTodo("10/15 보고서", today)).toMatchObject({ title: "보고서", dueOn: "2026-10-15" });
     expect(guessTodo("다음 주 월요일 회의", today)).toMatchObject({ dueOn: "2026-10-12" });
     expect(guessTodo("10/12~10/15 출장", today)).toMatchObject({ startOn: "2026-10-12", dueOn: "2026-10-15" });

@@ -1,7 +1,7 @@
 import { asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb, todos } from "@/lib/db";
 import { decryptText, encryptText } from "@/lib/security/secret-crypto";
-import { orderRange } from "@/lib/my-space/todo-dates";
+import { hhmm, orderRange } from "@/lib/my-space/todo-dates";
 
 /**
  * 할 일(MYH-217). 글은 암호화하고, 기간(시작일 ~ 마감일, MYH-228) · 끝낸 때는
@@ -19,8 +19,9 @@ function open(envelope: string) {
 }
 
 /**
- * 안 끝낸 것은 마감이 이른 것부터(마감 없는 것은 시작일 차례로 그 뒤, 날이
- * 없는 것은 맨 뒤. 그 안에서는 먼저 적은 것부터). 끝낸 것은 최근에 끝낸 것부터 30개까지.
+ * 안 끝낸 것은 마감이 이른 것부터(같은 날은 시각 차례, 마감 없는 것은 시작일
+ * 차례로 그 뒤, 날이 없는 것은 맨 뒤. 그 안에서는 먼저 적은 것부터). 끝낸 것은
+ * 최근에 끝낸 것부터 30개까지.
  */
 export async function listTodos() {
   const db = getDb();
@@ -32,6 +33,8 @@ export async function listTodos() {
       .orderBy(
         sql`${todos.dueOn} asc nulls last`,
         sql`${todos.startOn} asc nulls last`,
+        sql`${todos.startTime} asc nulls last`,
+        sql`${todos.endTime} asc nulls last`,
         asc(todos.createdAt),
         asc(todos.id),
       ),
@@ -43,7 +46,12 @@ export async function listTodos() {
       .limit(30),
   ]);
   const opened = (rows: typeof open_) =>
-    rows.map((row) => ({ ...row, title: open(row.title) }));
+    rows.map((row) => ({
+      ...row,
+      title: open(row.title),
+      startTime: row.startTime ? hhmm(row.startTime) : null,
+      endTime: row.endTime ? hhmm(row.endTime) : null,
+    }));
   return { open: opened(open_), done: opened(done) };
 }
 
@@ -52,23 +60,42 @@ export async function addTodo(
   {
     startOn = null,
     dueOn = null,
+    startTime = null,
+    endTime = null,
     source = "web",
-  }: { startOn?: string | null; dueOn?: string | null; source?: TodoSource } = {},
+  }: {
+    startOn?: string | null;
+    dueOn?: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
+    source?: TodoSource;
+  } = {},
 ) {
   const [row] = await getDb()
     .insert(todos)
-    .values({ title: encryptText(title), ...orderRange({ startOn, dueOn }), source })
+    .values({ title: encryptText(title), ...orderRange({ startOn, dueOn }), startTime, endTime, source })
     .returning({ id: todos.id });
   return row.id;
 }
 
 export async function updateTodo(
   id: number,
-  input: { title: string; startOn: string | null; dueOn: string | null },
+  input: {
+    title: string;
+    startOn: string | null;
+    dueOn: string | null;
+    startTime: string | null;
+    endTime: string | null;
+  },
 ) {
   await getDb()
     .update(todos)
-    .set({ title: encryptText(input.title), ...orderRange(input) })
+    .set({
+      title: encryptText(input.title),
+      ...orderRange({ startOn: input.startOn, dueOn: input.dueOn }),
+      startTime: input.startTime,
+      endTime: input.endTime,
+    })
     .where(eq(todos.id, id));
 }
 
