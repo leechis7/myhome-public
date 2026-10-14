@@ -8,6 +8,7 @@ import { listBooks, readBookFilter } from "@/lib/books";
 import { lookupSource } from "@/lib/books/lookup";
 import { lookupAccess } from "@/lib/books/lookup-key";
 import { BOOK_CATEGORY, BOOK_KIND, listCodes } from "@/lib/codes";
+import { siteAi } from "@/lib/site/settings";
 
 export const metadata: Metadata = {
   title: "책 관리",
@@ -72,6 +73,7 @@ export default async function AdminBooksPage({
           filter={readBookFilter(params)}
           // 저장하다 막혀 돌아왔거나(?be=) ?add=1 이면 「책 추가」 를 펼쳐 둔다
           addOpen={params.add === "1" || Boolean(error)}
+          aiReady={(await siteAi()) !== null}
         />
       </div>
     </Container>

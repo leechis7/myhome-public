@@ -55,6 +55,8 @@ test.describe("책 찾기 설정", () => {
   test("찾는 곳의 차례를 바꾸고 되돌린다", async ({ page }) => {
     await page.goto("/admin/settings#book-search");
     const form = page.getByRole("form", { name: "책 찾기 출처" });
+    // 항목이 접혀 있다가 #주소로 펴진다(MYH-249) - 펴진 뒤에 읽는다
+    await expect(form).toBeVisible();
     const names = () => form.locator("li label span:first-of-type").allTextContents();
     const before = await names();
     // 맨 아래 것을 한 칸 올린다

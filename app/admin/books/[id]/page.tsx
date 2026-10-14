@@ -6,6 +6,8 @@ import MarkdownField from "@/components/admin/markdown/MarkdownField";
 import { saveReadingNote } from "@/app/admin/books/actions";
 import { isAdmin } from "@/lib/security/auth";
 import { BOOK_STATUS_LABELS, findBook, type BookStatus } from "@/lib/books";
+import BookAiButton from "@/components/admin/BookAiButton";
+import { siteAi } from "@/lib/site/settings";
 
 export const metadata: Metadata = {
   title: "독서 노트",
@@ -36,6 +38,8 @@ export default async function ReadingNotePage({
   const book = await findBook(Number(id));
   if (!book) notFound();
   const saved = (await searchParams).ok === "1";
+
+  const aiReady = (await siteAi()) !== null;
 
   return (
     <Container>
@@ -68,6 +72,7 @@ export default async function ReadingNotePage({
         className="mt-8 space-y-5"
       >
         <input type="hidden" name="id" value={book.id} />
+        <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
         <label className="block text-sm text-muted">
           별점
           <select
@@ -84,6 +89,22 @@ export default async function ReadingNotePage({
             ))}
           </select>
         </label>
+        {/* 한 줄 평 = 책 목록 카드의 소개(내 말로). 노트로 초안을 만든다(MYH-251) */}
+        <div className="block text-sm text-muted">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor="book-note">한 줄 평 (책 목록의 소개)</label>
+            {aiReady ? <BookAiButton mode="review" bookId={book.id} /> : null}
+          </div>
+          <textarea
+            id="book-note"
+            name="note"
+            rows={2}
+            defaultValue={book.note ?? ""}
+            placeholder="한두 줄, 내 말로. 책 목록에 보입니다"
+            className={`${field} mt-1 field-sizing-content`}
+          />
+        </div>
+        </div>
         <MarkdownField
           id="reading-note"
           name="readingNote"

@@ -10,6 +10,7 @@ import { formatDateTime, listGuestbook } from "@/lib/posts/comments";
 import { pageMetadata } from "@/lib/site/page-metadata";
 import { eq } from "drizzle-orm";
 import { getDb, profile } from "@/lib/db";
+import HideCommentButton from "@/components/blog/HideCommentButton";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -39,9 +40,10 @@ export default async function GuestbookPage({
   const params = await searchParams;
   const asked = Number(params.page);
   const page = Number.isInteger(asked) && asked > 0 ? asked : 1;
-  const [{ rows, total, lastPage }, admin, [me]] = await Promise.all([
-    listGuestbook(page),
-    isAdmin(),
+  // 숨긴 글(MYH-252)은 관리자에게만 온다
+  const admin = await isAdmin();
+  const [{ rows, total, lastPage }, [me]] = await Promise.all([
+    listGuestbook(page, { admin }),
     // 연락 수단(MYH-216). 소개 화면과 같은 값이다
     getDb()
       .select({
@@ -103,7 +105,7 @@ export default async function GuestbookPage({
         ) : (
           <ul className="mt-6 space-y-6">
             {rows.map((entry) => (
-              <li key={entry.id}>
+              <li key={entry.id} className={entry.hiddenAt ? "opacity-60" : undefined}>
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-sm font-medium">{entry.author}</span>
                   <time
@@ -113,7 +115,10 @@ export default async function GuestbookPage({
                     {formatDateTime(entry.createdAt)}
                   </time>
                   {admin ? (
-                    <DeleteCommentButton id={entry.id} author={entry.author} />
+                    <>
+                      <HideCommentButton id={entry.id} hiddenAt={entry.hiddenAt} reason={entry.hiddenReason} />
+                      <DeleteCommentButton id={entry.id} author={entry.author} />
+                    </>
                   ) : null}
                 </div>
                 {/* 마크다운으로 해석하지 않는다. 그대로 줄바꿈만 살린다 */}

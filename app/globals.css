@@ -17,7 +17,7 @@
   :root:not([data-theme="light"]) {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --border: rgb(255 255 255 / 0.12);
+    --border: rgb(255 255 255 / 0.4);
     --muted: #a3a3a3;
     --faint: #949494;
   }
@@ -27,7 +27,7 @@
 :root[data-theme="dark"] {
   --background: #0a0a0a;
   --foreground: #ededed;
-  --border: rgb(255 255 255 / 0.12);
+  --border: rgb(255 255 255 / 0.4);
   --muted: #a3a3a3;
   --faint: #949494;
 }

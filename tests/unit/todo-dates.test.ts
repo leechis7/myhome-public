@@ -7,6 +7,7 @@ import {
   readTodo,
   readTodoDates,
   readTodoTime,
+  todoEvent,
 } from "@/lib/my-space/todo-dates";
 
 describe("할 일의 기간(MYH-228)", () => {
@@ -190,5 +191,38 @@ describe("글 속의 시각(MYH-245)", () => {
     expect(parseTime("19:00:00")).toBe("19:00");
     expect(parseTime("24:00")).toBeNull();
     expect(parseTime("")).toBeNull();
+  });
+});
+
+describe("할 일을 일정 달력에(MYH-254)", () => {
+  const base = { id: 7, title: "장보기", startOn: null, dueOn: null, doneAt: null };
+
+  it("날이 없으면 넣지 않는다", () => {
+    expect(todoEvent(base)).toBeNull();
+  });
+
+  it("마감일 하루는 종일, 기간은 걸쳐서", () => {
+    const one = todoEvent({ ...base, dueOn: "2026-10-15" })!;
+    expect(one).toMatchObject({ key: "todo-7", allDay: true, startDay: "2026-10-15", endDay: "2026-10-16" });
+    const span = todoEvent({ ...base, startOn: "2026-10-12", dueOn: "2026-10-15", startTime: "09:00" })!;
+    expect(span).toMatchObject({ allDay: true, startDay: "2026-10-12", endDay: "2026-10-16" });
+    expect(todoEvent({ ...base, startOn: "2026-10-12" })).toMatchObject({ startDay: "2026-10-12", endDay: "2026-10-13" });
+  });
+
+  it("하루에 시각이 있으면 시각 일정", () => {
+    const e = todoEvent({ ...base, dueOn: "2026-10-15", startTime: "19:00:00", endTime: "21:00:00" })!;
+    expect(e.allDay).toBe(false);
+    expect(e.start.toISOString()).toBe("2026-10-15T10:00:00.000Z");
+    expect(e.end.toISOString()).toBe("2026-10-15T12:00:00.000Z");
+    // 끝 시각이 없으면 30분
+    const short = todoEvent({ ...base, dueOn: "2026-10-15", endTime: "21:00" })!;
+    expect(short.start.toISOString()).toBe("2026-10-15T12:00:00.000Z");
+    expect(short.end.toISOString()).toBe("2026-10-15T12:30:00.000Z");
+  });
+
+  it("끝낸 것과 열 수 없는 글을 표시한다", () => {
+    const e = todoEvent({ ...base, title: null, dueOn: "2026-10-15", doneAt: new Date() })!;
+    expect(e.todo).toEqual({ id: 7, done: true });
+    expect(e.title).toBe("열 수 없음");
   });
 });

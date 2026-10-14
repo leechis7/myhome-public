@@ -16,6 +16,8 @@ import {
 } from "@/lib/my-space/diary-calendar";
 import { todayInSeoul } from "@/lib/profile/resume-sections";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { todoEventsBetween } from "@/lib/my-space/todos";
+import type { TodoEvent } from "@/lib/my-space/todo-dates";
 
 export const metadata: Metadata = {
   title: "일정",
@@ -50,7 +52,16 @@ const time = new Intl.DateTimeFormat("ko-KR", {
   hour12: false,
 });
 
-function when(event: CalendarEvent) {
+type Item = (CalendarEvent & { calendar?: string | null }) | TodoEvent;
+
+const isTodo = (e: Item): e is TodoEvent => "todo" in e;
+
+/** 달력 칸 · 주간 칸에서 할 일의 표시. 끝낸 것은 흐리게 줄 긋는다 */
+function todoMark(e: Item) {
+  return isTodo(e) ? (e.todo.done ? "☑ " : "☐ ") : "";
+}
+
+function when(event: Item) {
   if (event.allDay) return "종일";
   return `${time.format(event.start)}–${time.format(event.end)}`;
 }
@@ -58,6 +69,7 @@ function when(event: CalendarEvent) {
 /**
  * 일정(MYH-214). 구글 캘린더를 읽어 한 달 달력으로 보여 주고(MYH-221), 고른
  * 날의 일정을 아래에 자세히 늘어놓는다. 만들고 고치는 것은 구글에서 한다.
+ * 날짜가 있는 할 일도 함께 보인다(MYH-254) - 누르면 할 일 화면으로.
  */
 export default async function CalendarPage({
   searchParams,
@@ -87,10 +99,14 @@ export default async function CalendarPage({
   const to = new Date(new Date(`${cells.at(-1)}T00:00:00+09:00`).getTime() + 24 * 60 * 60 * 1000);
 
   const urls = await getCalendars();
-  const { events, failed } = urls.length > 0
-    ? await upcomingEvents(from, to)
-    : { events: [], failed: 0 };
-  const byDay = new Map(groupByDay(events, cells).map((g) => [g.day, g.events]));
+  const [{ events, failed }, todoEvents] = await Promise.all([
+    urls.length > 0 ? upcomingEvents(from, to) : { events: [], failed: 0 },
+    todoEventsBetween(cells[0], cells.at(-1)!).catch(() => []),
+  ]);
+  const items: Item[] = [...events, ...todoEvents].sort(
+    (a, b) => a.start.getTime() - b.start.getTime(),
+  );
+  const byDay = new Map(groupByDay(items, cells).map((g) => [g.day, g.events]));
   const selected = byDay.get(day) ?? [];
   const href = (q: { month?: string; day?: string; view?: string }) =>
     `/admin/calendar?${new URLSearchParams(
@@ -111,20 +127,19 @@ export default async function CalendarPage({
       </div>
 
       {urls.length === 0 ? (
-        <p className="mt-10 text-sm text-muted">
-          아직 캘린더가 연결돼 있지 않습니다.{" "}
+        <p className="mt-6 text-sm text-muted">
+          아직 캘린더가 연결돼 있지 않아 할 일만 보입니다.{" "}
           <Link href="/admin/settings#calendar" className="underline underline-offset-4">
             관리 › 설정 › 환경설정
           </Link>
           에서 구글 캘린더 주소를 넣으세요.
         </p>
-      ) : (
-        <>
-          {failed > 0 ? (
+      ) : null}
+      {failed > 0 ? (
             <p role="alert" className="mt-6 text-sm text-red-600 dark:text-red-400">
               캘린더 {failed}개를 읽지 못했습니다. 주소가 바뀌었는지 확인하세요.
             </p>
-          ) : null}
+      ) : null}
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-2">
             <Link
@@ -222,9 +237,16 @@ export default async function CalendarPage({
                               <span
                                 key={e.key}
                                 className={`block truncate rounded px-1 text-[11px] leading-4 ${
-                                  e.allDay ? "bg-sky-500/15 text-sky-800 dark:text-sky-300" : "text-foreground/80"
+                                  isTodo(e)
+                                    ? `text-emerald-800 dark:text-emerald-300 ${
+                                        e.allDay ? "bg-emerald-500/15" : "border-l-2 border-emerald-500 bg-emerald-500/[0.06]"
+                                      } ${e.todo.done ? "line-through opacity-50" : ""}`
+                                    : e.allDay
+                                      ? "bg-sky-500/15 text-sky-800 dark:text-sky-300"
+                                      : "border-l-2 border-sky-500 bg-sky-500/[0.06] text-sky-900 dark:text-sky-200"
                                 }`}
                               >
+                                {todoMark(e)}
                                 {e.allDay ? "" : `${time.format(e.start)} `}
                                 {e.title}
                               </span>
@@ -237,7 +259,10 @@ export default async function CalendarPage({
                           {list.length > 0 ? (
                             <span aria-hidden className="mt-1 flex justify-center gap-0.5 sm:hidden">
                               {list.slice(0, 4).map((e) => (
-                                <span key={e.key} className="size-1.5 rounded-full bg-sky-500" />
+                                <span
+                                  key={e.key}
+                                  className={`size-1.5 rounded-full ${isTodo(e) ? "bg-emerald-500" : "bg-sky-500"}`}
+                                />
                               ))}
                             </span>
                           ) : null}
@@ -264,9 +289,33 @@ export default async function CalendarPage({
               <p className="mt-2 text-sm text-muted">일정이 없습니다.</p>
             ) : (
               <ul aria-label="고른 날 일정" className="mt-2 divide-y divide-border rounded-xl border border-border">
-                {selected.map((event) => (
+                {selected.map((event) =>
+                  isTodo(event) ? (
+                    <li key={event.key}>
+                      <Link
+                        href="/admin/todos"
+                        className="flex gap-4 px-4 py-2.5 text-sm transition-colors hover:bg-foreground/5"
+                      >
+                        <span className="flex w-28 shrink-0 items-center gap-1.5 whitespace-nowrap tabular-nums text-muted">
+                          <span aria-hidden className="size-2 shrink-0 rounded-full bg-emerald-500" />
+                          {when(event)}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="mr-2 rounded bg-emerald-500/15 px-1.5 py-0.5 text-xs text-emerald-800 dark:text-emerald-300">
+                            {event.todo.done ? "끝낸 할 일" : "할 일"}
+                          </span>
+                          <span className={`font-medium ${event.todo.done ? "text-muted line-through" : ""}`}>
+                            {event.title}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  ) : (
                   <li key={event.key} className="flex gap-4 px-4 py-2.5 text-sm">
-                    <span className="w-24 shrink-0 tabular-nums text-muted">{when(event)}</span>
+                    <span className="flex w-28 shrink-0 items-center gap-1.5 whitespace-nowrap tabular-nums text-muted">
+                      <span aria-hidden className="size-2 shrink-0 rounded-full bg-sky-500" />
+                      {when(event)}
+                    </span>
                     <span className="min-w-0">
                       {event.calendar ? (
                         <span className="mr-2 rounded bg-foreground/[0.06] px-1.5 py-0.5 text-xs text-foreground/60">
@@ -279,12 +328,11 @@ export default async function CalendarPage({
                       ) : null}
                     </span>
                   </li>
-                ))}
+                  ),
+                )}
               </ul>
             )}
           </section>
-        </>
-      )}
 
     </Container>
   );

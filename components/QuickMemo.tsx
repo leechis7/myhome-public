@@ -1,6 +1,7 @@
 import QuickMemoButton from "@/components/admin/QuickMemoButton";
 import { isAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
+import { chatEngines } from "@/app/admin/chat/actions";
 
 /**
  * 빠른 메모 단추(MYH-223). 로그인한 관리자에게만, 메모를 암호화할 열쇠가
@@ -15,7 +16,7 @@ export default async function QuickMemo() {
   return (
     <>
       <div aria-hidden className="h-20 shrink-0 print:hidden" />
-      <QuickMemoButton />
+      <QuickMemoButton engines={await chatEngines().catch(() => [])} />
     </>
   );
 }

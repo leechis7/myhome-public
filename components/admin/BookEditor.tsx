@@ -4,6 +4,7 @@ import CodePicker from "@/components/admin/CodePicker";
 import CoverInput from "@/components/admin/CoverInput";
 import BookLookup from "@/components/admin/BookLookup";
 import LazyDetails from "@/components/admin/LazyDetails";
+import BookAiButton from "@/components/admin/BookAiButton";
 import { deleteBook, saveBook } from "@/app/admin/books/actions";
 import {
   BOOK_STATUS_LABELS,
@@ -29,10 +30,13 @@ function Fields({
   book,
   kinds,
   categories,
+  aiReady = false,
 }: {
   book?: BookRow;
   kinds: Code[];
   categories: Code[];
+  /** AI 엔진이 있으면 「분류 제안」 을 보인다(MYH-251) */
+  aiReady?: boolean;
 }) {
   const cover = book ? coverUrl(book) : null;
   return (
@@ -62,14 +66,18 @@ function Fields({
         className={field}
       />
       {/* 분류(MYH-225). 컴퓨터 · 교양 · 소설 … */}
-      <CodePicker
-        codes={categories}
-        value={book?.categoryCode}
-        name="categoryCode"
-        label="분류"
-        editHref={codesHref(BOOK_CATEGORY)}
-        className={field}
-      />
+      <div className="grid gap-1">
+        <CodePicker
+          codes={categories}
+          value={book?.categoryCode}
+          name="categoryCode"
+          label="분류"
+          editHref={codesHref(BOOK_CATEGORY)}
+          className={field}
+        />
+        {/* 제목 · 지은이 · 소개로 지금 있는 분류 가운데 하나를 고른다 */}
+        {aiReady ? <BookAiButton mode="category" /> : null}
+      </div>
       <select
         name="status"
         defaultValue={book?.status ?? "reading"}
@@ -137,11 +145,13 @@ function BookItem({
   kinds,
   categories,
   lookupSource,
+  aiReady,
 }: {
   book: BookRow;
   kinds: Code[];
   categories: Code[];
   lookupSource: string;
+  aiReady: boolean;
 }) {
   const cover = coverUrl(book);
   return (
@@ -205,7 +215,7 @@ function BookItem({
             <input type="hidden" name="id" value={book.id} />
             {/* 등록된 책도 찾아서 고친다 - 표지 · 지은이를 나중에 채울 때 */}
             <BookLookup source={lookupSource} initial={book.title} />
-            <Fields book={book} kinds={kinds} categories={categories} />
+            <Fields book={book} kinds={kinds} categories={categories} aiReady={aiReady} />
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button type="submit" className={primary}>
                 저장
@@ -262,8 +272,11 @@ export default function BookEditor({
   lookupSource,
   filter,
   addOpen = false,
+  aiReady = false,
 }: {
   rows: BookRow[];
+  /** AI 엔진이 있으면 「분류 제안」 을 보인다(MYH-251) */
+  aiReady?: boolean;
   /** 책 종류 코드 전부(꺼 둔 것까지) */
   kinds: Code[];
   /** 책 분류 코드 전부(꺼 둔 것까지, MYH-225) */
@@ -284,6 +297,7 @@ export default function BookEditor({
       kinds={kinds}
       categories={categories}
       lookupSource={lookupSource}
+      aiReady={aiReady}
     />
   );
   const sections: { status: BookStatus; title: string }[] = [
@@ -306,7 +320,7 @@ export default function BookEditor({
           className="mt-3 rounded-xl border border-dashed border-border p-4"
         >
           <BookLookup source={lookupSource} />
-          <Fields kinds={kinds} categories={categories} />
+          <Fields kinds={kinds} categories={categories} aiReady={aiReady} />
           <button type="submit" className={`${primary} mt-3`}>
             추가
           </button>

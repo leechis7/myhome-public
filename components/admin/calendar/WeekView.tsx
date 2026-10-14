@@ -1,7 +1,16 @@
 import Link from "next/link";
 import type { CalendarEvent } from "@/lib/my-space/calendar-ical";
 
-type Event = CalendarEvent & { calendar?: string | null };
+/** 할 일(MYH-254)은 todo 를 단다 */
+type Event = CalendarEvent & { calendar?: string | null; todo?: { id: number; done: boolean } };
+
+/** 할 일은 초록, 끝낸 것은 흐리게 줄 긋는다 */
+function todoTone(e: Event) {
+  if (!e.todo) return null;
+  return `text-emerald-800 dark:text-emerald-300 ${e.todo.done ? "line-through opacity-50" : ""}`;
+}
+
+const mark = (e: Event) => (e.todo ? (e.todo.done ? "☑ " : "☐ ") : "");
 
 /** 한 시간 칸의 높이(px) */
 const HOUR = 44;
@@ -55,7 +64,7 @@ function layout(events: Event[], day: string) {
 /**
  * 일정의 주간 보기(MYH-224). 일 ~ 토 일곱 열, 위에 종일 일정, 아래 시간 칸.
  * 시간 칸은 7시 ~ 23시를 기본으로, 그 밖에 일정이 있으면 넓힌다.
- * 날 머리를 누르면 그 날을 고른다(아래 목록).
+ * 날 머리를 누르면 그 날을 고른다(아래 목록). 할 일은 초록으로 구별한다.
  */
 export default function WeekView({
   days,
@@ -119,8 +128,11 @@ export default function WeekView({
                     <p
                       key={e.key}
                       title={e.title}
-                      className="truncate rounded bg-sky-500/15 px-1 text-[11px] leading-5 text-sky-800 dark:text-sky-300"
+                      className={`truncate rounded px-1 text-[11px] leading-5 ${
+                        todoTone(e) ? `bg-emerald-500/15 ${todoTone(e)}` : "bg-sky-500/15 text-sky-800 dark:text-sky-300"
+                      }`}
                     >
+                      {mark(e)}
                       {e.title}
                     </p>
                   ))}
@@ -151,7 +163,9 @@ export default function WeekView({
                 <div
                   key={e.key}
                   title={`${hm.format(e.start)}–${hm.format(e.end)} ${e.title}${e.location ? ` · ${e.location}` : ""}`}
-                  className="absolute overflow-hidden rounded border border-sky-500/40 bg-sky-500/10 px-1 text-[11px] leading-4"
+                  className={`absolute overflow-hidden rounded border px-1 text-[11px] leading-4 ${
+                    todoTone(e) ? `border-emerald-500/40 bg-emerald-500/10 ${todoTone(e)}` : "border-sky-500/40 bg-sky-500/10"
+                  }`}
                   style={{
                     top: ((top - first * 60) / 60) * HOUR,
                     height: Math.max(18, ((bottom - top) / 60) * HOUR - 2),
@@ -160,7 +174,10 @@ export default function WeekView({
                   }}
                 >
                   <span className="tabular-nums text-muted">{hm.format(e.start)}</span>{" "}
-                  <span className="font-medium">{e.title}</span>
+                  <span className="font-medium">
+                    {mark(e)}
+                    {e.title}
+                  </span>
                 </div>
               ))}
             </div>

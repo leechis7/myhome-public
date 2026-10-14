@@ -9,6 +9,8 @@ import MarkdownField from "@/components/admin/markdown/MarkdownField";
 import ImageList, { type ImageRow } from "@/components/admin/ImageList";
 import ImageUpload from "@/components/admin/ImageUpload";
 import NoteComposer from "@/components/admin/NoteComposer";
+import AiFillButton from "@/components/admin/AiFillButton";
+import ProofreadPanel from "@/components/admin/ProofreadPanel";
 import { noteTitle } from "@/lib/posts/notes";
 import { draftKey } from "@/lib/posts/draft-store";
 import { deleteNote, updateNote } from "@/app/admin/notes/actions";
@@ -37,8 +39,11 @@ export default function NoteEditor({
   rows,
   attachments = {},
   images = {},
+  aiReady = false,
 }: {
   rows: Post[];
+  /** AI 엔진이 있으면 「태그 제안」 을 보인다(MYH-249) */
+  aiReady?: boolean;
   /** 글 번호 → 붙은 파일들 */
   attachments?: Record<number, AttachmentRow[]>;
   /** 글 번호 → 본문에 넣은 그림들 */
@@ -47,7 +52,7 @@ export default function NoteEditor({
   return (
     <div className="mt-8 space-y-4">
       {/* 쓰는 동안 그림을 올릴 수 있어야 해서 이 칸만 클라이언트다 */}
-      <NoteComposer />
+      <NoteComposer aiReady={aiReady} />
 
       <ul className="space-y-3">
         {rows.map((note) => (
@@ -126,6 +131,12 @@ export default function NoteEditor({
                     aria-label="태그"
                     className={field}
                   />
+                  {aiReady ? (
+                    <div className="flex flex-wrap items-start gap-2">
+                      <AiFillButton formId={`note-form-${note.id}`} kind="note" label="✨ 태그 제안" />
+                      <ProofreadPanel fieldId={`note-content-${note.id}`} kind="note" />
+                    </div>
+                  ) : null}
                 </form>
 
                 {/* 그림은 접어 둔다. 한 화면에 줄이 여럿이라 다 펴 두면

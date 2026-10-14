@@ -1,17 +1,24 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Container from "@/components/Container";
+import AiEngineSettings from "@/components/admin/settings/AiEngineSettings";
+import ApiSettings from "@/components/admin/settings/ApiSettings";
 import BookSourceSettings from "@/components/admin/settings/BookSourceSettings";
 import SummaryPromptSettings from "@/components/admin/settings/SummaryPromptSettings";
 import CalendarSettings from "@/components/admin/settings/CalendarSettings";
 import ConfigFields from "@/components/admin/settings/ConfigFields";
 import TelegramSettings from "@/components/admin/settings/TelegramSettings";
 import TodoPromptSettings from "@/components/admin/settings/TodoPromptSettings";
+import PostPromptSettings from "@/components/admin/settings/PostPromptSettings";
+import DiaryPromptSettings from "@/components/admin/settings/DiaryPromptSettings";
+import DiaryAiSettings from "@/components/admin/settings/DiaryAiSettings";
+import MorePromptSettings from "@/components/admin/settings/MorePromptSettings";
 import { isAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import { envSetting, storedSetting } from "@/lib/site/settings";
 import { saveEditorAction } from "@/app/admin/settings/actions";
 import { DEFAULT_EDITOR, EDITORS, EDITOR_LABELS, editorOf } from "@/lib/posts/editor-kinds";
+import OpenHashDetails from "@/components/admin/OpenHashDetails";
 
 export const metadata: Metadata = {
   title: "환경설정",
@@ -39,11 +46,12 @@ export default async function AdminIntegrationsPage({
   return (
     <Container>
       <h1 className="text-2xl font-semibold tracking-tight">환경설정</h1>
-      <p className="mt-3 max-w-xl text-sm text-muted">
+      <p className="mt-3 text-sm text-muted">
         이 사이트를 어떻게 쓰는지와 바깥 서비스 연결입니다. 칸마다 따로 저장합니다.
         .env 에 값이 있으면 그것이 먼저이고, 여기서 넣은 뒤 .env 에서 빼면 여기 값을
         씁니다. 토큰 · 키는 암호화해서 두고 다시 보여 주지 않습니다.
       </p>
+      <OpenHashDetails />
       <div>
         <Integration id="writing" title="글쓰기">
           {outNotice("writing") ? (
@@ -134,19 +142,41 @@ export default async function AdminIntegrationsPage({
           </div>
         </Integration>
 
-        <Integration id="gemini" title="AI 사용">
-          <ConfigFields
-            names={["geminiApiKey"]}
-            anchor="gemini"
-            label="Gemini"
-            notice={outNotice("gemini")}
-          />
+        {/* AI 엔진(MYH-246): 쓰는 엔진의 차례 · 사용, 엔진마다 접속 값 */}
+        <Integration id="ai" title="AI 사용">
+          <AiEngineSettings notice={outNotice("ai")} />
+          <div id="openclaw" className="scroll-mt-24">
+            <h4 className="mb-2 text-sm font-medium">오픈클로</h4>
+            <ConfigFields
+              names={["openclawUrl", "openclawToken", "openclawAgent", "openclawChatAgent"]}
+              anchor="openclaw"
+              label="오픈클로"
+              notice={outNotice("openclaw")}
+            />
+          </div>
+          <div id="gemini" className="scroll-mt-24">
+            <h4 className="mb-2 text-sm font-medium">Gemini</h4>
+            <ConfigFields
+              names={["geminiApiKey"]}
+              anchor="gemini"
+              label="Gemini"
+              notice={outNotice("gemini")}
+            />
+          </div>
+          <DiaryAiSettings notice={outNotice("diary-ai")} />
         </Integration>
 
-        {/* Gemini 에게 보내는 글들. 키는 위 「AI 사용」 칸에 */}
+        {/* AI 엔진에게 보내는 글들. 엔진은 위 「AI 사용」 칸에 */}
         <Integration id="prompts" title="AI 프롬프트">
           <TodoPromptSettings notice={outNotice("todo-prompt")} />
           <SummaryPromptSettings notice={outNotice("summary")} />
+          <PostPromptSettings notice={outNotice("post-prompt")} />
+          <DiaryPromptSettings notice={outNotice("diary-prompt")} />
+          <MorePromptSettings notice={outNotice} />
+        </Integration>
+
+        <Integration id="api" title="홈페이지 API">
+          <ApiSettings notice={outNotice("api")} />
         </Integration>
 
         <Integration id="stats" title="통계 · 감시">
@@ -176,12 +206,20 @@ function Integration({
     <section
       id={id}
       aria-labelledby={`${id}-heading`}
-      className="mt-6 scroll-mt-24 space-y-6 rounded-xl border border-border p-5"
+      className="mt-6 scroll-mt-24 rounded-xl border border-border"
     >
-      <h3 id={`${id}-heading`} className="text-base font-semibold">
-        {title}
-      </h3>
-      {children}
+      {/* 항목이 많아 화면이 길다. 접어 두고, #주소로 오면(저장 뒤 포함) 편다 */}
+      <details className="group">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 p-5">
+          <h3 id={`${id}-heading`} className="text-base font-semibold">
+            {title}
+          </h3>
+          <span aria-hidden className="text-muted transition-transform group-open:rotate-180">
+            ▾
+          </span>
+        </summary>
+        <div className="space-y-6 px-5 pb-5">{children}</div>
+      </details>
     </section>
   );
 }

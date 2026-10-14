@@ -20,6 +20,7 @@ const notices: Record<string, string> = {
   calibre: "Calibre 서버 주소는 http:// 나 https:// 로 시작합니다.",
   kakao: "카카오 키는 영문 · 숫자 32자 안팎입니다. 「REST API 키」 를 그대로 붙여 넣어 주세요.",
   gemini: "Gemini API 키는 「AIza…」 나 「AQ.…」 처럼 생겼습니다. AI Studio 에서 받은 것을 그대로 붙여 넣어 주세요.",
+  openclaw: "오픈클로 주소는 http:// 나 https:// 로, 에이전트 이름은 영문 · 숫자 · - · _ 로 적어 주세요.",
 };
 
 type Row = {
@@ -57,8 +58,32 @@ const ROWS: Row[] = [
   {
     name: "geminiApiKey",
     label: "Gemini API 키",
-    hint: "있으면 책 소개 요약과 할 일 · 메모 가르기(텔레그램 · 할 일 화면 · 떠 있는 창의 날짜 · 시각 읽기)를 Gemini 가 합니다. 그 글이 Google(Gemini 무료 등급)로 나갑니다. aistudio.google.com 에서 무료로 받습니다. 비우면 요약은 소개 앞부분을 줄이고, 가르기는 규칙으로 합니다.",
+    hint: "보낸 글이 Google(Gemini 무료 등급)로 나갑니다. aistudio.google.com 에서 무료로 받습니다.",
     placeholder: "AIza… / AQ.…",
+  },
+  {
+    name: "openclawUrl",
+    label: "오픈클로 게이트웨이 주소",
+    hint: "같은 서버의 컨테이너에서는 http://host.docker.internal:18789. 게이트웨이의 OpenAI 호환 주소(chatCompletions)를 켜 두어야 합니다. 보낸 글은 오픈클로가 쓰는 모델(OpenAI 등)로 나갑니다.",
+    placeholder: "http://host.docker.internal:18789",
+  },
+  {
+    name: "openclawToken",
+    label: "오픈클로 게이트웨이 토큰",
+    hint: "게이트웨이 전체를 쥐는 열쇠입니다. 서버에서만 쓰고 브라우저로 보내지 않습니다. 암호화해서 두고 다시 보여 주지 않습니다.",
+    placeholder: "…",
+  },
+  {
+    name: "openclawAgent",
+    label: "작은 일 에이전트",
+    hint: "책 소개 요약 · 할 일 · 메모 분류에 부를 에이전트. 도구를 모두 끈 전용 에이전트를 권합니다. 비우면 homepage.",
+    placeholder: "homepage",
+  },
+  {
+    name: "openclawChatAgent",
+    label: "대화창 에이전트",
+    hint: "떠 있는 「+」 창의 AI 탭이 부를 에이전트. 평소 대화하는 에이전트를 쓰면 같은 말투 · 기억으로 답합니다(도구도 그대로 씁니다). 비우면 main.",
+    placeholder: "main",
   },
   {
     name: "kakaoRestKey",

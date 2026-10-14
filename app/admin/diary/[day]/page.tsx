@@ -15,6 +15,9 @@ import { findDiary } from "@/lib/my-space/diary";
 import { MOODS, dayLabel, parseDay, type Mood } from "@/lib/my-space/diary-calendar";
 import { formatDate } from "@/lib/posts";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
+import DiaryDraftButton from "@/components/admin/DiaryDraftButton";
+import { memosOfDay } from "@/lib/my-space/memos";
+import { diaryAiOn, siteAi } from "@/lib/site/settings";
 
 export const metadata: Metadata = {
   title: "일기",
@@ -54,6 +57,10 @@ export default async function DiaryDayPage({
   const written = Boolean(diary?.content);
   const editing = !written || (await searchParams).edit === "1";
   const month = day.slice(0, 7);
+  // 그날 메모로 초안(MYH-250). AI 엔진이 있을 때만, 스위치가 꺼져 있으면 켜는 곳을 알린다
+  const ai = editing && (await siteAi()) !== null;
+  const draftOn = ai && (await diaryAiOn());
+  const memoCount = draftOn ? (await memosOfDay(day)).length : 0;
 
   return (
     <Container>
@@ -119,6 +126,17 @@ export default async function DiaryDayPage({
               ))}
             </div>
           </fieldset>
+          {draftOn ? (
+            <DiaryDraftButton day={day} memoCount={memoCount} fieldId="diary-content" />
+          ) : ai ? (
+            <p className="text-xs text-muted">
+              그날 메모로 일기 초안을 만들 수 있습니다 —{" "}
+              <Link href="/admin/settings#diary-ai" className="underline underline-offset-4">
+                환경설정 › AI 사용
+              </Link>
+              에서 「나만 보는 글을 AI 로 보내기」 를 켜면 됩니다.
+            </p>
+          ) : null}
           <MarkdownField
             id="diary-content"
             name="content"

@@ -6,6 +6,7 @@ import NoteEditor from "@/components/admin/NoteEditor";
 import { listAttachments, listPostImages } from "@/lib/uploads/attachments";
 import { isAdmin } from "@/lib/security/auth";
 import { getDb, posts } from "@/lib/db";
+import { siteAi } from "@/lib/site/settings";
 
 export const metadata: Metadata = {
   title: "짧은 글 관리",
@@ -64,6 +65,7 @@ export default async function AdminNotesPage({
         rows={rows}
         attachments={attachmentsByNote}
         images={imagesByNote}
+        aiReady={(await siteAi()) !== null}
       />
     </Container>
   );

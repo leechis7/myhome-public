@@ -90,6 +90,52 @@ function start() {
       }
     },
   });
+
+  /**
+   * 대시보드에 보이는 숫자들(MYH-256) - Grafana 의 「내 홈페이지」 대시보드가 쓴다.
+   * 할 일 · 메모 · 일기 · 비밀글은 암호화한 글이라 수만 낸다(날짜 · 상태는 평문).
+   * 서울 날짜로 센다. 한 질의로 센다.
+   */
+  new Gauge({
+    name: "myhome_personal",
+    help: "대시보드 숫자: 할 일 · 메모 · 조회 · 책 · 프로젝트 · 일기 · 비밀글",
+    labelNames: ["name"],
+    registers: [registry],
+    async collect() {
+      this.reset();
+      try {
+        const [row] = (await getDb().execute(sql`
+          with d as (select (now() at time zone 'Asia/Seoul')::date as today)
+          select
+            (select count(*) from todos, d where done_at is null and due_on < d.today) as todos_late,
+            (select count(*) from todos, d where done_at is null and coalesce(start_on, due_on) <= d.today + 7) as todos_week,
+            (select count(*) from todos where done_at is null and start_on is null and due_on is null) as todos_undated,
+            (select count(*) from todos where done_at is null) as todos_open,
+            (select count(*) from todos, d where done_at >= d.today::timestamp at time zone 'Asia/Seoul') as todos_done_today,
+            (select count(*) from memos) as memos,
+            (select count(*) from memos, d where created_at >= d.today::timestamp at time zone 'Asia/Seoul') as memos_today,
+            (select coalesce(sum(v.views), 0) from post_views_daily v join posts p on p.id = v.post_id, d
+              where p.kind = 'post' and v.day > d.today - 7) as views7_post,
+            (select coalesce(sum(v.views), 0) from post_views_daily v join posts p on p.id = v.post_id, d
+              where p.kind = 'note' and v.day > d.today - 7) as views7_note,
+            (select coalesce(sum(v.views), 0) from post_views_daily v, d where v.day = d.today) as views_today,
+            (select count(*) from comments where post_id is null and hidden_at is null) as guestbook,
+            (select count(*) from comments where hidden_at is not null) as comments_hidden,
+            (select count(*) from books where status = 'reading') as books_reading,
+            (select count(*) from books where status = 'read') as books_read,
+            (select count(*) from books where status = 'want') as books_want,
+            (select count(*) from books where status = 'stopped') as books_stopped,
+            (select count(*) from projects where ended_on is null) as projects_active,
+            (select count(*) from secrets where diary_day is null) as secrets,
+            (select count(*) from secrets where diary_day is not null) as diary_days,
+            (select count(*) from secrets, d where diary_day = d.today - 1) as diary_yesterday
+        `)) as unknown as Record<string, unknown>[];
+        for (const [name, value] of Object.entries(row ?? {})) this.set({ name }, Number(value ?? 0));
+      } catch {
+        // 위의 myhome_content 와 같다 - 못 센 것을 0 으로 내지 않는다
+      }
+    },
+  });
 }
 
 export async function renderMetrics() {

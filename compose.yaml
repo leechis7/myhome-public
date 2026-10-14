@@ -51,6 +51,9 @@ services:
     image: ${MYHOME_IMAGE:-ghcr.io/leechis7/myhome-public:${MYHOME_VERSION:-latest}}
     ports:
       - '${PORT:-3000}:3000'
+    # 같은 서버에 오픈클로 게이트웨이가 있으면 이 이름으로 닿는다(선택)
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       DATABASE_URL: postgresql://myhome:${POSTGRES_PASSWORD}@postgres:5432/myhome
       # 쿠키를 암호화하는 열쇠. 32자 이상. openssl rand -base64 32
@@ -70,6 +73,12 @@ services:
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
       # 선택. 고른 책의 소개를 Gemini 로 요약한다. 비우면 앞부분을 줄인다
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AI_ENGINES: ${AI_ENGINES:-}
+      MYHOME_API_TOKEN_SHA256: ${MYHOME_API_TOKEN_SHA256:-}
+      OPENCLAW_URL: ${OPENCLAW_URL:-}
+      OPENCLAW_TOKEN: ${OPENCLAW_TOKEN:-}
+      OPENCLAW_AGENT: ${OPENCLAW_AGENT:-}
+      OPENCLAW_CHAT_AGENT: ${OPENCLAW_CHAT_AGENT:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-}
       # 선택. 책 찾기가 내 Calibre 서재에서도 찾는다(환경설정에서도 넣는다)
       CALIBRE_URL: ${CALIBRE_URL:-}
@@ -81,6 +90,13 @@ services:
       GOOGLE_CALENDAR_ICAL: ${GOOGLE_CALENDAR_ICAL:-}
       BOOK_SUMMARY_PROMPT: ${BOOK_SUMMARY_PROMPT:-}
       TODO_AI_PROMPT: ${TODO_AI_PROMPT:-}
+      POST_AI_PROMPT: ${POST_AI_PROMPT:-}
+      DIARY_AI: ${DIARY_AI:-}
+      DIARY_AI_PROMPT: ${DIARY_AI_PROMPT:-}
+      BOOK_REVIEW_PROMPT: ${BOOK_REVIEW_PROMPT:-}
+      BOOK_CATEGORY_PROMPT: ${BOOK_CATEGORY_PROMPT:-}
+      SPAM_AI_PROMPT: ${SPAM_AI_PROMPT:-}
+      PROOF_AI_PROMPT: ${PROOF_AI_PROMPT:-}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
       NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
       MONITORING_DASHBOARD: ${MONITORING_DASHBOARD:-}

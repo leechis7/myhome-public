@@ -1,5 +1,6 @@
 import { summarize } from "@/lib/books/lookup";
-import { askGemini, missOf, type GeminiMiss } from "@/lib/ai/gemini";
+import { missOf, type GeminiMiss } from "@/lib/ai/gemini";
+import { aiAccess, askAi, type AiAccess } from "@/lib/ai";
 
 /**
  * 책 소개를 한두 줄로(MYH-233). Gemini 키가 있으면 Gemini 가 요약하고, 없거나
@@ -18,15 +19,17 @@ export type BookSummary =
 export async function summarizeBook(
   title: string,
   description: string,
-  key: string | null,
+  /** 쓸 AI 엔진(문자열이면 Gemini 키). 없으면 줄이기 */
+  key: AiAccess | string | null,
   author = "",
   template: string = DEFAULT_SUMMARY_PROMPT,
 ): Promise<BookSummary> {
   const trimmed = summarize(description);
   if (!description.trim()) return { summary: trimmed, how: "trim", miss: "empty" };
-  if (!key) return { summary: trimmed, how: "trim", miss: "nokey" };
+  const ai = aiAccess(key);
+  if (!ai) return { summary: trimmed, how: "trim", miss: "nokey" };
   try {
-    const summary = await summarizeWithGemini(title, author, description, key, template);
+    const summary = await summarizeWithAi(title, author, description, ai, template);
     return summary
       ? { summary, how: "ai" }
       : { summary: trimmed, how: "trim", miss: "error" };
@@ -66,17 +69,17 @@ export function renderSummaryPrompt(
   return template.includes("{소개글}") ? filled : `${filled}\n\n${body}`;
 }
 
-async function summarizeWithGemini(
+async function summarizeWithAi(
   title: string,
   author: string,
   description: string,
-  key: string,
+  ai: AiAccess,
   template: string,
 ) {
   const prompt = renderSummaryPrompt(template, { title, author, description });
   // 무료 등급은 빠르면 1초, 붐비면 20초를 넘기도 한다. 화면은 그동안 「요약하는
   // 중」 을 보이고 줄인 앞부분을 먼저 넣어 두므로 넉넉히 기다린다
-  return cleanSummary(await askGemini(prompt, key, { timeoutMs: 45000 }));
+  return cleanSummary(await askAi(prompt, ai, { timeoutMs: 45000 }));
 }
 
 /** 받은 요약을 다듬는다. 따옴표 · 줄바꿈을 걷고, 너무 길면 줄이기로 자른다 */

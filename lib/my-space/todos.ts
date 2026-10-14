@@ -1,14 +1,14 @@
-import { asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb, todos } from "@/lib/db";
 import { decryptText, encryptText } from "@/lib/security/secret-crypto";
-import { hhmm, orderRange } from "@/lib/my-space/todo-dates";
+import { hhmm, orderRange, todoEvent, type TodoEvent } from "@/lib/my-space/todo-dates";
 
 /**
  * 할 일(MYH-217). 글은 암호화하고, 기간(시작일 ~ 마감일, MYH-228) · 끝낸 때는
  * 평문이다(줄 세우기 · 넘김 표시). 암호화 · 복호화는 여기 한 곳에서 한다.
  */
 
-export type TodoSource = "telegram" | "web";
+export type TodoSource = "telegram" | "web" | "api";
 
 function open(envelope: string) {
   try {
@@ -53,6 +53,26 @@ export async function listTodos() {
       endTime: row.endTime ? hhmm(row.endTime) : null,
     }));
   return { open: opened(open_), done: opened(done) };
+}
+
+/**
+ * 일정 달력에 보일 할 일(MYH-254). 기간(시작일 ~ 마감일, 하나만 있으면 그 날)이
+ * [from, to] 날에 걸치는 것을 끝낸 것까지 일정 꼴로.
+ */
+export async function todoEventsBetween(from: string, to: string): Promise<TodoEvent[]> {
+  const rows = await getDb()
+    .select()
+    .from(todos)
+    .where(
+      and(
+        sql`coalesce(${todos.startOn}, ${todos.dueOn}) <= ${to}`,
+        sql`coalesce(${todos.dueOn}, ${todos.startOn}) >= ${from}`,
+      ),
+    )
+    .orderBy(asc(todos.id));
+  return rows
+    .map((row) => todoEvent({ ...row, title: open(row.title) }))
+    .filter((e): e is TodoEvent => e !== null);
 }
 
 export async function addTodo(

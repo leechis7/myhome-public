@@ -3,6 +3,8 @@
 import { useState } from "react";
 import ImageUpload from "@/components/admin/ImageUpload";
 import { addNote } from "@/app/admin/notes/actions";
+import AiFillButton from "@/components/admin/AiFillButton";
+import ProofreadPanel from "@/components/admin/ProofreadPanel";
 
 const field =
   "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40";
@@ -20,7 +22,7 @@ const primary =
  *
  * 그래서 이 조각만 클라이언트다. 나머지 목록은 서버가 그린다.
  */
-export default function NoteComposer() {
+export default function NoteComposer({ aiReady = false }: { aiReady?: boolean }) {
   const [id, setId] = useState<number | null>(null);
 
   return (
@@ -44,6 +46,7 @@ export default function NoteComposer() {
       >
         {id === null ? null : <input type="hidden" name="id" value={id} />}
         <textarea
+          id="note-new-content"
           name="content"
           rows={4}
           required
@@ -57,6 +60,13 @@ export default function NoteComposer() {
           aria-label="태그"
           className={field}
         />
+        {/* 본문을 읽고 태그를 넣어 준다(MYH-249) */}
+        {aiReady ? (
+          <div className="flex flex-wrap items-start gap-2">
+            <AiFillButton formId="note-new" kind="note" label="✨ 태그 제안" />
+            <ProofreadPanel fieldId="note-new-content" kind="note" />
+          </div>
+        ) : null}
 
         {/* 단추는 폼 안에 둔다. 밖으로 빼야 하는 것은 폼을 품은 올리기
             상자뿐이다 — 폼 안에 폼을 넣으면 브라우저가 안쪽을 버린다. */}

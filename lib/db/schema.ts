@@ -441,6 +441,10 @@ export const comments = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    /** 숨긴 때(MYH-252). AI 가 스팸으로 보았거나 관리자가 숨겼다. 비어 있으면 보인다 */
+    hiddenAt: timestamp("hidden_at", { withTimezone: true }),
+    /** 숨긴 까닭 한 줄(AI 의 말). 관리자에게만 보인다 */
+    hiddenReason: text("hidden_reason"),
   },
   (t) => [
     index("comments_post_id_idx").on(t.postId, t.createdAt),
@@ -867,7 +871,7 @@ export const memos = pgTable(
     id: serial("id").primaryKey(),
     /** 암호문. 원문은 평문 글 */
     content: text("content").notNull(),
-    /** 어디서 왔나: telegram · web */
+    /** 어디서 왔나: telegram · web · api(홈페이지 API, MYH-247) */
     source: text("source").notNull().default("web"),
     /** 일기로 옮긴 때. 옮기지 않았으면 null */
     movedAt: timestamp("moved_at", { withTimezone: true }),
@@ -876,7 +880,7 @@ export const memos = pgTable(
       .defaultNow(),
   },
   (t) => [
-    check("memos_source", sql`${t.source} in ('telegram', 'web')`),
+    check("memos_source", sql`${t.source} in ('telegram', 'web', 'api')`),
     index("memos_created_idx").on(t.createdAt.desc()),
   ],
 );
@@ -903,14 +907,14 @@ export const todos = pgTable(
     endTime: time("end_time"),
     /** 끝낸 때. 안 끝났으면 null */
     doneAt: timestamp("done_at", { withTimezone: true }),
-    /** 어디서 왔나: telegram · web */
+    /** 어디서 왔나: telegram · web · api(홈페이지 API, MYH-247) */
     source: text("source").notNull().default("web"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
-    check("todos_source", sql`${t.source} in ('telegram', 'web')`),
+    check("todos_source", sql`${t.source} in ('telegram', 'web', 'api')`),
     check(
       "todos_range",
       sql`${t.startOn} is null or ${t.dueOn} is null or ${t.startOn} <= ${t.dueOn}`,

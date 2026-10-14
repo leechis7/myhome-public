@@ -3,6 +3,9 @@ import { unstable_cache, updateTag } from "next/cache";
 import { inArray } from "drizzle-orm";
 import { getDb, settings } from "@/lib/db";
 import { decryptText, encryptText, hasSecretKey } from "@/lib/security/secret-crypto";
+import { aiAccess, type AiAccess } from "@/lib/ai";
+import { readEngines } from "@/lib/ai/engines";
+import { isOn } from "@/lib/my-space/diary-ai";
 
 /**
  * 환경설정(MYH-231 · MYH-232). .env 와 화면(관리 › 설정 › 환경설정) 양쪽에서
@@ -43,10 +46,39 @@ export const SETTINGS = {
   calibreUser: { env: "CALIBRE_USER", kind: "text" },
   calibrePassword: { env: "CALIBRE_PASSWORD", kind: "secret" },
   geminiApiKey: { env: "GEMINI_API_KEY", kind: "secret" },
+  /**
+   * 홈페이지 API 토큰의 sha256(MYH-247). 토큰 자체는 두지 않는다 - 환경설정에서
+   * 만들 때 한 번만 보여 준다. .env 에도 토큰이 아니라 sha256 을 적는다
+   */
+  apiTokenHash: { env: "MYHOME_API_TOKEN_SHA256", kind: "text" },
+  /** AI 엔진의 차례 · 사용: openclaw,-gemini (앞이 먼저, - 는 끔. MYH-246) */
+  aiEngines: { env: "AI_ENGINES", kind: "list" },
+  /** 오픈클로 게이트웨이(MYH-246). 주소 · 토큰 · 에이전트 */
+  openclawUrl: { env: "OPENCLAW_URL", kind: "text" },
+  openclawToken: { env: "OPENCLAW_TOKEN", kind: "secret" },
+  openclawAgent: { env: "OPENCLAW_AGENT", kind: "text" },
+  /** AI 대화창이 부를 에이전트(MYH-248). 비우면 main */
+  openclawChatAgent: { env: "OPENCLAW_CHAT_AGENT", kind: "text" },
   /** 책 소개 요약 프롬프트. .env 는 줄바꿈을 \n 으로 */
   bookSummaryPrompt: { env: "BOOK_SUMMARY_PROMPT", kind: "text" },
   /** 할 일 · 메모 판정 프롬프트(MYH-245). .env 는 줄바꿈을 \n 으로 */
   todoAiPrompt: { env: "TODO_AI_PROMPT", kind: "text" },
+  /** 글 요약 · 태그 제안 프롬프트(MYH-249). .env 는 줄바꿈을 \n 으로 */
+  postAiPrompt: { env: "POST_AI_PROMPT", kind: "text" },
+  /**
+   * 나만 보는 글(메모 · 일기)을 AI 로 보내도 되나(MYH-250). 처음은 끔 - 켜야 그날
+   * 메모로 일기 초안을 만든다
+   */
+  diaryAi: { env: "DIARY_AI", kind: "onoff" },
+  /** 일기 초안 프롬프트(MYH-250). .env 는 줄바꿈을 \n 으로 */
+  diaryAiPrompt: { env: "DIARY_AI_PROMPT", kind: "text" },
+  /** 독서 노트로 한 줄 평 · 소개로 분류 제안 프롬프트(MYH-251). .env 는 줄바꿈을 \n 으로 */
+  bookReviewPrompt: { env: "BOOK_REVIEW_PROMPT", kind: "text" },
+  bookCategoryPrompt: { env: "BOOK_CATEGORY_PROMPT", kind: "text" },
+  /** 방명록 · 댓글 스팸 판정 프롬프트(MYH-252). .env 는 줄바꿈을 \n 으로 */
+  spamAiPrompt: { env: "SPAM_AI_PROMPT", kind: "text" },
+  /** 맞춤법 · 문장 다듬기 프롬프트(MYH-253). .env 는 줄바꿈을 \n 으로 */
+  proofAiPrompt: { env: "PROOF_AI_PROMPT", kind: "text" },
 } as const satisfies Record<string, { env: string; kind: "text" | "secret" | "onoff" | "list" }>;
 
 export type SettingName = keyof typeof SETTINGS;
@@ -186,4 +218,62 @@ export async function todoAiPrompt() {
   const env = envSetting("todoAiPrompt");
   if (env) return env.replaceAll("\\n", "\n");
   return (await storedSetting("todoAiPrompt"))?.trim() || null;
+}
+
+/**
+ * 글 요약 · 태그 제안 프롬프트(MYH-249). .env 의 POST_AI_PROMPT(줄바꿈은 \n) →
+ * 화면에서 넣은 것 → 없으면 null(코드의 처음 값을 쓴다).
+ */
+export async function postAiPrompt() {
+  const env = envSetting("postAiPrompt");
+  if (env) return env.replaceAll("\\n", "\n");
+  return (await storedSetting("postAiPrompt"))?.trim() || null;
+}
+
+/**
+ * 일기 초안 프롬프트(MYH-250). .env 의 DIARY_AI_PROMPT(줄바꿈은 \n) → 화면에서
+ * 넣은 것 → 없으면 null(코드의 처음 값을 쓴다).
+ */
+export async function diaryAiPrompt() {
+  const env = envSetting("diaryAiPrompt");
+  if (env) return env.replaceAll("\\n", "\n");
+  return (await storedSetting("diaryAiPrompt"))?.trim() || null;
+}
+
+/**
+ * 이름 붙은 프롬프트 하나. .env(줄바꿈은 \n) → 화면에서 넣은 것 → 없으면 null
+ * (코드의 처음 값을 쓴다). 새 프롬프트는 이것으로 읽는다(MYH-251)
+ */
+export async function promptSetting(name: "bookReviewPrompt" | "bookCategoryPrompt" | "spamAiPrompt" | "proofAiPrompt") {
+  const env = envSetting(name);
+  if (env) return env.replaceAll("\\n", "\n");
+  return (await storedSetting(name))?.trim() || null;
+}
+
+/** 나만 보는 글을 AI 로 보내도 되나(MYH-250). .env 가 먼저, 처음은 끔 */
+export async function diaryAiOn() {
+  return isOn((await siteConfig()).diaryAi);
+}
+
+/**
+ * 쓸 AI 엔진들(MYH-246). 환경설정 › AI 사용 의 차례대로, 켠 것 가운데 필요한
+ * 값(오픈클로는 주소 · 토큰, Gemini 는 키)이 있는 것만. 하나도 없으면 null.
+ * chat 이면 오픈클로는 대화창 에이전트(처음 값 main, MYH-248)를 부른다.
+ */
+export async function siteAi({ chat = false }: { chat?: boolean } = {}): Promise<AiAccess | null> {
+  const c = await siteConfig();
+  const list: AiAccess = [];
+  for (const { engine, on } of readEngines(c.aiEngines)) {
+    if (!on) continue;
+    if (engine === "openclaw" && c.openclawUrl && c.openclawToken) {
+      list.push({
+        engine,
+        url: c.openclawUrl,
+        token: c.openclawToken,
+        agent: chat ? c.openclawChatAgent || "main" : c.openclawAgent || "homepage",
+      });
+    }
+    if (engine === "gemini" && c.geminiApiKey) list.push({ engine, key: c.geminiApiKey });
+  }
+  return aiAccess(list);
 }

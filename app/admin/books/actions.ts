@@ -9,7 +9,7 @@ import { isBookStatus, parseRating } from "@/lib/books";
 import { fetchCover, searchBooks, type FoundBook } from "@/lib/books/lookup";
 import { calibreAccess, lookupAccess } from "@/lib/books/lookup-key";
 import { summarizeBook } from "@/lib/books/summary";
-import { siteConfig, summaryPrompt } from "@/lib/site/settings";
+import { siteAi, summaryPrompt } from "@/lib/site/settings";
 import { BOOK_CATEGORY, BOOK_KIND, readCode } from "@/lib/codes";
 import { books, getDb } from "@/lib/db";
 import { ALLOWED_TYPES, MAX_UPLOAD_BYTES, saveUpload } from "@/lib/uploads";
@@ -133,6 +133,8 @@ export async function saveReadingNote(formData: FormData) {
 
   const readingNote = String(formData.get("readingNote") ?? "").trim() || null;
   const rating = parseRating(formData.get("rating"));
+  // 한 줄 평(책 소개, MYH-251). 칸이 있는 폼에서만 고친다
+  const note = formData.has("note") ? String(formData.get("note") ?? "").trim() || null : undefined;
   const db = getDb();
   const [before] = await db
     .select({ readingNote: books.readingNote })
@@ -146,6 +148,7 @@ export async function saveReadingNote(formData: FormData) {
     .set({
       readingNote,
       rating,
+      ...(note === undefined ? {} : { note }),
       // 노트 글이 바뀐 때만 고친 날을 옮긴다. 별점만 바꾼 것은 넣지 않는다
       ...(before.readingNote !== readingNote
         ? { noteUpdatedAt: readingNote ? new Date() : null }
@@ -178,16 +181,16 @@ export async function lookupBooks(
 }
 
 /**
- * 고른 책의 소개를 한두 줄로(MYH-233). Gemini 키가 있으면 Gemini, 없으면
- * 앞부분 줄이기. 화면은 줄인 것을 먼저 넣어 두고 이것이 오면 바꾼다.
+ * 고른 책의 소개를 한두 줄로(MYH-233). AI 엔진(오픈클로 · Gemini, MYH-246)이
+ * 있으면 AI, 없으면 앞부분 줄이기. 화면은 줄인 것을 먼저 넣어 두고 이것이 오면 바꾼다.
  */
 export async function summarizeBookAction(title: string, description: string, author = "") {
   await requireAdmin();
-  const [{ geminiApiKey }, template] = await Promise.all([siteConfig(), summaryPrompt()]);
+  const [ai, template] = await Promise.all([siteAi(), summaryPrompt()]);
   return summarizeBook(
     String(title ?? "").slice(0, 200),
     String(description ?? "").slice(0, 4000),
-    geminiApiKey,
+    ai,
     String(author ?? "").slice(0, 200),
     template ?? undefined,
   );

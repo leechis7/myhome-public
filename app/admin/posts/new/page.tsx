@@ -5,6 +5,7 @@ import PostForm from "@/components/admin/PostForm";
 import { isAdmin } from "@/lib/security/auth";
 import { listCodes, SERIES } from "@/lib/codes";
 import { postErrors } from "../errors";
+import { siteAi } from "@/lib/site/settings";
 
 export const metadata: Metadata = {
   title: "새 글",
@@ -33,7 +34,10 @@ export default async function NewPostPage({
         </p>
       ) : null}
       <div className="mt-8">
-        <PostForm series={await listCodes(SERIES, { all: true })} />
+        <PostForm
+          series={await listCodes(SERIES, { all: true })}
+          aiReady={(await siteAi()) !== null}
+        />
       </div>
     </Container>
   );

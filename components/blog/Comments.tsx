@@ -1,5 +1,6 @@
 import CommentForm from "./CommentForm";
 import DeleteCommentButton from "./DeleteCommentButton";
+import HideCommentButton from "./HideCommentButton";
 import { formatDateTime, listComments } from "@/lib/posts/comments";
 import { isAdmin } from "@/lib/security/auth";
 
@@ -16,15 +17,18 @@ export default async function Comments({
   postId: number;
   errorCode?: string;
 }) {
-  const [rows, admin] = await Promise.all([listComments(postId), isAdmin()]);
+  // 숨긴 댓글(MYH-252)은 관리자에게만 온다
+  const admin = await isAdmin();
+  const rows = await listComments(postId, { admin });
+  const shown = rows.filter((c) => c.hiddenAt === null).length;
 
   return (
     <section id="comments" className="mt-16 border-t border-border pt-10">
       <h2 className="text-lg font-semibold">
         댓글
-        {rows.length > 0 ? (
+        {shown > 0 ? (
           <span className="ml-2 text-sm font-normal text-muted tabular-nums">
-            {rows.length}
+            {shown}
           </span>
         ) : null}
       </h2>
@@ -34,7 +38,7 @@ export default async function Comments({
       ) : (
         <ul className="mt-6 space-y-6">
           {rows.map((comment) => (
-            <li key={comment.id}>
+            <li key={comment.id} className={comment.hiddenAt ? "opacity-60" : undefined}>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm font-medium">{comment.author}</span>
                 <time
@@ -44,11 +48,19 @@ export default async function Comments({
                   {formatDateTime(comment.createdAt)}
                 </time>
                 {admin ? (
-                  <DeleteCommentButton
-                    id={comment.id}
-                    postId={postId}
-                    author={comment.author}
-                  />
+                  <>
+                    <HideCommentButton
+                      id={comment.id}
+                      postId={postId}
+                      hiddenAt={comment.hiddenAt}
+                      reason={comment.hiddenReason}
+                    />
+                    <DeleteCommentButton
+                      id={comment.id}
+                      postId={postId}
+                      author={comment.author}
+                    />
+                  </>
                 ) : null}
               </div>
               {/* 마크다운으로 해석하지 않는다. 본문 그대로 줄바꿈만 살린다 */}

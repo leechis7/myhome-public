@@ -41,3 +41,11 @@ describe(".env.example 이 환경설정 값을 다 적는다", () => {
     });
   }
 });
+
+/** README 의 환경설정 표에도 다 적혀 있다 - 설정을 더하고 README 를 잊지 않게 */
+describe("README 가 환경설정 값을 다 적는다", () => {
+  it("README.md", () => {
+    const text = readFileSync("README.md", "utf8");
+    expect(Object.values(SETTINGS).map((f) => f.env).filter((n) => !text.includes(n))).toEqual([]);
+  });
+});

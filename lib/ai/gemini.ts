@@ -35,6 +35,18 @@ export function missOf(error: unknown): GeminiMiss {
 export async function askGemini(
   prompt: string,
   key: string,
+  options: { timeoutMs: number; temperature?: number; schema?: Record<string, unknown> },
+) {
+  return chatGemini([{ role: "user", content: prompt }], key, options);
+}
+
+/**
+ * 대화를 통째로 넘기고 다음 답을 받는다(MYH-248). Gemini 는 assistant 를
+ * model 이라 부른다.
+ */
+export async function chatGemini(
+  messages: { role: "user" | "assistant"; content: string }[],
+  key: string,
   {
     timeoutMs,
     temperature = 0.3,
@@ -46,10 +58,14 @@ export async function askGemini(
     config.responseMimeType = "application/json";
     config.responseSchema = schema;
   }
+  const contents = messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
   let res: Response | null = null;
   for (const model of MODELS) {
-    res = await call(model, prompt, key, { ...config, thinkingConfig: { thinkingBudget: 0 } }, timeoutMs);
-    if (res.status === 400) res = await call(model, prompt, key, config, timeoutMs);
+    res = await call(model, contents, key, { ...config, thinkingConfig: { thinkingBudget: 0 } }, timeoutMs);
+    if (res.status === 400) res = await call(model, contents, key, config, timeoutMs);
     if (res.status === 429 || res.status === 404 || res.status >= 500) continue;
     break;
   }
@@ -62,7 +78,7 @@ export async function askGemini(
 
 function call(
   model: string,
-  prompt: string,
+  contents: { role: string; parts: { text: string }[] }[],
   key: string,
   generationConfig: Record<string, unknown>,
   timeoutMs: number,
@@ -72,7 +88,7 @@ function call(
     {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig }),
+      body: JSON.stringify({ contents, generationConfig }),
       signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
     },

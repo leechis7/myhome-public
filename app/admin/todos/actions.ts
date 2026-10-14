@@ -4,10 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/security/auth";
 import { parseDay } from "@/lib/my-space/diary-calendar";
-import { parseTime, seoulTime, withTimeDay } from "@/lib/my-space/todo-dates";
+import { parseTime, withTimeDay } from "@/lib/my-space/todo-dates";
+import { readNewTodo } from "@/lib/my-space/todo-read";
 import { todayInSeoul } from "@/lib/profile/resume-sections";
-import { classify } from "@/lib/telegram/classify";
-import { siteConfig, todoAiPrompt } from "@/lib/site/settings";
 import {
   addTodo,
   clearDoneTodos,
@@ -51,28 +50,9 @@ function range(formData: FormData) {
   };
 }
 
-/**
- * 새 할 일(화면 · 떠 있는 창). 날짜 · 시각 칸을 하나도 고르지 않았으면 글에서
- * 읽는다 - 「내일 오후 7시 운동」 → 운동 · 내일 19:00. 텔레그램과 같은 길이라
- * Gemini 키가 있으면 Gemini 가 먼저, 없거나 실패하면 규칙(lib/telegram/classify.ts).
- * 칸을 골랐으면 그것을 쓰고 글은 그대로 둔다.
- */
-async function readNew(text: string, formData: FormData) {
-  const picked = range(formData);
-  if (picked.startOn || picked.dueOn || picked.startTime || picked.endTime) {
-    return { title: text, ...picked };
-  }
-  const key = (await siteConfig()).geminiApiKey;
-  const template = (await todoAiPrompt()) ?? undefined;
-  const read = await classify(text, todayInSeoul(), "todo", key, seoulTime(), template);
-  if (read.kind !== "todo") return { title: text, ...picked };
-  return {
-    title: read.title || text,
-    startOn: read.startOn,
-    dueOn: read.dueOn,
-    startTime: read.startTime,
-    endTime: read.endTime,
-  };
+/** 새 할 일. 칸을 비웠으면 글에서 읽는다(lib/my-space/todo-read.ts) */
+function readNew(text: string, formData: FormData) {
+  return readNewTodo(text, range(formData));
 }
 
 export async function addTodoAction(formData: FormData) {

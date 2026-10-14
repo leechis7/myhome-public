@@ -8,6 +8,11 @@ import { isMood, parseDay } from "@/lib/my-space/diary-calendar";
 import { addSecretImage, removeSecret } from "@/lib/my-space/secrets";
 import { ALLOWED_TYPES, MAX_UPLOAD_BYTES } from "@/lib/uploads/limits";
 import type { SecretUploadState } from "@/app/admin/secrets/actions";
+import { askAi } from "@/lib/ai";
+import { missOf } from "@/lib/ai/gemini";
+import { memosOfDay } from "@/lib/my-space/memos";
+import { DEFAULT_DIARY_PROMPT, renderDiaryPrompt } from "@/lib/my-space/diary-ai";
+import { diaryAiOn, diaryAiPrompt, siteAi } from "@/lib/site/settings";
 
 /**
  * 일기장(MYH-213)을 쓰고 지운다. 암호화는 lib/my-space/diary.ts · lib/my-space/secrets.ts
@@ -69,4 +74,45 @@ export async function uploadDiaryImage(
   const { markdown } = await addSecretImage(id, file);
   refresh(day);
   return { markdown, secretId: id };
+}
+
+const MISS = {
+  quota: "AI 사용 한도를 넘었습니다. 잠시 뒤에 다시 해 주세요.",
+  slow: "AI 가 너무 오래 답하지 않습니다. 다시 해 주세요.",
+  error: "AI 에게 묻지 못했습니다. 환경설정 › AI 사용 을 확인하세요.",
+} as const;
+
+const seoulTime = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Seoul",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/**
+ * 그날 메모로 일기 초안(MYH-250). 저장하지 않고 글만 돌려준다 - 화면이 쓰는 칸에
+ * 넣고 사람이 고쳐 저장한다. 나만 보는 글이 바깥 AI 로 나가므로 환경설정의
+ * 스위치를 켰을 때만.
+ */
+export async function draftDiaryAction(dayValue: string): Promise<{ text?: string; error?: string }> {
+  await requireAdmin();
+  const day = parseDay(dayValue);
+  if (!day) return { error: "날짜가 맞지 않습니다." };
+  if (!(await diaryAiOn())) {
+    return { error: "환경설정 › AI 사용 에서 「나만 보는 글을 AI 로 보내기」 를 켜 주세요." };
+  }
+  const access = await siteAi();
+  if (!access) return { error: "쓸 AI 엔진이 없습니다. 환경설정 › AI 사용 에서 켜 주세요." };
+  const memos = await memosOfDay(day);
+  if (memos.length === 0) return { error: "이 날 적은 메모가 없습니다." };
+  const prompt = renderDiaryPrompt((await diaryAiPrompt()) ?? DEFAULT_DIARY_PROMPT, {
+    day,
+    memos: memos.map((m) => ({ at: seoulTime.format(m.createdAt), text: m.content })),
+  });
+  try {
+    const text = (await askAi(prompt, access, { timeoutMs: 90_000, temperature: 0.6 })).trim();
+    return text ? { text } : { error: MISS.error };
+  } catch (error) {
+    return { error: MISS[missOf(error)] };
+  }
 }

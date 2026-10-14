@@ -22,6 +22,8 @@ import ImageList, { type ImageRow } from "./ImageList";
 import ImageUpload from "./ImageUpload";
 import MarkdownField from "./markdown/MarkdownField";
 import CodePicker from "./CodePicker";
+import AiFillButton from "./AiFillButton";
+import ProofreadPanel from "./ProofreadPanel";
 import { codesHref, SERIES } from "@/lib/codes/groups";
 import type { Code, Post } from "@/lib/db";
 
@@ -38,8 +40,11 @@ export default function PostForm({
   attachments = [],
   images = [],
   series = [],
+  aiReady = false,
 }: {
   post?: Post;
+  /** AI 엔진이 하나라도 있으면 「AI 로 채우기」 를 보인다(MYH-249) */
+  aiReady?: boolean;
   attachments?: AttachmentRow[];
   images?: ImageRow[];
   /** 고를 수 있는 연재(코드 그룹 00003). 꺼 둔 것까지 */
@@ -103,9 +108,13 @@ export default function PostForm({
         </div>
 
         <div>
-          <label htmlFor="summary" className={label}>
-            요약
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor="summary" className={label}>
+              요약
+            </label>
+            {/* 제목 · 본문을 읽고 요약 · 태그를 넣어 준다. 저장은 직접 */}
+            {aiReady ? <AiFillButton formId="post-form" kind="post" /> : null}
+          </div>
           <p className="mt-1 text-xs text-muted">
             목록에 보이는 한두 줄. 비워도 됩니다.
           </p>
@@ -189,6 +198,8 @@ export default function PostForm({
           onRestoreId={setId}
         />
 
+        {/* 고칠 곳을 하나씩 받아들인다(MYH-253) */}
+        {aiReady ? <ProofreadPanel fieldId="content" kind="post" /> : null}
         <MarkdownField
           id="content"
           name="content"

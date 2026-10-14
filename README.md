@@ -279,11 +279,69 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | 책 찾기 | `BOOK_SOURCES` | 찾는 곳의 차례 · 사용. 앞이 먼저, 끄려면 앞에 `-` (예: `kakao,-calibre,openlibrary`). 비우면 카카오 → 내 서재 → Open Library |
 | 책 찾기 | `KAKAO_REST_API_KEY` | 카카오 책 검색([developers.kakao.com](https://developers.kakao.com) 앱의 REST API 키). 비우면 카카오는 건너뛴다 |
 | 책 찾기 | `CALIBRE_URL` · `CALIBRE_USER` · `CALIBRE_PASSWORD` | 내 [Calibre](https://calibre-ebook.com) 콘텐츠 서버에서도 찾아 소개 · 표지 · ISBN 을 가져온다(원서도). 앱 전용 읽기 계정을 권한다 |
-| AI 사용 | `GEMINI_API_KEY` | 책 소개 요약과 할 일 · 메모 가르기(텔레그램 · 할 일 화면의 날짜 · 시각 읽기)에 쓴다. 그 글이 Gemini 로 나간다([aistudio.google.com](https://aistudio.google.com) 의 무료 API 키). 비우면 요약은 소개 앞부분을 줄이고, 가르기는 규칙으로 |
+| AI 사용 | `AI_ENGINES` | 쓰는 AI 엔진의 차례 · 사용. 앞이 먼저, 끄려면 앞에 `-` (예: `openclaw,-gemini`). 비우면 오픈클로 → Gemini. 다 안 되면 AI 없이 |
+| AI 사용 | `OPENCLAW_URL` · `OPENCLAW_TOKEN` · `OPENCLAW_AGENT` · `OPENCLAW_CHAT_AGENT` | [OpenClaw](https://openclaw.ai) 게이트웨이를 AI 엔진으로. 게이트웨이의 OpenAI 호환 주소(`gateway.http.endpoints.chatCompletions`)를 켜 둔다. 토큰은 게이트웨이 전체를 쥐는 열쇠라 요약 · 분류에는 도구를 끈 전용 에이전트를 권한다(비우면 `homepage`). 「+」 창의 AI 대화는 대화창 에이전트를 부른다(비우면 `main`) |
+| AI 사용 | `GEMINI_API_KEY` | 책 소개 요약과 할 일 · 메모 분류(텔레그램 · 할 일 화면의 날짜 · 시각 읽기)에 쓴다. 그 글이 Gemini 로 나간다([aistudio.google.com](https://aistudio.google.com) 의 무료 API 키). 비우면 요약은 소개 앞부분을 줄이고, 분류는 규칙으로 |
+| AI 사용 | `DIARY_AI` | 나만 보는 글(메모 · 일기)을 AI 로 보내도 되나. `on` 이면 일기 쓰기 화면의 「그날 메모로 초안」 이 그날 메모를 AI 엔진으로 보낸다. 비우면 끔 |
+| AI 프롬프트 | `PROOF_AI_PROMPT` | 맞춤법 · 문장 다듬기 프롬프트. `{종류}` · `{글}` 자리가 채워진다. 답은 `{"edits":[{from,to,why}]}` 꼴. 줄바꿈은 `\n`. 비우면 처음 값 |
+| AI 프롬프트 | `SPAM_AI_PROMPT` | 새 방명록 · 댓글 스팸 판정 프롬프트. `{자리}` · `{이름}` · `{글}` 자리가 채워진다. 줄바꿈은 `\n`. 비우면 처음 값 |
+| AI 프롬프트 | `BOOK_REVIEW_PROMPT` · `BOOK_CATEGORY_PROMPT` | 독서 노트로 한 줄 평(`{제목}` · `{지은이}` · `{별점}` · `{노트}`), 소개로 분류 제안(`{제목}` · `{지은이}` · `{분류}` · `{소개}`) 프롬프트. 줄바꿈은 `\n`. 비우면 처음 값 |
+| AI 프롬프트 | `DIARY_AI_PROMPT` | 일기 초안 프롬프트. `{날짜}` · `{메모}` 자리가 채워진다. 줄바꿈은 `\n`. 비우면 처음 값 |
+| AI 프롬프트 | `POST_AI_PROMPT` | 글 요약 · 태그 제안 프롬프트(블로그의 「AI 로 채우기」 · 짧은 글의 「태그 제안」). `{종류}` · `{제목}` · `{태그}` · `{글}` 자리가 채워진다. 줄바꿈은 `\n`. 비우면 처음 값 |
 | AI 프롬프트 | `TODO_AI_PROMPT` | 할 일 · 메모 판정 프롬프트(텔레그램 · 할 일 화면 · 떠 있는 창). `{오늘}` · `{지금}` · `{종류}` · `{글}` 자리가 채워진다. 줄바꿈은 `\n`. 비우면 처음 값 |
 | AI 프롬프트 | `BOOK_SUMMARY_PROMPT` | 책 소개 요약 프롬프트. `{제목}` · `{지은이}` · `{소개글}` 자리에 그 책의 것이 든다. 줄바꿈은 `\n`. 비우면 처음 값 |
+| 홈페이지 API | `MYHOME_API_TOKEN_SHA256` | 홈페이지 API(`/api/v1/todos` · `memos` · `events` · `drafts`) 토큰의 sha256. 보통은 화면에서 만든다(한 번만 보임). 비우면 API 가 모두 막힌다 |
 | 통계 · 감시 | `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 나가지 않는다 |
 | 통계 · 감시 | `MONITORING_DASHBOARD` | 관리 › 감시 화면에 끼울 Grafana 대시보드 경로. 비우면 메뉴에서 빠진다 |
+
+## AI 붙이기
+
+AI 는 없어도 된다. 없으면 책 소개는 앞부분을 줄여 넣고, 할 일 · 메모는 규칙으로 가른다.
+붙이면 이런 일을 AI 가 한다.
+
+- 책 찾기로 고른 책의 소개를 한두 줄로 요약
+- 텔레그램 · 할 일 화면 · 떠 있는 「+」 창에서 적은 글을 할 일 · 메모로 분류하고 날짜 · 시각을 읽기
+  (「내일 오후 7시~9시 운동」 → 운동 · 내일 19:00~21:00)
+- 블로그 · 짧은 글 쓰기 화면의 「맞춤법 · 문장 보기」 — 고칠 곳을 원문 → 제안으로 늘어놓고 하나씩 받아들인다
+- 새 방명록 · 댓글을 AI 가 보고 광고 · 욕설 · 스팸이면 숨기고 텔레그램으로 알린다(관리자는 그 자리에서 「보이기」). AI 가 없거나 실패하면 그대로 보인다
+- 독서 노트의 「노트로 한 줄 평」(책 목록의 소개 칸), 책 추가 · 고치기의 「분류 제안」(있는 분류에서 고른다)
+- 일기 쓰기 화면의 「그날 메모로 초안」 — 메모 · 일기는 나만 보는 글이라 환경설정에서 따로 켜야 한다(처음은 끔)
+- 블로그 쓰기 화면의 「AI 로 채우기」(요약 · 태그), 짧은 글의 「태그 제안」 — 이미 쓰던 태그에서 먼저 고른다
+- 떠 있는 「+」 창의 **🤖 AI** 탭에서 대화. 오픈클로는 평소 대화하는 에이전트(대화창 에이전트, 비우면 `main`)가
+  답한다. 대화는 그 브라우저 탭에만 잠깐 두고 홈페이지 서버에 남기지 않는다
+
+**엔진과 차례.** 관리 › 설정 › 환경설정 › **AI 사용** 에서 엔진을 켜고 차례를 정한다(↑ · ↓).
+위의 엔진부터 묻고 안 되면 다음 것으로, 다 안 되면 AI 없이 한다. `.env` 로는
+`AI_ENGINES=openclaw,-gemini`(앞이 먼저, `-` 는 끔). 지금 붙일 수 있는 엔진은 둘이다.
+
+| 엔진 | 넣을 것 | 메모 |
+| --- | --- | --- |
+| Gemini | API 키(`GEMINI_API_KEY`) | [aistudio.google.com](https://aistudio.google.com) 에서 무료로 받는다. 보낸 글을 Google 이 제품 개선에 쓸 수 있다(무료 등급) |
+| [OpenClaw](https://openclaw.ai) | 게이트웨이 주소 · 토큰 · 에이전트(`OPENCLAW_URL` · `OPENCLAW_TOKEN` · `OPENCLAW_AGENT`) | 같은 서버의 OpenClaw 게이트웨이에 묻는다. 게이트웨이가 쓰는 모델(구독 등)로 간다 |
+
+**OpenClaw 를 붙일 때**
+
+1. 게이트웨이의 OpenAI 호환 주소를 켠다: `openclaw.json` 의
+   `gateway.http.endpoints.chatCompletions.enabled = true`
+2. 홈페이지 전용 에이전트를 만든다 - 도구를 모두 끄고 글만 답하게(예: `agents.entries.homepage`,
+   `tools.profile = "minimal"` 에 `deny` 로 나머지를 막는다). 게이트웨이 토큰은 게이트웨이
+   전체를 쥐는 열쇠라서, 홈페이지가 부를 에이전트는 할 수 있는 것이 없어야 한다
+3. 홈페이지가 컨테이너 안에 있으면 게이트웨이가 도커 다리 주소에서도 받게 한다:
+   `gateway.bind = "custom"`, `gateway.customBindHost = "172.17.0.1"`. 주소는
+   `http://host.docker.internal:18789`(compose 가 이 이름을 넣어 둔다). 방화벽이 있으면
+   도커 안쪽 주소(`172.16.0.0/12`)에서 오는 18789 를 받게 한다. 인터넷에는 열지 않는다
+4. 환경설정 › AI 사용 › 오픈클로 에 주소 · 토큰을 넣는다(토큰은 암호화해 둔다)
+
+**프롬프트.** AI 에게 보내는 글은 환경설정 › **AI 프롬프트** 에서 고친다(할 일 · 메모 판정,
+책 소개 요약). 비우거나 「처음 값으로」 면 코드의 처음 값을 쓴다.
+
+**거꾸로 - AI 가 홈페이지를 다루게.** 환경설정 › **홈페이지 API** 에서 토큰을 만들면
+`/api/v1/todos` · `memos` · `events` · `drafts` 로 할 일 · 메모를 넣고 읽을 수 있다(글은
+초안만). OpenClaw 에는 [`integrations/openclaw/myhome`](integrations/openclaw/myhome) 스킬을
+`~/.openclaw/workspace/skills/myhome` 에 넣고, 토큰을 `~/.config/myhome/api-token`(권한 600)에
+적는다. 「이번 주 할 일 정리해서 홈페이지에 넣어줘」 가 된다.
+
+새 AI 엔진을 붙이는 법(코드)은 [`lib/ai/README.md`](lib/ai/README.md).
 
 ## 소스로 고쳐 쓰기
 

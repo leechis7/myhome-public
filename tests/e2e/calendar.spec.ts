@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login, pressDelete } from "./helpers";
+import { login, pressDelete, TEST_PREFIX } from "./helpers";
 
 /**
  * 일정(MYH-214). iCal 을 읽고 펼치는 것은 단위 시험(calendar-ical)이 본다.
@@ -48,5 +48,42 @@ test.describe("일정", () => {
     await expect(page.locator("#calendar").getByRole("status")).toHaveText("캘린더 주소를 지웠습니다.");
     // 환경설정 화면에는 다른 칸(카카오 …)의 「설정 안 됨」 도 있다 - 캘린더 칸에서만 본다
     await expect(page.locator("#calendar").getByText("○ 설정 안 됨")).toBeVisible();
+  });
+
+  test("날짜 있는 할 일이 달력과 고른 날 목록에 보인다(MYH-254)", async ({ page }) => {
+    const title = `${TEST_PREFIX}달력 할 일 ${Date.now().toString(36)}`;
+    await page.goto("/admin/todos");
+    const form = page.getByRole("form", { name: "할 일 더하기" });
+    await form.getByLabel("새 할 일").fill(title);
+    await form.getByLabel("시작 시각").fill("23:00");
+    await form.getByRole("button", { name: "더하기" }).click();
+    const open = page.getByRole("list", { name: "남은 할 일" });
+    await expect(open.locator("li", { hasText: title })).toBeVisible();
+
+    // 오늘이 골라진 채로 열린다 - 고른 날 목록에 할 일로, 누르면 할 일 화면
+    await page.goto("/admin/calendar");
+    const row = page.getByRole("list", { name: "고른 날 일정" }).getByRole("link", { name: new RegExp(title) });
+    await expect(row).toContainText("23:00");
+    await expect(row).toContainText("할 일");
+    await page.goto("/admin/calendar?view=week");
+    await expect(page.getByText(`☐ ${title}`)).toBeVisible();
+    await page.goto("/admin/calendar");
+    await page.getByRole("list", { name: "고른 날 일정" }).getByRole("link", { name: new RegExp(title) }).click();
+    await expect(page).toHaveURL(/\/admin\/todos$/);
+
+    // 끝내면 끝낸 할 일로 남는다
+    await open.getByRole("button", { name: `${title} 끝냄` }).click();
+    await expect(open.locator("li", { hasText: title })).toHaveCount(0);
+    await page.goto("/admin/calendar");
+    await expect(
+      page.getByRole("list", { name: "고른 날 일정" }).getByRole("link", { name: new RegExp(title) }),
+    ).toContainText("끝낸 할 일");
+
+    await page.goto("/admin/todos");
+    await page.getByText(/^끝낸 일 \d+$/).click();
+    // 끝낸 일은 하나씩 지울 수 없다 - 되살려서 지운다(남의 끝낸 일은 건드리지 않게)
+    await page.getByRole("list", { name: "끝낸 일" }).getByRole("button", { name: `${title} 되살리기` }).click();
+    await pressDelete(open.locator("li", { hasText: title }), "할 일 삭제");
+    await expect(page.getByText(title)).toHaveCount(0);
   });
 });

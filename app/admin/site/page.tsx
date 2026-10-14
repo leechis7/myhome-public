@@ -61,7 +61,7 @@ export default async function AdminSitePage() {
       <ActionForm
         action={saveSite}
         submit="저장"
-        className="mt-10 max-w-xl space-y-6"
+        className="mt-10 space-y-6"
         buttonClassName="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
       >
         <Field

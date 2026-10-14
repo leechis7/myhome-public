@@ -8,6 +8,8 @@ import { clientKey, requireAdmin } from "@/lib/security/auth";
 import { AUTHOR_MAX, BODY_MAX } from "@/lib/posts/comment-limits";
 import { commentMessage, guestbookMessage, notifyTelegram } from "@/lib/telegram/notify";
 import { isScheduled } from "@/lib/posts/state";
+import { after } from "next/server";
+import { checkSpam } from "@/lib/posts/spam-check";
 
 /** 같은 사람이 짧은 시간에 몇 개까지 쓸 수 있는지 */
 const WINDOW_MINUTES = 10;
@@ -84,12 +86,17 @@ export async function createComment(formData: FormData) {
 
   const { author, body, ipHash } = await admit(formData, back);
 
-  await getDb().insert(comments).values({
-    postId: post.id,
-    author,
-    body,
-    ipHash,
-  });
+  const [row] = await getDb()
+    .insert(comments)
+    .values({
+      postId: post.id,
+      author,
+      body,
+      ipHash,
+    })
+    .returning({ id: comments.id });
+  // 응답을 보낸 뒤 AI 가 스팸인지 본다(MYH-252)
+  after(() => checkSpam(row.id, { where: "comment", author, body, back }));
 
   // 댓글이 달린 것을 바로 알 수 있게 한다. 실패해도 저장은 이미 끝났다.
   await notifyTelegram(
@@ -105,11 +112,34 @@ export async function createGuestbookEntry(formData: FormData) {
   const back = "/guestbook";
   const { author, body, ipHash } = await admit(formData, back);
 
-  await getDb().insert(comments).values({ postId: null, author, body, ipHash });
+  const [row] = await getDb()
+    .insert(comments)
+    .values({ postId: null, author, body, ipHash })
+    .returning({ id: comments.id });
+  after(() => checkSpam(row.id, { where: "guestbook", author, body, back }));
   await notifyTelegram(guestbookMessage({ author, body }));
 
   revalidatePath(back);
   redirect(`${back}#comments`);
+}
+
+/** 숨김 ↔ 보이기(MYH-252). 관리자만. 보이게 하면 까닭도 지운다 */
+export async function setCommentHiddenAction(formData: FormData) {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) return;
+  const hide = formData.get("hide") === "1";
+  await getDb()
+    .update(comments)
+    .set(hide ? { hiddenAt: new Date(), hiddenReason: "관리자가 숨김" } : { hiddenAt: null, hiddenReason: null })
+    .where(eq(comments.id, id));
+  const raw = formData.get("postId");
+  const postId = Number(raw);
+  if (!raw) revalidatePath("/guestbook");
+  else if (Number.isInteger(postId)) {
+    revalidatePath(`/blog/${postId}`);
+    revalidatePath(`/notes/${postId}`);
+  }
 }
 
 export async function deleteComment(formData: FormData) {

@@ -1,0 +1,28 @@
+/*
+ * 대시보드 차트 색(MYH-255). 역할로 쓰고 값은 여기 한 곳. 다크는 같은 색상을
+ * 어두운 바탕에 맞춘 단계(라이트에서 뒤집은 것이 아니다). 색약 구별 검사를 거친 순서
+ * (파랑 · 주황 · 청록 · 노랑) - 순서를 바꾸지 않는다.
+ */
+.viz {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --grid: rgb(0 0 0 / 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz {
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --grid: rgb(255 255 255 / 0.1);
+  }
+}
+:root[data-theme="dark"] .viz {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --grid: rgb(255 255 255 / 0.1);
+}

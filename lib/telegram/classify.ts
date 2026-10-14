@@ -1,4 +1,4 @@
-import { askGemini } from "@/lib/ai/gemini";
+import { aiAccess, askAi, type AiAccess } from "@/lib/ai";
 import { parseDay } from "@/lib/my-space/diary-calendar";
 import { orderRange, parseTime, readTodo, withTimeDay } from "@/lib/my-space/todo-dates";
 import { guessTodo } from "@/lib/my-space/todo-intent";
@@ -142,14 +142,16 @@ export async function classify(
   text: string,
   today: string,
   fixed: "todo" | "memo" | null,
-  key: string | null,
+  /** 쓸 AI 엔진(문자열이면 Gemini 키). 없으면 규칙 */
+  key: AiAccess | string | null,
   now = "00:00",
   template: string = DEFAULT_TODO_PROMPT,
 ): Promise<Decision> {
+  const ai = aiAccess(key);
   // 메모라고 말했으면 AI 가 할 것이 없다
-  if (!key || fixed === "memo") return byRule(text, today, fixed, now);
+  if (!ai || fixed === "memo") return byRule(text, today, fixed, now);
   try {
-    const raw = await askGemini(renderTodoPrompt(template, { text, today, now, fixed }), key, {
+    const raw = await askAi(renderTodoPrompt(template, { text, today, now, fixed }), ai, {
       timeoutMs: 15000,
       temperature: 0,
       schema: SCHEMA,

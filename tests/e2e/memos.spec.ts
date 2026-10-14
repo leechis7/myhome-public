@@ -109,6 +109,12 @@ test.describe("메모", () => {
     await expect(page.getByRole("tab", { name: "✅ 할 일" })).toHaveAttribute("aria-selected", "true");
     await page.getByRole("tab", { name: "📝 메모" }).click();
 
+    // AI 탭(MYH-248): 대화 칸이 열린다. 실제로 묻는 것은 밖의 AI 에 기대므로 보지 않는다
+    await page.getByRole("tab", { name: "🤖 AI" }).click();
+    await expect(page.getByRole("log", { name: "AI 대화" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "보내기" })).toBeDisabled();
+    await page.getByRole("tab", { name: "📝 메모" }).click();
+
     // 방문자에게는 단추가 없다
     const context = await browser.newContext();
     const visitor = await context.newPage();

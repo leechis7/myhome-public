@@ -5,7 +5,7 @@ import { rangeLabel, seoulTime, type TodoRange } from "@/lib/my-space/todo-dates
 import { todayInSeoul } from "@/lib/profile/resume-sections";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import { inboxDisabled, reply } from "@/lib/telegram/bot";
-import { siteConfig, todoAiPrompt } from "@/lib/site/settings";
+import { siteAi, siteConfig, todoAiPrompt } from "@/lib/site/settings";
 import { classify } from "@/lib/telegram/classify";
 import { matchesSecret, readUpdate } from "@/lib/telegram/inbox";
 
@@ -43,8 +43,7 @@ export async function POST(request: Request) {
 
   // 할 일 · 메모 · 저장 안 함을 가른다(MYH-233). Gemini 키가
   // 있으면 AI 가 먼저, 실패하면 규칙. 말을 붙여 보낸 글은 그 말을 따른다
-  const config = await siteConfig();
-  const key = config.geminiApiKey;
+  const key = await siteAi();
   const fixed = message.kind === "free" ? null : message.kind;
   const decision = await classify(
     message.text.slice(0, MAX_MEMO),

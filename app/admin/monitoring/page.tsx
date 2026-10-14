@@ -21,9 +21,15 @@ export const dynamic = "force-dynamic";
 // 내 서버는 "/grafana/d/myhome/myhome" — uid 는
 // infra/monitoring/grafana/build-dashboard.py 가 박는 값이다.
 // 비어 있으면 감시를 붙이지 않은 설치로 보고 그렇다고 알린다.
-export default async function AdminMonitoringPage() {
+//
+// ?d=personal 이면 「내 홈페이지」 대시보드(MYH-256, uid myhome-personal)를 끼운다 -
+// 관리 › 대시보드의 「Grafana 로 보기」 가 여기로 온다. 같은 Grafana 의 같은 자리
+// (/grafana/d/…)라 감시 경로에서 uid 만 바꾼다.
+export default async function AdminMonitoringPage({ searchParams }: PageProps<"/admin/monitoring">) {
   if (!(await isAdmin())) redirect("/admin");
-  const DASHBOARD = (await siteConfig()).monitoringDashboard ?? "";
+  const base = (await siteConfig()).monitoringDashboard ?? "";
+  const personal = (await searchParams).d === "personal";
+  const DASHBOARD = personal ? personalDashboard(base) : base;
 
   // 대시보드는 넓고 높아야 읽힌다. 본문 폭(max-w-3xl)을 벗어나고,
   // main 의 위쪽 여백도 되돌려 첫 화면에 최대한 많이 담는다.
@@ -42,7 +48,13 @@ export default async function AdminMonitoringPage() {
 
   return (
     <div className="mx-auto -mt-8 w-full max-w-[110rem] px-5">
-      <MonitoringDashboard title="감시" dashboard={DASHBOARD} />
+      <MonitoringDashboard title={personal ? "내 홈페이지 (Grafana)" : "감시"} dashboard={DASHBOARD} />
     </div>
   );
+}
+
+/** "/grafana/d/myhome/myhome" → "/grafana/d/myhome-personal/myhome-personal" */
+function personalDashboard(path: string) {
+  const at = path.indexOf("/d/");
+  return at < 0 ? "" : `${path.slice(0, at)}/d/myhome-personal/myhome-personal`;
 }

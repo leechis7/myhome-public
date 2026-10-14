@@ -3,6 +3,8 @@
  * 날짜는 모두 서울 날 "2026-10-15" 글자다 - 글자 차례가 날 차례와 같다.
  */
 
+import type { CalendarEvent } from "@/lib/my-space/calendar-ical";
+
 export type TodoRange = {
   startOn: string | null;
   dueOn: string | null;
@@ -336,4 +338,63 @@ export function readTodo(text: string, today: string, now: string) {
     },
     today,
   );
+}
+
+/* ───────────────── 일정 달력에 보이기(MYH-254) ───────────────── */
+
+/** 일정 달력에 넣는 할 일. 일정과 같은 꼴에 할 일 표시를 단다 */
+export type TodoEvent = CalendarEvent & { todo: { id: number; done: boolean } };
+
+/** 2026-10-15 의 n 일 뒤 */
+function nextDay(day: string, n = 1) {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * 할 일 하나를 일정 꼴로. 날이 하루(마감일, 없으면 시작일)이고 시각이 있으면
+ * 시각 일정, 아니면 종일(기간이면 시작일 ~ 마감일에 걸쳐). 날이 없으면 null.
+ * 끝 시각이 없거나 시작보다 이르면 30분짜리로 둔다.
+ */
+export function todoEvent(todo: {
+  id: number;
+  title: string | null;
+  startOn: string | null;
+  dueOn: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  doneAt: Date | null;
+}): TodoEvent | null {
+  const first = todo.startOn ?? todo.dueOn;
+  const last = todo.dueOn ?? todo.startOn;
+  if (!first || !last) return null;
+  const base = {
+    key: `todo-${todo.id}`,
+    title: todo.title ?? "열 수 없음",
+    location: null,
+    todo: { id: todo.id, done: todo.doneAt !== null },
+  };
+  const at = todo.startTime ?? todo.endTime;
+  if (first === last && at) {
+    const start = new Date(`${first}T${hhmm(at)}:00+09:00`);
+    const end = todo.endTime ? new Date(`${first}T${hhmm(todo.endTime)}:00+09:00`) : start;
+    return {
+      ...base,
+      allDay: false,
+      start,
+      end: end > start ? end : new Date(start.getTime() + 30 * 60 * 1000),
+      startDay: null,
+      endDay: null,
+    };
+  }
+  const after = nextDay(last);
+  return {
+    ...base,
+    allDay: true,
+    start: new Date(`${first}T00:00:00+09:00`),
+    end: new Date(`${after}T00:00:00+09:00`),
+    startDay: first,
+    endDay: after,
+  };
 }

@@ -9,6 +9,7 @@ import { isAdmin } from "@/lib/security/auth";
 import { listCodes, SERIES } from "@/lib/codes";
 import { getDb, posts } from "@/lib/db";
 import { postErrors } from "../errors";
+import { siteAi } from "@/lib/site/settings";
 
 export const metadata: Metadata = {
   title: "글 수정",
@@ -73,6 +74,7 @@ export default async function EditPostPage({
           attachments={await listAttachments(post.id)}
           images={await listPostImages(post.id)}
           series={await listCodes(SERIES, { all: true })}
+          aiReady={(await siteAi()) !== null}
         />
       </div>
     </Container>
