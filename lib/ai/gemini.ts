@@ -42,10 +42,14 @@ export async function askGemini(
 
 /**
  * 대화를 통째로 넘기고 다음 답을 받는다(MYH-248). Gemini 는 assistant 를
- * model 이라 부른다.
+ * model 이라 부른다. 그림은 inline_data 로 붙인다.
  */
 export async function chatGemini(
-  messages: { role: "user" | "assistant"; content: string }[],
+  messages: {
+    role: "user" | "assistant";
+    content: string;
+    images?: { type: string; data: string }[];
+  }[],
   key: string,
   {
     timeoutMs,
@@ -60,7 +64,10 @@ export async function chatGemini(
   }
   const contents = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
+    parts: [
+      ...(m.content || !m.images?.length ? [{ text: m.content }] : []),
+      ...(m.images ?? []).map((i) => ({ inline_data: { mime_type: i.type, data: i.data } })),
+    ],
   }));
   let res: Response | null = null;
   for (const model of MODELS) {
@@ -78,7 +85,7 @@ export async function chatGemini(
 
 function call(
   model: string,
-  contents: { role: string; parts: { text: string }[] }[],
+  contents: { role: string; parts: unknown[] }[],
   key: string,
   generationConfig: Record<string, unknown>,
   timeoutMs: number,

@@ -7,6 +7,7 @@ import { getDb, posts } from "@/lib/db";
 import { requireAdmin } from "@/lib/security/auth";
 import { removePost } from "@/lib/uploads/attachments";
 import { noteTitle } from "@/lib/posts/notes";
+import { announcePost } from "@/lib/posts/announce";
 
 /**
  * 짧은 글은 제목과 주소를 사람이 정하지 않는다. 본문 첫 줄이 제목이 되고
@@ -65,9 +66,11 @@ export async function addNote(formData: FormData) {
       .set({ ...values, updatedAt: now })
       .where(eq(posts.id, given));
     refresh(given);
+    announcePost(given);
   } else {
-    await db.insert(posts).values(values);
+    const [created] = await db.insert(posts).values(values).returning({ id: posts.id });
     refresh();
+    announcePost(created?.id);
   }
   redirect("/admin/notes?ok=1");
 }
@@ -124,6 +127,7 @@ export async function updateNote(formData: FormData) {
     .where(eq(posts.id, id));
 
   refresh(id);
+  announcePost(id);
   redirect("/admin/notes?ok=1");
 }
 

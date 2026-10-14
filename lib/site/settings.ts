@@ -36,7 +36,12 @@ export const SETTINGS = {
   telegramChatId: { env: "TELEGRAM_CHAT_ID", kind: "text" },
   /** 구글 캘린더 iCal 비공개 주소들. DB 에는 JSON, .env 는 「이름 https://…」 을 ; 로 */
   calendarIcal: { env: "GOOGLE_CALENDAR_ICAL", kind: "secret" },
-  googleSiteVerification: { env: "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION", kind: "text" },
+  googleSiteVerification: { env: "GOOGLE_SITE_VERIFICATION", kind: "text" },
+  /** 네이버 서치어드바이저 · 빙 웹마스터 도구 소유 확인(MYH-257). HTML 태그의 content 값 */
+  naverSiteVerification: { env: "NAVER_SITE_VERIFICATION", kind: "text" },
+  bingSiteVerification: { env: "BING_SITE_VERIFICATION", kind: "text" },
+  /** IndexNow 열쇠(MYH-257). 사이트에 /<열쇠>.txt 로 걸어 두는 값이라 비밀이 아니다 */
+  indexnowKey: { env: "INDEXNOW_KEY", kind: "text" },
   umamiWebsiteId: { env: "UMAMI_WEBSITE_ID", kind: "text" },
   monitoringDashboard: { env: "MONITORING_DASHBOARD", kind: "text" },
   /** 책 찾기 출처의 차례 · 사용: kakao,-calibre,openlibrary (앞이 먼저, - 는 끔) */
@@ -147,6 +152,20 @@ const readStored = cache(async (): Promise<Settings> => {
 export async function siteConfig(): Promise<Settings> {
   const stored = await readStored();
   return Object.fromEntries(NAMES.map((n) => [n, envSetting(n) ?? stored[n]])) as Settings;
+}
+
+/**
+ * 머리에 넣을 검색엔진 소유 확인 태그(MYH-257). 값이 없는 것은 빠지고, 다
+ * 없으면 undefined 라 태그가 하나도 나가지 않는다.
+ * 네이버는 naver-site-verification, 빙은 msvalidate.01
+ */
+export function siteVerification(config: Settings) {
+  const other: Record<string, string> = {};
+  if (config.naverSiteVerification) other["naver-site-verification"] = config.naverSiteVerification;
+  if (config.bingSiteVerification) other["msvalidate.01"] = config.bingSiteVerification;
+  const google = config.googleSiteVerification ?? undefined;
+  if (!google && Object.keys(other).length === 0) return undefined;
+  return { ...(google ? { google } : {}), ...(Object.keys(other).length ? { other } : {}) };
 }
 
 /** 화면에서 넣어 둔 값(.env 를 보지 않는다). 고치는 화면이 처음 값으로 쓴다 */

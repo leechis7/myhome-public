@@ -1,7 +1,13 @@
 import { askGemini, chatGemini, GeminiError } from "@/lib/ai/gemini";
-import { askOpenClaw, chatOpenClaw, type ChatTurn, type OpenClawAccess } from "@/lib/ai/openclaw";
+import {
+  askOpenClaw,
+  chatOpenClaw,
+  type ChatImage,
+  type ChatTurn,
+  type OpenClawAccess,
+} from "@/lib/ai/openclaw";
 
-export type { ChatTurn };
+export type { ChatImage, ChatTurn };
 
 /**
  * AI 엔진 부르기(MYH-246). 환경설정 › AI 사용 에서 켠 엔진을 정한 차례대로

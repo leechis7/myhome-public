@@ -20,6 +20,7 @@ const notices: Record<string, string> = {
   calibre: "Calibre 서버 주소는 http:// 나 https:// 로 시작합니다.",
   kakao: "카카오 키는 영문 · 숫자 32자 안팎입니다. 「REST API 키」 를 그대로 붙여 넣어 주세요.",
   gemini: "Gemini API 키는 「AIza…」 나 「AQ.…」 처럼 생겼습니다. AI Studio 에서 받은 것을 그대로 붙여 넣어 주세요.",
+  indexnow: "IndexNow 열쇠는 영문 · 숫자 · - 로 8~128자입니다(예: openssl rand -hex 16).",
   openclaw: "오픈클로 주소는 http:// 나 https:// 로, 에이전트 이름은 영문 · 숫자 · - · _ 로 적어 주세요.",
 };
 
@@ -54,6 +55,24 @@ const ROWS: Row[] = [
     label: "Search Console 소유 확인",
     hint: "HTML 태그 방식의 content 값.",
     placeholder: "abc123…",
+  },
+  {
+    name: "naverSiteVerification",
+    label: "네이버 서치어드바이저 소유 확인",
+    hint: "HTML 태그 방식의 content 값.",
+    placeholder: "abc123…",
+  },
+  {
+    name: "bingSiteVerification",
+    label: "빙 웹마스터 도구 소유 확인",
+    hint: "HTML 태그(msvalidate.01) 방식의 content 값. 구글 Search Console 에서 가져오기로 등록했으면 필요 없습니다.",
+    placeholder: "ABC123…",
+  },
+  {
+    name: "indexnowKey",
+    label: "IndexNow 열쇠",
+    hint: "글을 공개하면 빙 · 네이버에 바로 알립니다. 8~128자 영숫자(예: openssl rand -hex 16). 사이트가 /<열쇠>.txt 를 내보냅니다. 비우면 알리지 않습니다.",
+    placeholder: "0f3a…",
   },
   {
     name: "geminiApiKey",
@@ -118,7 +137,7 @@ const ROWS: Row[] = [
 ];
 
 /**
- * 환경설정의 값 칸들(MYH-232). 서비스 칸(텔레그램 · 구글 …)마다 자기 것만
+ * 환경설정의 값 칸들(MYH-232). 서비스 칸(텔레그램 · 검색 등록 …)마다 자기 것만
  * 보여 주고 따로 저장한다 - 한 서비스를 고칠 때 다른 것을 건드리지 않게.
  * .env 에 값이 있는 칸은 그것이 먼저라 잠가 두고 어디서 오는지만 알린다.
  */

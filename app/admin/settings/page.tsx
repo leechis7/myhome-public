@@ -107,17 +107,12 @@ export default async function AdminIntegrationsPage({
           ) : null}
         </Integration>
 
-        <Integration id="google" title="구글">
-          {hasSecretKey() ? (
+        {/* 구글 캘린더뿐이다. 받은 주소를 암호화해 두므로 열쇠가 있을 때만 */}
+        {hasSecretKey() ? (
+          <Integration id="google" title="구글">
             <CalendarSettings notice={typeof cal === "string" ? cal : undefined} />
-          ) : null}
-          <ConfigFields
-            names={["googleSiteVerification"]}
-            anchor="google"
-            label="Search Console"
-            notice={outNotice("google")}
-          />
-        </Integration>
+          </Integration>
+        ) : null}
 
         {/* 책 찾기(MYH-226): 출처의 차례 · 사용, 카카오 키, 내 Calibre 서재 */}
         <Integration id="book-search" title="책 찾기">
@@ -177,6 +172,16 @@ export default async function AdminIntegrationsPage({
 
         <Integration id="api" title="홈페이지 API">
           <ApiSettings notice={outNotice("api")} />
+        </Integration>
+
+        {/* 검색엔진 소유 확인(MYH-257). 구글 · 네이버 · 빙 */}
+        <Integration id="search" title="검색 등록">
+          <ConfigFields
+            names={["googleSiteVerification", "naverSiteVerification", "bingSiteVerification", "indexnowKey"]}
+            anchor="search"
+            label="검색 등록"
+            notice={outNotice("search")}
+          />
         </Integration>
 
         <Integration id="stats" title="통계 · 감시">

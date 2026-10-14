@@ -24,7 +24,7 @@ export async function saveOutsideAction(formData: FormData) {
   await requireAdmin();
   // 돌아갈 서비스 칸. 정해 둔 것만
   const at = String(formData.get("anchor") ?? "");
-  const anchor = ["telegram", "google", "gemini", "openclaw", "ai", "stats", "calibre", "kakao", "book-search"].includes(at) ? at : "settings";
+  const anchor = ["telegram", "search", "gemini", "openclaw", "ai", "stats", "calibre", "kakao", "book-search"].includes(at) ? at : "settings";
   const back = (out: string) => `/admin/settings?out=${out}&at=${anchor}#${anchor}`;
   const sources = await configSources();
   const take = (name: SettingName, max: number) => {
@@ -57,6 +57,9 @@ export async function saveOutsideAction(formData: FormData) {
   if (openclawUrl && !/^https?:\/\/\S+$/.test(openclawUrl)) redirect(back("openclaw"));
   const openclawAgent = take("openclawAgent", 64);
   if (openclawAgent && !/^[\w-]+$/.test(openclawAgent)) redirect(back("openclaw"));
+  // IndexNow 열쇠는 주소에 그대로 들어간다. 정해진 글자만(MYH-257)
+  const indexnowKey = take("indexnowKey", 128);
+  if (indexnowKey && !/^[A-Za-z0-9-]{8,128}$/.test(indexnowKey)) redirect(back("indexnow"));
   const openclawChatAgent = take("openclawChatAgent", 64);
   if (openclawChatAgent && !/^[\w-]+$/.test(openclawChatAgent)) redirect(back("openclaw"));
 
@@ -65,6 +68,9 @@ export async function saveOutsideAction(formData: FormData) {
     telegramChatId: chatId,
     umamiWebsiteId: take("umamiWebsiteId", 80),
     googleSiteVerification: take("googleSiteVerification", 200),
+    naverSiteVerification: take("naverSiteVerification", 200),
+    bingSiteVerification: take("bingSiteVerification", 200),
+    indexnowKey,
     monitoringDashboard: dashboard,
     geminiApiKey: gemini,
     openclawUrl,

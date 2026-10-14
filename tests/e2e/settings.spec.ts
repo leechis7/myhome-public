@@ -14,8 +14,8 @@ test.describe("환경설정", () => {
   });
 
   test("Search Console 값을 넣으면 머리에 태그가 붙고, 비우면 빠진다", async ({ page }) => {
-    await page.goto("/admin/settings#google");
-    const form = page.getByRole("form", { name: "Search Console" });
+    await page.goto("/admin/settings#search");
+    const form = page.getByRole("form", { name: "검색 등록" });
     const input = form.getByLabel("Search Console 소유 확인");
     test.skip((await input.count()) === 0, ".env 에 값이 있다");
     test.skip((await input.inputValue()) !== "", "이미 넣어 둔 값이 있다");
@@ -27,22 +27,22 @@ test.describe("환경설정", () => {
       await chat.fill("내 방");
       await telegram.getByRole("button", { name: "텔레그램 저장" }).click();
       await expect(page.locator("#telegram").getByRole("status")).toHaveText(/대화방 번호는 숫자/);
-      await page.goto("/admin/settings#google");
+      await page.goto("/admin/settings#search");
     }
     await form.getByLabel("Search Console 소유 확인").fill("e2e-verify-232");
-    await form.getByRole("button", { name: "Search Console 저장" }).click();
-    await expect(page.locator("#google").getByRole("status")).toHaveText("저장했습니다.");
+    await form.getByRole("button", { name: "검색 등록 저장" }).click();
+    await expect(page.locator("#search").getByRole("status")).toHaveText("저장했습니다.");
     await page.goto("/");
     await expect(page.locator('meta[name="google-site-verification"]')).toHaveAttribute(
       "content",
       "e2e-verify-232",
     );
 
-    await page.goto("/admin/settings#google");
+    await page.goto("/admin/settings#search");
     await expect(form.getByLabel("Search Console 소유 확인")).toHaveValue("e2e-verify-232");
     await form.getByLabel("Search Console 소유 확인").fill("");
-    await form.getByRole("button", { name: "Search Console 저장" }).click();
-    await expect(page.locator("#google").getByRole("status")).toHaveText("저장했습니다.");
+    await form.getByRole("button", { name: "검색 등록 저장" }).click();
+    await expect(page.locator("#search").getByRole("status")).toHaveText("저장했습니다.");
     await page.goto("/");
     await expect(page.locator('meta[name="google-site-verification"]')).toHaveCount(0);
   });

@@ -123,4 +123,22 @@ describe("AI 대화(MYH-248)", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(openclawReply("", 500)));
     await expect(chatAi(talk, [OPENCLAW], { timeoutMs: 1000 })).rejects.toThrow();
   });
+
+  it("그림을 오픈클로엔 image_url, Gemini 엔 inline_data 로 붙인다 (MYH-248)", async () => {
+    const withPic = [{ role: "user" as const, content: "이건 뭐야?", images: [{ type: "image/png", data: "QUJD" }] }];
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(openclawReply("", 500))
+      .mockResolvedValueOnce(geminiReply("고양이"));
+    vi.stubGlobal("fetch", fetch);
+    await chatAi(withPic, [OPENCLAW, GEMINI], { timeoutMs: 1000 });
+    expect(JSON.parse(fetch.mock.calls[0][1].body).messages[0].content).toEqual([
+      { type: "text", text: "이건 뭐야?" },
+      { type: "image_url", image_url: { url: "data:image/png;base64,QUJD" } },
+    ]);
+    expect(JSON.parse(fetch.mock.calls[1][1].body).contents[0].parts).toEqual([
+      { text: "이건 뭐야?" },
+      { inline_data: { mime_type: "image/png", data: "QUJD" } },
+    ]);
+  });
 });

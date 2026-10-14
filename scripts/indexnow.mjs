@@ -10,8 +10,7 @@
  * lib/posts/indexnow.ts 를 그대로 쓴다. Node 가 "모듈 종류가 안 적혀 있다"고
  * 경고하는데 성능 안내일 뿐이라, npm 스크립트에서 그 경고만 껐다.
  */
-import { readdirSync } from "node:fs";
-import { submitToIndexNow } from "../lib/posts/indexnow.ts";
+import { findIndexNowKey, submitToIndexNow } from "../lib/posts/indexnow.ts";
 
 const site = process.env.SITE_URL;
 if (!site) {
@@ -21,18 +20,10 @@ if (!site) {
 const host = new URL(site).host;
 const dry = process.argv.includes("--dry");
 
-/** 열쇠는 public/<열쇠>.txt 로 올려 두므로 파일 이름에서 알아낸다 */
-function findKey() {
-  if (process.env.INDEXNOW_KEY) return process.env.INDEXNOW_KEY;
-  const hit = readdirSync(new URL("../public", import.meta.url)).find((f) =>
-    /^[0-9a-f]{32}\.txt$/.test(f),
-  );
-  return hit ? hit.replace(/\.txt$/, "") : null;
-}
-
-const key = findKey();
+// INDEXNOW_KEY(환경설정의 열쇠와 같은 값). 없으면 public/<열쇠>.txt 파일 이름
+const key = findIndexNowKey(new URL("../public", import.meta.url));
 if (!key) {
-  console.error("열쇠를 찾지 못했다. public/<32자리>.txt 가 있어야 한다.");
+  console.error("열쇠가 없다. 환경설정 › 검색 등록 의 IndexNow 열쇠를 INDEXNOW_KEY=… 로 준다.");
   process.exit(1);
 }
 

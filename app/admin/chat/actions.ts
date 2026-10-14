@@ -1,6 +1,7 @@
 "use server";
 
-import { chatAi, type ChatTurn } from "@/lib/ai";
+import { chatAi } from "@/lib/ai";
+import { turns } from "@/lib/ai/chat-turns";
 import { missOf } from "@/lib/ai/gemini";
 import { AI_ENGINES } from "@/lib/ai/engines";
 import { requireAdmin } from "@/lib/security/auth";
@@ -15,9 +16,6 @@ import { siteAi } from "@/lib/site/settings";
 
 export type ChatReply = { text?: string; engine?: string; error?: string };
 
-/** 넘겨받을 대화의 크기. 오래된 마디부터 버린다 */
-const MAX_TURNS = 20;
-const MAX_CHARS = 4000;
 /** 오픈클로 에이전트는 몇십 초 걸리기도 한다 */
 const TIMEOUT_MS = 90_000;
 
@@ -26,25 +24,6 @@ const MISS = {
   slow: "AI 가 너무 오래 답하지 않습니다. 다시 해 주세요.",
   error: "AI 에게 묻지 못했습니다. 환경설정 › AI 사용 을 확인하세요.",
 } as const;
-
-/** 받은 값을 대화로. 꼴이 틀린 마디는 버리고, 마지막은 사람이 한 말이어야 한다 */
-function turns(value: unknown): ChatTurn[] {
-  if (!Array.isArray(value)) return [];
-  const list = value
-    .filter(
-      (t): t is ChatTurn =>
-        typeof t === "object" &&
-        t !== null &&
-        (t.role === "user" || t.role === "assistant") &&
-        typeof t.content === "string" &&
-        t.content.trim() !== "",
-    )
-    .map((t) => ({ role: t.role, content: t.content.slice(0, MAX_CHARS) }))
-    .slice(-MAX_TURNS);
-  // 앞이 AI 의 말이면 떼어 낸다(엔진에 따라 사람 말로 시작해야 한다)
-  while (list[0]?.role === "assistant") list.shift();
-  return list.at(-1)?.role === "user" ? list : [];
-}
 
 /** 대화창에서 고를 수 있는 엔진들(환경설정의 차례, 쓸 수 있는 것만). 맨 앞이 처음 값 */
 export async function chatEngines() {
@@ -60,7 +39,7 @@ export async function chatEngines() {
 export async function chatAction(messages: unknown, engine?: string): Promise<ChatReply> {
   await requireAdmin();
   const list = turns(messages);
-  if (list.length === 0) return { error: "물을 말을 적어 주세요." };
+  if (list.length === 0) return { error: "물을 말을 적거나 그림을 붙여 주세요." };
   const all = await siteAi({ chat: true });
   if (!all) return { error: "쓸 AI 엔진이 없습니다. 환경설정 › AI 사용 에서 켜 주세요." };
   const access = engine ? all.filter((a) => a.engine === engine) : all;

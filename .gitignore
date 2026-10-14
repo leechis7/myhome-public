@@ -49,3 +49,6 @@ next-env.d.ts
 
 # 올린 파일. 디스크에 두고 백업은 infra/backup.sh 가 담는다
 /storage/
+
+# Claude Code 설정. 이 컴퓨터에서만 쓴다
+/.claude/

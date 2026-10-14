@@ -12,8 +12,23 @@ import { GeminiError } from "@/lib/ai/gemini";
 
 export type OpenClawAccess = { url: string; token: string; agent: string };
 
-/** 대화의 한 마디(MYH-248). OpenAI 꼴 그대로 */
-export type ChatTurn = { role: "user" | "assistant"; content: string };
+/** 대화에 붙인 그림(MYH-248). data 는 base64(data: 머리 없이) */
+export type ChatImage = { type: string; data: string };
+
+/** 대화의 한 마디(MYH-248). 사람의 말에는 그림이 붙을 수 있다 */
+export type ChatTurn = { role: "user" | "assistant"; content: string; images?: ChatImage[] };
+
+/** OpenAI 꼴 메시지로. 그림이 있으면 content 가 글 · image_url(data: 주소) 배열이 된다 */
+function toOpenAi({ role, content, images }: ChatTurn) {
+  if (!images?.length) return { role, content };
+  return {
+    role,
+    content: [
+      ...(content ? [{ type: "text", text: content }] : []),
+      ...images.map((i) => ({ type: "image_url", image_url: { url: `data:${i.type};base64,${i.data}` } })),
+    ],
+  };
+}
 
 /**
  * json 이면 그 꼴의 JSON 으로만 답하라고 덧붙이고, 답에서 { … } 만 떼어 낸다.
@@ -49,7 +64,7 @@ export async function chatOpenClaw(
   const res = await fetch(`${url.replace(/\/+$/, "")}/v1/chat/completions`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-    body: JSON.stringify({ model: `openclaw/${agent}`, messages, temperature }),
+    body: JSON.stringify({ model: `openclaw/${agent}`, messages: messages.map(toOpenAi), temperature }),
     signal: AbortSignal.timeout(timeoutMs),
     cache: "no-store",
   });

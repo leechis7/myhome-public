@@ -9,6 +9,7 @@ import { futureSchedule } from "@/lib/posts/schedule";
 import { isVersion, versionChange } from "@/lib/posts/version";
 import { readCode, SERIES } from "@/lib/codes";
 import { createDraftPost } from "@/lib/posts";
+import { announcePost } from "@/lib/posts/announce";
 import {
   findAttachment,
   linkImage,
@@ -86,6 +87,7 @@ export async function createPost(formData: FormData) {
     .returning({ id: posts.id });
 
   refreshBlog(created[0].id);
+  announcePost(created[0].id);
   redirect(`/admin/posts/${created[0].id}?ok=1`);
 }
 
@@ -190,6 +192,7 @@ export async function updatePost(formData: FormData) {
     .where(eq(posts.id, id));
 
   refreshBlog(id);
+  announcePost(id);
   redirect(`/admin/posts/${id}?ok=1`);
 }
 

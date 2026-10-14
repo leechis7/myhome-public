@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import QuickMemo from "@/components/QuickMemo";
 import { site } from "@/lib/site";
 import { getSite } from "@/lib/site/info";
-import { siteConfig } from "@/lib/site/settings";
+import { siteConfig, siteVerification } from "@/lib/site/settings";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -70,11 +70,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: info.name,
       statusBarStyle: "black-translucent",
     },
-    // Search Console 소유 확인용. 값이 없으면 태그가 나가지 않는다.
-    // .env 나 관리 › 설정 › 환경설정(MYH-232)
-    verification: config.googleSiteVerification
-      ? { google: config.googleSiteVerification }
-      : undefined,
+    // 검색엔진 소유 확인용. 값이 없으면 태그가 나가지 않는다.
+    // .env 나 관리 › 설정 › 환경설정(MYH-232 · MYH-257)
+    verification: siteVerification(config),
     twitter: {
       card: "summary_large_image",
       title: info.title,

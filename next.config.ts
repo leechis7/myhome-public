@@ -49,6 +49,11 @@ const nextConfig: NextConfig = {
       { source: "/admin/works", destination: "/admin", permanent: false },
     ];
   },
+  // IndexNow 열쇠 파일(MYH-257). INDEXNOW_KEY 를 넣으면 /<열쇠>.txt 를 앱이 내보낸다.
+  // public/ 에 같은 이름의 파일이 있으면 그것이 먼저다(파일 다음에 본다)
+  async rewrites() {
+    return [{ source: "/:key([A-Za-z0-9-]{8,128})\\.txt", destination: "/indexnow/:key" }];
+  },
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
   },
