@@ -14,7 +14,7 @@ async function target() {
 
 async function send(token: string, chatId: string, text: string) {
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -25,8 +25,10 @@ async function send(token: string, chatId: string, text: string) {
       // 알림 때문에 응답이 늦어지지 않게 한다
       signal: AbortSignal.timeout(5000),
     });
+    return res.ok;
   } catch {
     // 알림은 부가 기능이다. 실패해도 흐름을 막지 않는다.
+    return false;
   }
 }
 
@@ -36,7 +38,7 @@ async function send(token: string, chatId: string, text: string) {
  */
 export async function notifyTelegram(text: string) {
   const bot = await target();
-  if (bot) await send(bot[0], bot[1], text);
+  return bot ? send(bot[0], bot[1], text) : false;
 }
 
 export function commentMessage({

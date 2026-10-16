@@ -208,6 +208,13 @@ export async function saveMorePromptAction(formData: FormData) {
   redirect(`/admin/settings?out=saved&at=${anchor}#${anchor}`);
 }
 
+/** 할 일 · 일정 미리 알림(MYH-258). 끄면 지운다 - 처음 값이 끔이다 */
+export async function saveRemindersAction(formData: FormData) {
+  await requireAdmin();
+  await saveConfig({ telegramReminders: formData.get("on") === "1" ? "on" : null });
+  redirect("/admin/settings?out=saved&at=reminders#reminders");
+}
+
 /** 나만 보는 글을 AI 로 보내기(MYH-250). 끄면 지운다 - 처음 값이 끔이다 */
 export async function saveDiaryAiAction(formData: FormData) {
   await requireAdmin();

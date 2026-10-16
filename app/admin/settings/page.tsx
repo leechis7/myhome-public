@@ -12,6 +12,7 @@ import TodoPromptSettings from "@/components/admin/settings/TodoPromptSettings";
 import PostPromptSettings from "@/components/admin/settings/PostPromptSettings";
 import DiaryPromptSettings from "@/components/admin/settings/DiaryPromptSettings";
 import DiaryAiSettings from "@/components/admin/settings/DiaryAiSettings";
+import ReminderSettings from "@/components/admin/settings/ReminderSettings";
 import MorePromptSettings from "@/components/admin/settings/MorePromptSettings";
 import { isAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
@@ -105,6 +106,7 @@ export default async function AdminIntegrationsPage({
           {hasSecretKey() ? (
             <TelegramSettings notice={typeof tg === "string" ? tg : undefined} />
           ) : null}
+          <ReminderSettings notice={outNotice("reminders")} />
         </Integration>
 
         {/* 구글 캘린더뿐이다. 받은 주소를 암호화해 두므로 열쇠가 있을 때만 */}

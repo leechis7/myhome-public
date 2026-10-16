@@ -922,6 +922,16 @@ export const todos = pgTable(
   ],
 );
 
+/**
+ * 보낸 미리 알림(MYH-258). 같은 알림을 두 번 보내지 않으려고 열쇠를 먼저 넣고,
+ * 넣어졌을 때만 보낸다. 열쇠는 「todo:12:h1:2026-10-16T10:00Z」 꼴(무엇 · 몇 분 전 ·
+ * 보낼 때). 30일 지난 것은 지운다
+ */
+export const remindersSent = pgTable("reminders_sent", {
+  key: text("key").primaryKey(),
+  sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Profile = typeof profile.$inferSelect;
 export type Career = typeof careers.$inferSelect;
 export type Skill = typeof skills.$inferSelect;

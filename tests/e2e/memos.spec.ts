@@ -104,16 +104,22 @@ test.describe("메모", () => {
     const open = page.getByRole("list", { name: "남은 할 일" });
     await expect(open.locator("li", { hasText: todo })).toContainText("1.1 ~ 1.2");
     await pressDelete(open.locator("li", { hasText: todo }), "할 일 삭제");
-    // 마지막 탭을 기억한다 - 다음 시험을 위해 메모로 되돌린다
+    // 열면 늘 메모 탭부터다(할 일 탭을 썼어도)
     await page.getByRole("button", { name: "빠른 메모" }).click();
-    await expect(page.getByRole("tab", { name: "✅ 할 일" })).toHaveAttribute("aria-selected", "true");
-    await page.getByRole("tab", { name: "📝 메모" }).click();
+    await expect(page.getByRole("tab", { name: "📝 메모" })).toHaveAttribute("aria-selected", "true");
 
     // AI 탭(MYH-248): 대화 칸이 열린다. 실제로 묻는 것은 밖의 AI 에 기대므로 보지 않는다
     await page.getByRole("tab", { name: "🤖 AI" }).click();
     await expect(page.getByRole("log", { name: "AI 대화" })).toBeVisible();
     await expect(page.getByRole("button", { name: "보내기" })).toBeDisabled();
-    await page.getByRole("tab", { name: "📝 메모" }).click();
+    // 전체 화면으로 키웠다가 Esc 로 돌아온다
+    await page.getByRole("button", { name: "전체 화면" }).click();
+    await expect(page.getByRole("button", { name: "전체 화면 끝내기" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "전체 화면" })).toBeVisible();
+    // 창 밖을 누르면 닫힌다
+    await page.mouse.click(5, 5);
+    await expect(page.getByRole("form", { name: "빠른 메모" })).toBeHidden();
 
     // 방문자에게는 단추가 없다
     const context = await browser.newContext();

@@ -274,6 +274,7 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | --- | --- | --- |
 | 글쓰기 | `DEFAULT_EDITOR` | 기본 편집기: `milkdown` · `tiptap` · `toast` |
 | 텔레그램 | `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | 댓글 · 방명록 알림과 텔레그램으로 메모 · 할 일 적기 |
+| 텔레그램 | `TELEGRAM_REMINDERS` | `on` 이면 할 일 · 구글 캘린더 일정을 미리 알린다. 날만 있는 것은 그 날 아침 8시, 시각이 있는 것은 1시간 · 30분 전. 처음 끔 |
 | 구글 | `GOOGLE_CALENDAR_ICAL` | 구글 캘린더 iCal 비공개 주소. `이름 https://…` 을 `;` 로 잇는다 |
 | 검색 등록 | `GOOGLE_SITE_VERIFICATION` | 구글 Search Console 소유 확인. HTML 태그 방식의 content 값 |
 | 검색 등록 | `NAVER_SITE_VERIFICATION` · `BING_SITE_VERIFICATION` | 네이버 서치어드바이저 · 빙 웹마스터 도구 소유 확인. HTML 태그 방식의 content 값 |

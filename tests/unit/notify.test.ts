@@ -52,9 +52,9 @@ describe("notifyTelegram", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("보내다 실패해도 던지지 않는다", async () => {
+  it("보내다 실패해도 던지지 않고 false 를 돌려준다", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("끊김")));
     setEnv({ TELEGRAM_BOT_TOKEN: "tok1", TELEGRAM_CHAT_ID: "111" });
-    await expect((await loadNotify())("안녕")).resolves.toBeUndefined();
+    await expect((await loadNotify())("안녕")).resolves.toBe(false);
   });
 });

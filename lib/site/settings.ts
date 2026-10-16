@@ -75,6 +75,8 @@ export const SETTINGS = {
    * 메모로 일기 초안을 만든다
    */
   diaryAi: { env: "DIARY_AI", kind: "onoff" },
+  /** 할 일 · 일정을 텔레그램으로 미리 알린다(MYH-258). 처음 끔 */
+  telegramReminders: { env: "TELEGRAM_REMINDERS", kind: "onoff" },
   /** 일기 초안 프롬프트(MYH-250). .env 는 줄바꿈을 \n 으로 */
   diaryAiPrompt: { env: "DIARY_AI_PROMPT", kind: "text" },
   /** 독서 노트로 한 줄 평 · 소개로 분류 제안 프롬프트(MYH-251). .env 는 줄바꿈을 \n 으로 */
@@ -295,4 +297,9 @@ export async function siteAi({ chat = false }: { chat?: boolean } = {}): Promise
     if (engine === "gemini" && c.geminiApiKey) list.push({ engine, key: c.geminiApiKey });
   }
   return aiAccess(list);
+}
+
+/** 할 일 · 일정 미리 알림을 켰는가(MYH-258) */
+export async function remindersOn() {
+  return isOn((await siteConfig()).telegramReminders);
 }

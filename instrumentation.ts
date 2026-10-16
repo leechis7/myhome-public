@@ -1,5 +1,5 @@
 /**
- * 앱이 뜰 때 한 번 돈다.
+ * 앱이 뜰 때 한 번 돈다. 미리 알림 타이머를 걸고(MYH-258),
  *
  * 관리자 비밀번호를 아직 정하지 않았으면(빈 DB 로 처음 띄움) 설치 코드를
  * 로그에 찍는다(MYH-172). 그 코드를 넣어야 /admin 에서 비밀번호를 정할 수
@@ -7,6 +7,9 @@
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  // 할 일 · 일정 미리 알림(MYH-258). 5분마다 돈다
+  const { startReminderTicker } = await import("@/lib/my-space/reminder-ticker");
+  startReminderTicker();
   const secret = process.env.SESSION_SECRET;
   if (!secret || process.env.ADMIN_PASSWORD) return;
   try {
