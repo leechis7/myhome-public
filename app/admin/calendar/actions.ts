@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/security/auth";
-import { parseCalendarLine, saveCalendars } from "@/lib/my-space/calendar";
+import { forgetCalendars, parseCalendarLine, saveCalendars } from "@/lib/my-space/calendar";
 
 /**
  * 구글 캘린더 주소를 넣고 뺀다(MYH-214). 줄마다 하나, 앞에 이름(개인 · 회사)을
@@ -32,4 +32,16 @@ export async function clearCalendarAction() {
   revalidatePath("/admin/calendar");
   revalidatePath("/admin/settings");
   redirect("/admin/settings?cal=cleared#calendar");
+}
+
+/**
+ * 「새로 고침」(MYH-262). 담아 둔 구글 캘린더를 버리고 보던 화면으로 돌아간다 -
+ * 돌아가면서 구글에서 바로 받아 온다. 돌아갈 곳은 일정 화면 안으로만
+ */
+export async function refreshCalendarAction(formData: FormData) {
+  await requireAdmin();
+  forgetCalendars();
+  const back = String(formData.get("back") ?? "");
+  revalidatePath("/admin/calendar");
+  redirect(back.startsWith("/admin/calendar") ? back : "/admin/calendar");
 }

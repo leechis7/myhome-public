@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asMemo, asTodo, matchesSecret, readUpdate, webhookSecret } from "@/lib/telegram/inbox";
+import { asMemo, asTodo, matchesSecret, readText, readUpdate, webhookSecret } from "@/lib/telegram/inbox";
 
 const ME = "5873072800";
 const msg = (over: Record<string, unknown>) => ({
@@ -56,6 +56,14 @@ describe("받은 글 읽기(MYH-215)", () => {
 
   it("글자가 없으면(사진 · 스티커) 알려 준다", () => {
     expect(readUpdate(msg({ photo: [{}] }), ME)).toEqual({ kind: "not-text", chatId: ME });
+    // 음성 메시지(MYH-269)는 받아쓰도록 파일 번호를 넘긴다
+    expect(readUpdate(msg({ voice: { file_id: "F1", duration: 7, mime_type: "audio/ogg" } }), ME)).toEqual({
+      kind: "voice",
+      chatId: ME,
+      fileId: "F1",
+      seconds: 7,
+      type: "audio/ogg",
+    });
   });
 });
 
@@ -126,3 +134,12 @@ describe("메모로 보는 말(MYH-215)", () => {
     expect(asMemo(text)).toBeNull();
   });
 });
+
+describe("readText (MYH-269)", () => {
+  it("받아쓴 음성도 「할일 …」 · 「메모 …」 를 가른다", () => {
+    expect(readText("할일 내일 우유 사기").kind).toBe("todo");
+    expect(readText("메모 서버 비용 표").kind).toBe("memo");
+    expect(readText("내일 7시 운동")).toEqual({ kind: "free", text: "내일 7시 운동" });
+  });
+});
+

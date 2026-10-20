@@ -59,12 +59,18 @@ export async function askOpenClaw(
 export async function chatOpenClaw(
   messages: ChatTurn[],
   { url, token, agent }: OpenClawAccess,
-  { timeoutMs, temperature = 0.3 }: { timeoutMs: number; temperature?: number },
+  {
+    timeoutMs,
+    temperature = 0.3,
+    system,
+  }: { timeoutMs: number; temperature?: number; system?: string },
 ) {
+  // 시스템 글(AI 비서의 할 일 · 일정, MYH-260)은 맨 앞에
+  const turns = [...(system ? [{ role: "system", content: system }] : []), ...messages.map(toOpenAi)];
   const res = await fetch(`${url.replace(/\/+$/, "")}/v1/chat/completions`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-    body: JSON.stringify({ model: `openclaw/${agent}`, messages: messages.map(toOpenAi), temperature }),
+    body: JSON.stringify({ model: `openclaw/${agent}`, messages: turns, temperature }),
     signal: AbortSignal.timeout(timeoutMs),
     cache: "no-store",
   });

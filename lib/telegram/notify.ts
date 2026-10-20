@@ -12,7 +12,7 @@ async function target() {
     : null;
 }
 
-async function send(token: string, chatId: string, text: string) {
+async function send(token: string, chatId: string, text: string, replyMarkup?: unknown) {
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -21,6 +21,7 @@ async function send(token: string, chatId: string, text: string) {
         chat_id: chatId,
         text,
         disable_web_page_preview: true,
+        ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
       }),
       // 알림 때문에 응답이 늦어지지 않게 한다
       signal: AbortSignal.timeout(5000),
@@ -33,12 +34,12 @@ async function send(token: string, chatId: string, text: string) {
 }
 
 /**
- * 텔레그램으로 알린다. 설정된 봇이 없으면 조용히 넘어간다.
+ * 텔레그램으로 알린다. 설정된 봇이 없으면 조용히 넘어간다. replyMarkup 은 단추(MYH-259).
  * 알림이 실패해도 원래 하던 일(댓글 저장 등)은 성공으로 둔다.
  */
-export async function notifyTelegram(text: string) {
+export async function notifyTelegram(text: string, replyMarkup?: unknown) {
   const bot = await target();
-  return bot ? send(bot[0], bot[1], text) : false;
+  return bot ? send(bot[0], bot[1], text, replyMarkup) : false;
 }
 
 export function commentMessage({

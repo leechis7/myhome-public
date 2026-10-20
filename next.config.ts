@@ -18,7 +18,9 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    // 마이크는 이 사이트에만(회의 녹음 · 말로 묻기, MYH-265 · 263). 막아 두었더니
+    // 브라우저에서 허용해도 「마이크를 쓸 수 없다」 가 났다. 카메라 · 위치는 그대로 막는다
+    value: "camera=(), microphone=(self), geolocation=(), interest-cohort=()",
   },
   {
     key: "Content-Security-Policy",

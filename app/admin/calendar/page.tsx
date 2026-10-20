@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Container from "@/components/Container";
 import WeekView from "@/components/admin/calendar/WeekView";
 import { isAdmin } from "@/lib/security/auth";
-import { getCalendars, upcomingEvents } from "@/lib/my-space/calendar";
+import { refreshCalendarAction } from "@/app/admin/calendar/actions";
+import {
+  calendarsFetchedAt,
+  forgetCalendars,
+  getCalendars,
+  upcomingEvents,
+} from "@/lib/my-space/calendar";
 import { groupByDay, type CalendarEvent } from "@/lib/my-space/calendar-ical";
 import {
   dayLabel,
@@ -99,6 +106,9 @@ export default async function CalendarPage({
   const to = new Date(new Date(`${cells.at(-1)}T00:00:00+09:00`).getTime() + 24 * 60 * 60 * 1000);
 
   const urls = await getCalendars();
+  // 브라우저 새로고침(F5)이면 구글에서 바로 받아 온다(MYH-262). 크롬 · 파이어폭스는
+  // 다시 불러올 때 Cache-Control: max-age=0 을 보낸다. 못 가려내는 브라우저는 단추로
+  if ((await headers()).get("cache-control")?.includes("max-age=0")) forgetCalendars();
   const [{ events, failed }, todoEvents] = await Promise.all([
     urls.length > 0 ? upcomingEvents(from, to) : { events: [], failed: 0 },
     todoEventsBetween(cells[0], cells.at(-1)!).catch(() => []),
@@ -113,17 +123,32 @@ export default async function CalendarPage({
       { ...(view === "week" ? { view } : {}), ...q } as Record<string, string>,
     ).toString()}`;
   const dayHref = (d: string) => href({ month: d.slice(0, 7), day: d });
+  const fetchedAt = urls.length > 0 ? calendarsFetchedAt() : null;
+  const here = `/admin/calendar?${new URLSearchParams(
+    Object.entries(params).filter((e): e is [string, string] => typeof e[1] === "string"),
+  ).toString()}`;
 
   return (
     <Container>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">일정</h1>
-        <p className="text-sm text-muted">
-          구글 캘린더에서 읽어 옵니다(5분마다) ·{" "}
-          <Link href="/admin/settings#calendar" className="underline underline-offset-4">
-            연결 설정
-          </Link>
-        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+          <p>
+            구글 캘린더에서 읽어 옵니다(5분마다, 새로 고치면 바로)
+            {fetchedAt ? ` · ${time.format(fetchedAt)} 에 가져옴` : ""} ·{" "}
+            <Link href="/admin/settings#calendar" className="underline underline-offset-4">
+              연결 설정
+            </Link>
+          </p>
+          {urls.length > 0 ? (
+            <form action={refreshCalendarAction}>
+              <input type="hidden" name="back" value={here} />
+              <button type="submit" className={button} title="구글 캘린더에서 바로 다시 가져오기">
+                ↻ 새로 고침
+              </button>
+            </form>
+          ) : null}
+        </div>
       </div>
 
       {urls.length === 0 ? (

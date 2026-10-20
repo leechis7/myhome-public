@@ -16,6 +16,8 @@ import { bookStats, dailyViews, etcStats, postStats, recentMemos, talkStats } fr
 import BookBar from "@/components/admin/dashboard/BookBar";
 import ViewsChart from "@/components/admin/dashboard/ViewsChart";
 import { siteConfig } from "@/lib/site/settings";
+import SpeakButton from "@/components/admin/SpeakButton";
+import { briefingText, spokenTime } from "@/lib/my-space/briefing";
 
 export const metadata: Metadata = {
   title: "관리",
@@ -121,6 +123,25 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const undated = openTodos.filter((t) => !t.startOn && !t.dueOn).length;
   const lateCount = openTodos.filter((t) => t.state === "late").length;
 
+  // 「🔊 오늘 듣기」(MYH-272): 위에서 모은 것으로 짧은 글을 만든다(AI 없이)
+  const dayLabel = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  }).format(from);
+  const briefing = briefingText({
+    dayLabel,
+    late: openTodos.filter((t) => t.state === "late").map((t) => t.title ?? "열 수 없음"),
+    today: openTodos
+      .filter((t) => t.state === "today" || t.state === "ongoing")
+      .map((t) => `${t.startTime ? `${spokenTime(new Date(`${today}T${t.startTime}:00+09:00`))} ` : ""}${t.title ?? "열 수 없음"}`),
+    events: (calendar?.events ?? [])
+      .filter((e) => e.start < new Date(from.getTime() + 24 * 60 * 60 * 1000))
+      .map((e) => (e.allDay ? e.title : `${spokenTime(e.start)} ${e.title}`)),
+    unread: unread?.n ?? 0,
+  });
+
   return (
     <Container>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -135,7 +156,10 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
           </Link>
         ) : null}
       </div>
-      <p className="mt-3 text-sm text-muted">{today} · 챙길 것만 모았습니다.</p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <p className="text-sm text-muted">{today} · 챙길 것만 모았습니다.</p>
+        {secret ? <SpeakButton text={briefing} label="🔊 오늘 듣기" /> : null}
+      </div>
 
       {/* 맨 위 큰 숫자. 누르면 그 화면 */}
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">

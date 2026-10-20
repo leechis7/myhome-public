@@ -1,10 +1,14 @@
-import { and, inArray, isNull, lt, sql } from "drizzle-orm";
-import { getDb, remindersSent, todos } from "@/lib/db";
-import { decryptText } from "@/lib/security/secret-crypto";
+import { and, gt, inArray, isNull, lt, lte, sql } from "drizzle-orm";
+import { getDb, reminderItems, remindersSent, todos } from "@/lib/db";
+import { decryptText, encryptText } from "@/lib/security/secret-crypto";
 import { getCalendars, upcomingEvents } from "@/lib/my-space/calendar";
 import {
+  againMessage,
   dueReminders,
   eventReminders,
+  GRACE_MS,
+  reminderKeyboard,
+  reminderLine,
   reminderMessage,
   todoReminders,
   type Reminder,
@@ -65,11 +69,56 @@ async function candidates(now: Date): Promise<Reminder[]> {
   return list;
 }
 
+/** 항목을 남기고 그 번호들로 단추를 만든다(MYH-259) */
+async function itemsFor(order: Reminder[]) {
+  const rows = await getDb()
+    .insert(reminderItems)
+    .values(
+      order.map((r) => ({
+        todoId: r.kind === "todo" ? Number(r.key.split(":")[1]) : null,
+        text: encryptText(reminderLine(r)),
+      })),
+    )
+    .returning({ id: reminderItems.id, todoId: reminderItems.todoId });
+  return rows;
+}
+
+/** [30분 뒤] 로 미뤄 둔 것 가운데 때가 된 것을 다시 보낸다 */
+async function runAgain(now: Date) {
+  const db = getDb();
+  const rows = await db
+    .update(reminderItems)
+    .set({ remindAt: null })
+    .where(
+      and(
+        lte(reminderItems.remindAt, now),
+        gt(reminderItems.remindAt, new Date(now.getTime() - GRACE_MS)),
+      ),
+    )
+    .returning();
+  if (rows.length === 0) return 0;
+  const lines = rows.map((r) => open(r.text) ?? "열 수 없음");
+  const ok = await notifyTelegram(
+    againMessage(lines),
+    reminderKeyboard(rows.map((r) => ({ id: r.id, todo: r.todoId !== null }))),
+  );
+  if (!ok) {
+    // 다음 번에 다시
+    await db
+      .update(reminderItems)
+      .set({ remindAt: now })
+      .where(inArray(reminderItems.id, rows.map((r) => r.id)));
+    return 0;
+  }
+  return rows.length;
+}
+
 /** 한 번 돌기. 보낸 수를 돌려준다 */
 export async function runReminders(now = new Date()) {
   if (inboxDisabled() || !(await remindersOn())) return 0;
+  const again = await runAgain(now);
   const due = dueReminders(await candidates(now), now);
-  if (due.length === 0) return 0;
+  if (due.length === 0) return again;
 
   const db = getDb();
   const taken = await db
@@ -79,20 +128,25 @@ export async function runReminders(now = new Date()) {
     .returning({ key: remindersSent.key });
   const mine = new Set(taken.map((t) => t.key));
   const send = due.filter((r) => mine.has(r.key));
-  if (send.length === 0) return 0;
+  if (send.length === 0) return again;
 
-  if (!(await notifyTelegram(reminderMessage(send)))) {
+  const { text, order } = reminderMessage(send);
+  const items = await itemsFor(order);
+  const keyboard = reminderKeyboard(items.map((it) => ({ id: it.id, todo: it.todoId !== null })));
+  if (!(await notifyTelegram(text, keyboard))) {
     await db.delete(remindersSent).where(inArray(remindersSent.key, [...mine]));
-    return 0;
+    await db.delete(reminderItems).where(inArray(reminderItems.id, items.map((it) => it.id)));
+    return again;
   }
-  return send.length;
+  return again + send.length;
 }
 
 /** 30일 지난 기록을 지운다 */
 async function prune(now: Date) {
-  await getDb()
-    .delete(remindersSent)
-    .where(lt(remindersSent.sentAt, new Date(now.getTime() - 30 * DAY)));
+  const before = new Date(now.getTime() - 30 * DAY);
+  const db = getDb();
+  await db.delete(remindersSent).where(lt(remindersSent.sentAt, before));
+  await db.delete(reminderItems).where(lt(reminderItems.createdAt, before));
 }
 
 const STARTED = Symbol.for("myhome.reminders");

@@ -34,6 +34,7 @@ export type InboxMessage =
   | { kind: "memo"; chatId: string; text: string }
   | { kind: "todo"; chatId: string; text: string }
   | { kind: "free"; chatId: string; text: string }
+  | { kind: "voice"; chatId: string; fileId: string; seconds: number; type: string }
   | { kind: "not-text"; chatId: string };
 
 /**
@@ -87,23 +88,46 @@ export function asMemo(text: string) {
  * - /start 같은 명령은 메모가 아니다
  * - 「할일 …」 · 「메모 …」 같은 말이 없으면 free. 할 일인지는 웹훅이
  *   lib/my-space/todo-intent.ts 로 가른다(MYH-230 - 날짜와 말끝을 보는 규칙)
- * - 글자가 없으면(사진 · 스티커) 「글만 받는다」 고 답할 수 있게 알린다
+ * - 음성 메시지(voice)는 받아써서 글처럼 다룬다(MYH-269). 파일 번호를 넘긴다
+ * - 그 밖에 글자가 없으면(사진 · 스티커) 「글만 받는다」 고 답할 수 있게 알린다
  */
 export function readUpdate(update: unknown, ownChatId: string | undefined) {
   if (!ownChatId || typeof update !== "object" || update === null) return null;
   const message = (update as { message?: unknown }).message;
   if (typeof message !== "object" || message === null) return null;
-  const m = message as { chat?: { id?: unknown }; text?: unknown };
+  const m = message as {
+    chat?: { id?: unknown };
+    text?: unknown;
+    voice?: { file_id?: unknown; duration?: unknown; mime_type?: unknown };
+  };
   const chatId = String(m.chat?.id ?? "");
   if (chatId !== String(ownChatId).trim()) return null;
+
+  if (m.voice && typeof m.voice.file_id === "string") {
+    return {
+      kind: "voice",
+      chatId,
+      fileId: m.voice.file_id,
+      seconds: Number(m.voice.duration) || 0,
+      type: typeof m.voice.mime_type === "string" ? m.voice.mime_type : "audio/ogg",
+    } as const;
+  }
 
   if (typeof m.text !== "string") return { kind: "not-text", chatId } as const;
   const text = m.text.trim();
   if (!text || text.startsWith("/")) return null;
+  return { chatId, ...readText(text) };
+}
+
+/**
+ * 글 하나를 할 일 · 메모 · 모름으로. 「할일 …」 · 「메모 …」 같은 말을 뗀다.
+ * 받아쓴 음성(MYH-269)도 이것으로 가른다
+ */
+export function readText(text: string) {
   const todo = asTodo(text);
-  if (todo) return { kind: "todo", chatId, text: todo } as const;
+  if (todo) return { kind: "todo", text: todo } as const;
   const memo = asMemo(text);
-  if (memo) return { kind: "memo", chatId, text: memo } as const;
+  if (memo) return { kind: "memo", text: memo } as const;
   // 말이 없다. 할 일인지는 웹훅이 가른다
-  return { kind: "free", chatId, text } as const;
+  return { kind: "free", text } as const;
 }

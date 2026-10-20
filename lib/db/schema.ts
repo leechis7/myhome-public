@@ -15,6 +15,7 @@ import {
   time,
   timestamp,
   unique,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
@@ -932,6 +933,65 @@ export const remindersSent = pgTable("reminders_sent", {
   sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * 보낸 알림의 항목 하나(MYH-259). 텔레그램 단추([완료] · [30분 뒤])가 이 번호를
+ * 들고 온다. 글은 할 일 제목이 들어 있어 암호화한다. 다시 알릴 때가 있으면
+ * 미리 알림 타이머가 그때 다시 보낸다. 30일 지난 것은 지운다
+ */
+export const reminderItems = pgTable(
+  "reminder_items",
+  {
+    id: serial("id").primaryKey(),
+    /** 할 일이면 그 번호(끝냄 단추). 일정이면 null */
+    todoId: integer("todo_id"),
+    /** 암호문. 알림에 보인 한 줄 */
+    text: text("text").notNull(),
+    /** 다시 알릴 때([30분 뒤]). 없으면 null */
+    remindAt: timestamp("remind_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("reminder_items_remind_idx").on(t.remindAt)],
+);
+
+/**
+ * 회의(MYH-265). 녹음하며 30초씩 받아쓴 대본을 남긴다. 제목 · 요약은 암호화한다
+ * (참석자의 말이 들어 있다). 끝나지 않은 회의는 ended_at 이 비어 있다
+ */
+export const meetings = pgTable(
+  "meetings",
+  {
+    id: serial("id").primaryKey(),
+    /** 암호문 */
+    title: text("title").notNull(),
+    /** 암호문. 회의 끝에 AI 가 쓴 요약(MYH-266) */
+    summary: text("summary"),
+    /** 암호문. 오픈클로에 맡긴 결과(MYH-268) */
+    handoff: text("handoff"),
+    /** live: 화면에서 녹음 · file: 올린 녹음 파일(MYH-271) */
+    source: text("source").notNull().default("live"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+  },
+  (t) => [index("meetings_started_idx").on(t.startedAt.desc())],
+);
+
+/** 회의 녹음의 받아쓴 조각 하나(30초). 글은 암호화한다 */
+export const meetingChunks = pgTable(
+  "meeting_chunks",
+  {
+    id: serial("id").primaryKey(),
+    meetingId: integer("meeting_id")
+      .notNull()
+      .references(() => meetings.id, { onDelete: "cascade" }),
+    /** 몇 번째 조각(0부터). 같은 번호가 두 번 오면 나중 것을 버린다 */
+    seq: integer("seq").notNull(),
+    /** 암호문 */
+    text: text("text").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("meeting_chunks_seq_key").on(t.meetingId, t.seq)],
+);
+
 export type Profile = typeof profile.$inferSelect;
 export type Career = typeof careers.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
@@ -948,6 +1008,7 @@ export type SecretAttachment = typeof secretAttachments.$inferSelect;
 export type Menu = typeof menus.$inferSelect;
 export type Memo = typeof memos.$inferSelect;
 export type Todo = typeof todos.$inferSelect;
+export type Meeting = typeof meetings.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type Code = typeof codes.$inferSelect;
 export type CodeGroupRow = typeof codeGroups.$inferSelect;

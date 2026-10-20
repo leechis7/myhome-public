@@ -50,6 +50,16 @@ test.describe("일정", () => {
     await expect(page.locator("#calendar").getByText("○ 설정 안 됨")).toBeVisible();
   });
 
+  test("새로 고침 단추는 보던 화면 그대로 구글에서 다시 가져온다(MYH-262)", async ({ page }) => {
+    await page.goto("/admin/calendar?view=week");
+    const refresh = page.getByRole("button", { name: "↻ 새로 고침" });
+    // 캘린더를 연결하지 않은 곳에는 단추가 없다
+    test.skip((await refresh.count()) === 0, "캘린더가 연결돼 있지 않다");
+    await refresh.click();
+    await expect(page).toHaveURL(/\/admin\/calendar\?view=week$/);
+    await expect(page.getByText(/\d{2}:\d{2} 에 가져옴/)).toBeVisible();
+  });
+
   test("날짜 있는 할 일이 달력과 고른 날 목록에 보인다(MYH-254)", async ({ page }) => {
     const title = `${TEST_PREFIX}달력 할 일 ${Date.now().toString(36)}`;
     await page.goto("/admin/todos");

@@ -208,6 +208,26 @@ export async function saveMorePromptAction(formData: FormData) {
   redirect(`/admin/settings?out=saved&at=${anchor}#${anchor}`);
 }
 
+/** 회의 받아쓰기(MYH-265). 끄면 지운다 - 처음 값이 끔이다 */
+export async function saveMeetingAiAction(formData: FormData) {
+  await requireAdmin();
+  const sources = await configSources();
+  // 호출어(MYH-267). .env 에 있으면 화면 값은 보지 않는다
+  const wake = String(formData.get("wake") ?? "").trim().slice(0, 200);
+  await saveConfig({
+    ...(sources.meetingAi === "env" ? {} : { meetingAi: formData.get("on") === "1" ? "on" : null }),
+    ...(sources.meetingWakeWords === "env" || !formData.has("wake") ? {} : { meetingWakeWords: wake || null }),
+  });
+  redirect("/admin/settings?out=saved&at=meeting-ai#meeting-ai");
+}
+
+/** AI 비서(MYH-260). 끄면 지운다 - 처음 값이 끔이다 */
+export async function saveAssistantAction(formData: FormData) {
+  await requireAdmin();
+  await saveConfig({ aiAssistant: formData.get("on") === "1" ? "on" : null });
+  redirect("/admin/settings?out=saved&at=ai-assistant#ai-assistant");
+}
+
 /** 할 일 · 일정 미리 알림(MYH-258). 끄면 지운다 - 처음 값이 끔이다 */
 export async function saveRemindersAction(formData: FormData) {
   await requireAdmin();

@@ -10,6 +10,10 @@ export async function register() {
   // 할 일 · 일정 미리 알림(MYH-258). 5분마다 돈다
   const { startReminderTicker } = await import("@/lib/my-space/reminder-ticker");
   startReminderTicker();
+  // 예전에 건 웹훅이 단추 누름도 받게(MYH-259). 텔레그램에 닿지 않아도 앱은 뜬다
+  import("@/lib/telegram/bot")
+    .then(({ ensureWebhookUpdates }) => ensureWebhookUpdates())
+    .catch((err) => console.warn("[telegram] 웹훅 확인을 건너뜁니다:", err));
   const secret = process.env.SESSION_SECRET;
   if (!secret || process.env.ADMIN_PASSWORD) return;
   try {

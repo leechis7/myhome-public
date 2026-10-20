@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { chatAction } from "@/app/admin/chat/actions";
-import ChatMarkdown from "@/components/admin/ChatMarkdown";
+import type { ChatReply } from "@/lib/ai/chat-run";
+import AssistantReply from "@/components/admin/AssistantReply";
+import { recognitionClass, speak, type Recognition } from "@/lib/ai/speech-browser";
 
 /** 붙인 그림(MYH-248). data 는 base64(data: 머리 없이) */
 type Picture = { type: string; data: string };
@@ -57,10 +58,17 @@ function load(): Turn[] {
 export default function AiChat({
   height,
   engines = [],
+  fill = false,
 }: {
   height?: number;
   /** 고를 수 있는 엔진들. 맨 앞이 처음 값 */
   engines?: { key: string; label: string }[];
+  /**
+   * 화면에 꽉 차게(AI 화면, MYH-274). 텔레그램처럼 위 · 아래는 붙박이, 대화만 스크롤.
+   * 보이는 화면(휴대폰 자판이 올라오면 그만큼 줄어든다)에 맞춰 높이를 잡고 페이지는
+   * 스크롤하지 않게 한다
+   */
+  fill?: boolean;
 }) {
   const [engine, setEngine] = useState(engines[0]?.key ?? "");
   const [turns, setTurns] = useState<Turn[]>(load);
@@ -71,6 +79,31 @@ export default function AiChat({
   const box = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
+  const shell = useRef<HTMLDivElement>(null);
+  const [fitHeight, setFitHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!fill) return;
+    const html = document.documentElement;
+    const before = { html: html.style.overflow, body: document.body.style.overflow };
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    const fit = () => {
+      const top = shell.current?.getBoundingClientRect().top ?? 0;
+      const seen = window.visualViewport?.height ?? window.innerHeight;
+      setFitHeight(Math.max(240, Math.floor(seen - top - 12)));
+    };
+    window.scrollTo(0, 0);
+    fit();
+    window.visualViewport?.addEventListener("resize", fit);
+    window.addEventListener("resize", fit);
+    return () => {
+      html.style.overflow = before.html;
+      document.body.style.overflow = before.body;
+      window.visualViewport?.removeEventListener("resize", fit);
+      window.removeEventListener("resize", fit);
+    };
+  }, [fill]);
 
   useEffect(() => {
     try {
@@ -101,8 +134,49 @@ export default function AiChat({
     }
   };
 
-  const send = () => {
-    const content = draft.trim();
+  /** 말로 묻는 중(MYH-263). 말이 끝나면 바로 보내고, 답이 오면 소리로 읽는다 */
+  const [listening, setListening] = useState(false);
+  const recognition = useRef<Recognition | null>(null);
+  // 대화창은 「+」 창을 연 뒤에야 그려진다(서버 렌더 없음) - 처음 값에서 바로 본다
+  const [canListen] = useState(() => recognitionClass() !== null);
+  useEffect(() => () => recognition.current?.abort(), []);
+
+  const listen = () => {
+    if (listening) {
+      recognition.current?.abort();
+      setListening(false);
+      return;
+    }
+    const Klass = recognitionClass();
+    if (!Klass || pending) return;
+    window.speechSynthesis?.cancel();
+    const r = new Klass();
+    r.lang = "ko-KR";
+    r.interimResults = true;
+    r.continuous = false;
+    let heard = "";
+    r.onresult = (e) => {
+      heard = Array.from(e.results)
+        .map((res) => res[0]?.transcript ?? "")
+        .join("");
+      setDraft(heard);
+    };
+    r.onerror = (e) => {
+      if (e.error !== "aborted" && e.error !== "no-speech") setError("말을 알아듣지 못했습니다. 마이크 허용을 확인하세요.");
+    };
+    r.onend = () => {
+      setListening(false);
+      recognition.current = null;
+      if (heard.trim()) send(heard, true);
+    };
+    recognition.current = r;
+    setError(null);
+    setListening(true);
+    r.start();
+  };
+
+  const send = (said?: string, voice = false) => {
+    const content = (said ?? draft).trim();
     if ((!content && pictures.length === 0) || pending) return;
     const next: Turn[] = [
       ...turns,
@@ -113,12 +187,20 @@ export default function AiChat({
     setPictures([]);
     setError(null);
     start(async () => {
-      const reply = await chatAction(
-        next.map(({ role, content, images }) => ({ role, content, ...(images ? { images } : {}) })),
-        engine || undefined,
-      );
+      // 늘 같은 주소로 묻는다(보고 있는 화면의 주소로 가면 그림이 1MB 제한에 걸린다)
+      const reply: ChatReply = await fetch("/admin/ai/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: next.map(({ role, content, images }) => ({ role, content, ...(images ? { images } : {}) })),
+          engine: engine || undefined,
+        }),
+      })
+        .then((r) => r.json() as Promise<ChatReply>)
+        .catch(() => ({ error: "보내지 못했습니다. 연결을 확인해 주세요." }));
       if (reply.text) {
         setTurns((now) => [...now, { role: "assistant", content: reply.text!, engine: reply.engine }]);
+        if (voice) speak(reply.text);
       } else {
         setError(reply.error ?? "답을 받지 못했습니다.");
       }
@@ -126,13 +208,19 @@ export default function AiChat({
   };
 
   return (
-    <div>
+    <div
+      ref={shell}
+      style={fill && fitHeight ? { height: fitHeight } : undefined}
+      className={fill ? "flex flex-col" : undefined}
+    >
       <div
         role="log"
         aria-label="AI 대화"
         aria-live="polite"
-        style={height ? { height: `min(${height}px, calc(100vh - 17rem))` } : undefined}
-        className="h-[min(60vh,36rem)] space-y-2 overflow-y-auto pr-1 text-sm"
+        style={!fill && height ? { height: `min(${height}px, calc(100vh - 17rem))` } : undefined}
+        className={`space-y-2 overflow-y-auto overscroll-contain pr-1 text-sm ${
+          fill ? "min-h-0 flex-1" : "h-[min(60vh,36rem)]"
+        }`}
       >
         {turns.length === 0 ? (
           <p className="text-xs text-muted">
@@ -159,7 +247,7 @@ export default function AiChat({
           ) : (
             <div key={i} className="mr-8">
               <div className="rounded-lg bg-foreground/[0.06] px-3 py-2">
-                <ChatMarkdown>{t.content}</ChatMarkdown>
+                <AssistantReply content={t.content} />
               </div>
               {t.engine ? <p className="mt-0.5 text-[11px] text-muted">{t.engine}</p> : null}
             </div>
@@ -235,6 +323,21 @@ export default function AiChat({
           대화 지우기
         </button>
         <span className="ml-auto" />
+        {canListen ? (
+          <button
+            type="button"
+            onClick={listen}
+            disabled={pending && !listening}
+            aria-label={listening ? "말하기 멈춤" : "말로 묻기"}
+            aria-pressed={listening}
+            title={listening ? "듣는 중 · 누르면 멈춤" : "말로 묻기(말이 끝나면 보내고 답을 읽어 줍니다)"}
+            className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+              listening ? "animate-pulse border-red-500 text-red-600" : "border-border"
+            }`}
+          >
+            🎤
+          </button>
+        ) : null}
         <input
           ref={picker}
           type="file"
@@ -275,7 +378,7 @@ export default function AiChat({
         ) : null}
         <button
           type="button"
-          onClick={send}
+          onClick={() => send()}
           disabled={pending || (!draft.trim() && pictures.length === 0)}
           className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >

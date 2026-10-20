@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  againMessage,
   dueReminders,
   eventReminders,
+  readReminderPress,
+  reminderKeyboard,
   reminderMessage,
   todoReminders,
+  withoutItem,
 } from "@/lib/my-space/reminders";
 
 const todo = (over: Partial<Parameters<typeof todoReminders>[0]>) => ({
@@ -91,17 +95,63 @@ describe("dueReminders · reminderMessage (MYH-258)", () => {
     expect(dueReminders(list, kst("2026-10-16T18:30:30")).map((r) => r.lead)).toEqual(["m30"]);
   });
 
-  it("아침 묶음과 시각 알림을 한 글로", () => {
-    const text = reminderMessage([
-      ...dueReminders(list, kst("2026-10-16T08:00:00")),
+  it("아침 묶음과 시각 알림을 한 글로, 둘 이상이면 번호(MYH-259)", () => {
+    const { text, order } = reminderMessage([
       ...dueReminders(list, kst("2026-10-16T18:00:00")),
+      ...dueReminders(list, kst("2026-10-16T08:00:00")),
     ]);
-    expect(text).toBe("📅 오늘\n· 독감주사 (할 일 · 마감)\n\n⏰ 1시간 뒤 19:00 · 운동 (할 일)");
+    expect(text).toBe("📅 오늘\n· 1. 독감주사 (할 일 · 마감)\n\n⏰ 1시간 뒤 19:00 · 2. 운동 (할 일)");
+    expect(order.map((r) => r.title)).toEqual(["독감주사", "운동"]);
+  });
+
+  it("하나면 번호를 붙이지 않는다", () => {
+    expect(reminderMessage(dueReminders(list, kst("2026-10-16T08:00:00"))).text).toBe(
+      "📅 오늘\n· 독감주사 (할 일 · 마감)",
+    );
   });
 
   it("열쇠는 무엇 · 몇 분 전 · 보낼 때로 갈린다", () => {
     const keys = list.map((r) => r.key);
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys[0]).toBe("todo:7:day:2026-10-15T23:00Z");
+  });
+});
+
+describe("알림 단추 (MYH-259)", () => {
+  it("할 일은 [완료] · [30분 뒤], 일정은 [30분 뒤]. 둘 이상이면 번호", () => {
+    expect(reminderKeyboard([{ id: 5, todo: true }])).toEqual({
+      inline_keyboard: [
+        [
+          { text: "✅ 완료", callback_data: "rd:5" },
+          { text: "⏰ 30분 뒤", callback_data: "rs:5" },
+        ],
+      ],
+    });
+    expect(reminderKeyboard([{ id: 5, todo: true }, { id: 6, todo: false }]).inline_keyboard).toEqual([
+      [
+        { text: "✅ 1 완료", callback_data: "rd:5" },
+        { text: "⏰ 1 30분 뒤", callback_data: "rs:5" },
+      ],
+      [{ text: "⏰ 2 30분 뒤", callback_data: "rs:6" }],
+    ]);
+  });
+
+  it("누른 단추를 읽고, 모르는 것은 버린다", () => {
+    expect(readReminderPress("rd:12")).toEqual({ action: "done", id: 12 });
+    expect(readReminderPress("rs:3")).toEqual({ action: "snooze", id: 3 });
+    expect(readReminderPress("rx:3")).toBeNull();
+    expect(readReminderPress("rd:abc")).toBeNull();
+    expect(readReminderPress(undefined)).toBeNull();
+  });
+
+  it("누른 항목의 줄만 뺀다", () => {
+    const k = reminderKeyboard([{ id: 5, todo: true }, { id: 6, todo: false }]);
+    expect(withoutItem(k, 5).inline_keyboard).toEqual([k.inline_keyboard[1]]);
+    expect(withoutItem(undefined, 5)).toEqual({ inline_keyboard: [] });
+  });
+
+  it("다시 알림 글", () => {
+    expect(againMessage(["운동 (할 일)"])).toBe("⏰ 다시 알림 · 운동 (할 일)");
+    expect(againMessage(["가", "나"])).toBe("⏰ 다시 알림\n· 1. 가\n· 2. 나");
   });
 });

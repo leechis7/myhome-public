@@ -286,6 +286,9 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | AI 사용 | `OPENCLAW_URL` · `OPENCLAW_TOKEN` · `OPENCLAW_AGENT` · `OPENCLAW_CHAT_AGENT` | [OpenClaw](https://openclaw.ai) 게이트웨이를 AI 엔진으로. 게이트웨이의 OpenAI 호환 주소(`gateway.http.endpoints.chatCompletions`)를 켜 둔다. 토큰은 게이트웨이 전체를 쥐는 열쇠라 요약 · 분류에는 도구를 끈 전용 에이전트를 권한다(비우면 `homepage`). 「+」 창의 AI 대화는 대화창 에이전트를 부른다(비우면 `main`) |
 | AI 사용 | `GEMINI_API_KEY` | 책 소개 요약과 할 일 · 메모 분류(텔레그램 · 할 일 화면의 날짜 · 시각 읽기)에 쓴다. 그 글이 Gemini 로 나간다([aistudio.google.com](https://aistudio.google.com) 의 무료 API 키). 비우면 요약은 소개 앞부분을 줄이고, 분류는 규칙으로 |
 | AI 사용 | `DIARY_AI` | 나만 보는 글(메모 · 일기)을 AI 로 보내도 되나. `on` 이면 일기 쓰기 화면의 「그날 메모로 초안」 이 그날 메모를 AI 엔진으로 보낸다. 비우면 끔 |
+| AI 사용 | `AI_ASSISTANT` | `on` 이면 AI 대화창이 남은 할 일 · 7일 일정을 AI 엔진에 보내 보고 답하고, 할 일 · 메모를 넣을 단추를 제안한다(누를 때만 넣는다). 처음 끔 |
+| AI 사용 | `MEETING_AI` | `on` 이면 내 공간 › 회의 에서 녹음하며 30초씩 Gemini 로 받아쓴다. 참석자 목소리가 Google 로 간다. 글만 암호화해 남긴다. 처음 끔 |
+| AI 사용 | `MEETING_WAKE_WORDS` | 회의 중 비서를 부르는 말(쉼표로 여러 개, 예: `푸딩`). 부르면 그 자리에서 할 일 · 메모 카드를 띄운다. 비우면 `비서` |
 | AI 프롬프트 | `PROOF_AI_PROMPT` | 맞춤법 · 문장 다듬기 프롬프트. `{종류}` · `{글}` 자리가 채워진다. 답은 `{"edits":[{from,to,why}]}` 꼴. 줄바꿈은 `\n`. 비우면 처음 값 |
 | AI 프롬프트 | `SPAM_AI_PROMPT` | 새 방명록 · 댓글 스팸 판정 프롬프트. `{자리}` · `{이름}` · `{글}` 자리가 채워진다. 줄바꿈은 `\n`. 비우면 처음 값 |
 | AI 프롬프트 | `BOOK_REVIEW_PROMPT` · `BOOK_CATEGORY_PROMPT` | 독서 노트로 한 줄 평(`{제목}` · `{지은이}` · `{별점}` · `{노트}`), 소개로 분류 제안(`{제목}` · `{지은이}` · `{분류}` · `{소개}`) 프롬프트. 줄바꿈은 `\n`. 비우면 처음 값 |

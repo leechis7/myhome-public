@@ -12,7 +12,8 @@ import { askAi } from "@/lib/ai";
 import { missOf } from "@/lib/ai/gemini";
 import { memosOfDay } from "@/lib/my-space/memos";
 import { DEFAULT_DIARY_PROMPT, renderDiaryPrompt } from "@/lib/my-space/diary-ai";
-import { diaryAiOn, diaryAiPrompt, siteAi } from "@/lib/site/settings";
+import { diaryAiOn, diaryAiPrompt, siteAi, siteConfig } from "@/lib/site/settings";
+import { transcribeAudio } from "@/lib/ai/transcribe";
 
 /**
  * 일기장(MYH-213)을 쓰고 지운다. 암호화는 lib/my-space/diary.ts · lib/my-space/secrets.ts
@@ -116,3 +117,44 @@ export async function draftDiaryAction(dayValue: string): Promise<{ text?: strin
     return { error: MISS[missOf(error)] };
   }
 }
+
+/** 말로 쓰는 일기 한 번의 길이(MYH-270). 16kHz WAV 로 10MB 남짓 */
+const MAX_VOICE_BYTES = 12 * 1024 * 1024;
+
+/**
+ * 일기를 말로(MYH-270). 녹음을 Gemini 로 받아쓰고, 그 말을 그날 메모처럼 일기 프롬프트에
+ * 넣어 일기 문장으로 다듬는다. 저장하지 않고 글만 돌려준다 - 화면이 칸에 넣고 사람이
+ * 고쳐 저장한다. 나만 보는 글이 바깥 AI 로 나가므로 같은 스위치를 따른다. 소리는 버린다
+ */
+export async function voiceDiaryAction(formData: FormData): Promise<{ text?: string; heard?: string; error?: string }> {
+  await requireAdmin();
+  const day = parseDay(formData.get("day"));
+  if (!day) return { error: "날짜가 맞지 않습니다." };
+  if (!(await diaryAiOn())) {
+    return { error: "환경설정 › AI 사용 에서 「나만 보는 글을 AI 로 보내기」 를 켜 주세요." };
+  }
+  const key = (await siteConfig()).geminiApiKey;
+  if (!key) return { error: "받아쓰기는 Gemini 가 합니다. 환경설정 › AI 사용 에 Gemini 키를 넣어 주세요." };
+  const audio = formData.get("audio");
+  if (!(audio instanceof File) || audio.size === 0 || audio.size > MAX_VOICE_BYTES || audio.type !== "audio/wav") {
+    return { error: "녹음이 맞지 않습니다(5분까지)." };
+  }
+  try {
+    const heard = await transcribeAudio(
+      { type: "audio/wav", data: Buffer.from(await audio.arrayBuffer()).toString("base64") },
+      key,
+    );
+    if (!heard) return { error: "말을 알아듣지 못했습니다. 다시 말해 주세요." };
+    const access = await siteAi();
+    if (!access) return { text: heard, heard };
+    const prompt = renderDiaryPrompt((await diaryAiPrompt()) ?? DEFAULT_DIARY_PROMPT, {
+      day,
+      memos: [{ at: seoulTime.format(new Date()), text: heard }],
+    });
+    const text = (await askAi(prompt, access, { timeoutMs: 90_000, temperature: 0.6 })).trim();
+    return { text: text || heard, heard };
+  } catch (error) {
+    return { error: MISS[missOf(error)] };
+  }
+}
+

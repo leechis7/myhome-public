@@ -55,7 +55,14 @@ export async function chatGemini(
     timeoutMs,
     temperature = 0.3,
     schema,
-  }: { timeoutMs: number; temperature?: number; schema?: Record<string, unknown> },
+    system,
+  }: {
+    timeoutMs: number;
+    temperature?: number;
+    schema?: Record<string, unknown>;
+    /** 시스템 글(AI 비서, MYH-260). systemInstruction 으로 */
+    system?: string;
+  },
 ) {
   const config: Record<string, unknown> = { temperature, maxOutputTokens: 4096 };
   if (schema) {
@@ -71,8 +78,8 @@ export async function chatGemini(
   }));
   let res: Response | null = null;
   for (const model of MODELS) {
-    res = await call(model, contents, key, { ...config, thinkingConfig: { thinkingBudget: 0 } }, timeoutMs);
-    if (res.status === 400) res = await call(model, contents, key, config, timeoutMs);
+    res = await call(model, contents, key, { ...config, thinkingConfig: { thinkingBudget: 0 } }, timeoutMs, system);
+    if (res.status === 400) res = await call(model, contents, key, config, timeoutMs, system);
     if (res.status === 429 || res.status === 404 || res.status >= 500) continue;
     break;
   }
@@ -89,13 +96,18 @@ function call(
   key: string,
   generationConfig: Record<string, unknown>,
   timeoutMs: number,
+  system?: string,
 ) {
   return fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({ contents, generationConfig }),
+      body: JSON.stringify({
+        contents,
+        generationConfig,
+        ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
+      }),
       signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
     },

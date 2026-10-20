@@ -75,6 +75,12 @@ export const SETTINGS = {
    * 메모로 일기 초안을 만든다
    */
   diaryAi: { env: "DIARY_AI", kind: "onoff" },
+  /** AI 대화창이 할 일 · 일정을 읽고 넣기를 제안한다(MYH-260). 처음 끔 */
+  aiAssistant: { env: "AI_ASSISTANT", kind: "onoff" },
+  /** 회의 녹음을 AI(Gemini)로 받아쓴다(MYH-265). 참석자 목소리가 나가므로 처음 끔 */
+  meetingAi: { env: "MEETING_AI", kind: "onoff" },
+  /** 회의 중 비서를 부르는 말(MYH-267). 쉼표로 여러 개. 비우면 「비서」 */
+  meetingWakeWords: { env: "MEETING_WAKE_WORDS", kind: "text" },
   /** 할 일 · 일정을 텔레그램으로 미리 알린다(MYH-258). 처음 끔 */
   telegramReminders: { env: "TELEGRAM_REMINDERS", kind: "onoff" },
   /** 일기 초안 프롬프트(MYH-250). .env 는 줄바꿈을 \n 으로 */
@@ -302,4 +308,14 @@ export async function siteAi({ chat = false }: { chat?: boolean } = {}): Promise
 /** 할 일 · 일정 미리 알림을 켰는가(MYH-258) */
 export async function remindersOn() {
   return isOn((await siteConfig()).telegramReminders);
+}
+
+/** AI 비서를 켰는가(MYH-260) */
+export async function assistantOn() {
+  return isOn((await siteConfig()).aiAssistant);
+}
+
+/** 회의 받아쓰기를 켰는가(MYH-265) */
+export async function meetingAiOn() {
+  return isOn((await siteConfig()).meetingAi);
 }

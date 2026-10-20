@@ -119,25 +119,73 @@ function seoulClock(d: Date) {
   }).format(d);
 }
 
-function line(r: Reminder) {
+/** 알림에 보이는 한 줄(때 · 몇 분 전 없이). [30분 뒤] 로 다시 알릴 때도 이것을 쓴다 */
+export function reminderLine(r: Reminder) {
   const where = r.kind === "todo" ? "할 일" : r.calendar || "일정";
   const role = r.role === "due" ? " · 마감" : r.role === "start" ? " · 시작" : "";
   return `${r.title} (${where}${role})`;
 }
 
-/** 한 번에 보낼 글 하나. 아침 묶음이 먼저, 시각 알림은 시작순 */
+/**
+ * 한 번에 보낼 글 하나. 아침 묶음이 먼저, 시각 알림은 시작순. 둘 이상이면 줄마다
+ * 번호를 붙인다(단추의 번호와 같다, MYH-259). order 는 그 번호 차례
+ */
 export function reminderMessage(list: Reminder[]) {
   const day = list.filter((r) => r.lead === "day");
   const soon = list
     .filter((r) => r.lead !== "day")
     .sort((a, b) => (a.start?.getTime() ?? 0) - (b.start?.getTime() ?? 0));
+  const order = [...day, ...soon];
+  const num = (r: Reminder) => (order.length > 1 ? `${order.indexOf(r) + 1}. ` : "");
   const parts: string[] = [];
   if (day.length) {
-    parts.push(["📅 오늘", ...day.map((r) => `· ${line(r)}`)].join("\n"));
+    parts.push(["📅 오늘", ...day.map((r) => `· ${num(r)}${reminderLine(r)}`)].join("\n"));
   }
   for (const r of soon) {
     const lead = r.lead === "h1" ? "1시간 뒤" : "30분 뒤";
-    parts.push(`⏰ ${lead} ${r.start ? seoulClock(r.start) : ""} · ${line(r)}`);
+    parts.push(`⏰ ${lead} ${r.start ? seoulClock(r.start) : ""} · ${num(r)}${reminderLine(r)}`);
   }
-  return parts.join("\n\n");
+  return { text: parts.join("\n\n"), order };
+}
+
+/** [30분 뒤] 로 다시 보내는 글 */
+export function againMessage(lines: string[]) {
+  return lines.length === 1
+    ? `⏰ 다시 알림 · ${lines[0]}`
+    : ["⏰ 다시 알림", ...lines.map((l, i) => `· ${i + 1}. ${l}`)].join("\n");
+}
+
+/** 30분 뒤 */
+export const SNOOZE_MS = 30 * 60 * 1000;
+
+type Button = { text: string; callback_data: string };
+
+/**
+ * 알림 단추(MYH-259). 항목마다 한 줄: 할 일은 [✅ 완료] [⏰ 30분 뒤], 일정은
+ * [⏰ 30분 뒤]. 둘 이상이면 단추에 번호를 붙인다. 단추는 항목 번호(id)를 들고 간다
+ */
+export function reminderKeyboard(items: { id: number; todo: boolean }[]) {
+  const n = (i: number) => (items.length > 1 ? ` ${i + 1}` : "");
+  return {
+    inline_keyboard: items.map((it, i): Button[] => [
+      ...(it.todo ? [{ text: `✅${n(i)} 완료`, callback_data: `rd:${it.id}` }] : []),
+      { text: `⏰${n(i)} 30분 뒤`, callback_data: `rs:${it.id}` },
+    ]),
+  };
+}
+
+/** 누른 단추를 읽는다. 모르는 것이면 null */
+export function readReminderPress(data: unknown) {
+  if (typeof data !== "string") return null;
+  const m = data.match(/^r([ds]):(\d{1,10})$/);
+  if (!m) return null;
+  return { action: m[1] === "d" ? ("done" as const) : ("snooze" as const), id: Number(m[2]) };
+}
+
+/** 누른 항목의 단추 줄을 뺀 단추들(같은 메시지의 다른 항목은 그대로) */
+export function withoutItem(markup: { inline_keyboard?: Button[][] } | undefined, id: number) {
+  const rows = (markup?.inline_keyboard ?? []).filter(
+    (row) => !row.some((b) => b.callback_data === `rd:${id}` || b.callback_data === `rs:${id}`),
+  );
+  return { inline_keyboard: rows };
 }

@@ -333,3 +333,13 @@ test.describe("관리 화면 접근 제어", () => {
     await expect(page.getByText("비밀번호가 맞지 않습니다")).toBeVisible();
   });
 });
+
+// 마이크는 이 사이트에만 연다(회의 녹음 · 말로 묻기, MYH-265). 막혀 있으면 브라우저에서
+// 허용해도 녹음이 안 된다. 카메라 · 위치는 그대로 막는다
+test("보안 머리가 마이크만 이 사이트에 연다", async ({ request }) => {
+  const res = await request.get("/");
+  const policy = res.headers()["permissions-policy"] ?? "";
+  expect(policy).toContain("microphone=(self)");
+  expect(policy).toContain("camera=()");
+  expect(policy).toContain("geolocation=()");
+});

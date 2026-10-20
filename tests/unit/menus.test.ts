@@ -107,7 +107,14 @@ describe("DEFAULT_MENUS", () => {
           children: shape(all, r.id),
         }));
 
-    expect(shape(rows, null)).toEqual(shape(defaultRows(), null));
+    // 기준선 뒤의 마이그레이션이 넣은 메뉴(기준선은 고치지 않는다 - 이미 돈 DB 가
+    // 다시 돌리게 된다). 그 마이그레이션에 정말 있는지도 본다
+    const later = { "/admin/ai": "drizzle/0007_meetings.sql" } as Record<string, string>;
+    for (const [href, file] of Object.entries(later)) {
+      expect(readFileSync(file, "utf8")).toContain(`'${href}'`);
+    }
+    const defaults = defaultRows().filter((r) => !r.href || !(r.href in later));
+    expect(shape(rows, null)).toEqual(shape(defaults, null));
   });
 
   it("관리 화면으로 가는 줄은 전부 관리자만 보고, 관리자 그룹 아래도 그렇다", () => {

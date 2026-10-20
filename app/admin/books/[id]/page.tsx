@@ -7,6 +7,7 @@ import { saveReadingNote } from "@/app/admin/books/actions";
 import { isAdmin } from "@/lib/security/auth";
 import { BOOK_STATUS_LABELS, findBook, type BookStatus } from "@/lib/books";
 import BookAiButton from "@/components/admin/BookAiButton";
+import DictateButton from "@/components/admin/DictateButton";
 import { siteAi } from "@/lib/site/settings";
 
 export const metadata: Metadata = {
@@ -104,6 +105,10 @@ export default async function ReadingNotePage({
             className={`${field} mt-1 field-sizing-content`}
           />
         </div>
+        </div>
+        {/* 독서 노트를 말로(MYH-273). 말한 것을 노트 끝에 붙인다 */}
+        <div className="-mb-2 flex justify-end">
+          <DictateButton fieldId="reading-note" />
         </div>
         <MarkdownField
           id="reading-note"

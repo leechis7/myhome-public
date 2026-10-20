@@ -60,11 +60,31 @@ export async function currentWebhook() {
   return { ok: r.ok, url: info.url ?? "", lastError: info.last_error_message };
 }
 
+const UPDATES = ["message", "callback_query"];
+
+/**
+ * 이 사이트에 걸린 웹훅이 단추 누름까지 받는지 보고, 아니면 받게 다시 건다(MYH-259).
+ * 예전 판(글만 받음)에서 건 웹훅을 앱이 뜰 때 고친다. 쌓인 글은 버리지 않는다
+ */
+export async function ensureWebhookUpdates() {
+  if (!(await inboxReady())) return;
+  const r = await call("getWebhookInfo");
+  const info = (r.result ?? {}) as { url?: string; allowed_updates?: string[] };
+  if (!r.ok || info.url !== webhookUrl()) return;
+  if (UPDATES.every((u) => info.allowed_updates?.includes(u))) return;
+  await call("setWebhook", {
+    url: webhookUrl(),
+    secret_token: webhookSecret(),
+    allowed_updates: UPDATES,
+  });
+}
+
 export async function connectWebhook() {
   return call("setWebhook", {
     url: webhookUrl(),
     secret_token: webhookSecret(),
-    allowed_updates: ["message"],
+    // 글과 단추 누름(미리 알림의 [완료] · [30분 뒤], MYH-259)
+    allowed_updates: UPDATES,
     // 걸기 전에 쌓여 있던 글은 버린다 - 오래된 것이 한꺼번에 메모로 들어오지 않게
     drop_pending_updates: true,
   });
@@ -82,3 +102,30 @@ export async function reply(chatId: string, text: string) {
     disable_web_page_preview: true,
   });
 }
+
+/** 단추를 누른 사람에게 잠깐 뜨는 말(MYH-259) */
+export async function answerPress(id: string, text: string) {
+  await call("answerCallbackQuery", { callback_query_id: id, text });
+}
+
+/** 보낸 알림의 단추를 바꾼다(누른 항목의 단추를 뺀다) */
+export async function editButtons(chatId: string, messageId: number, replyMarkup: unknown) {
+  await call("editMessageReplyMarkup", {
+    chat_id: chatId,
+    message_id: messageId,
+    reply_markup: replyMarkup,
+  });
+}
+
+/** 텔레그램에 올라온 파일을 받는다(음성 메시지, MYH-269). 봇 API 는 20MB 까지 */
+export async function downloadFile(fileId: string) {
+  const r = await call("getFile", { file_id: fileId });
+  const path = (r.result as { file_path?: string } | undefined)?.file_path;
+  const { telegramBotToken: token } = await siteConfig();
+  if (!r.ok || !path || !token) return null;
+  const res = await fetch(`https://api.telegram.org/file/bot${token}/${path}`, {
+    signal: AbortSignal.timeout(30_000),
+  });
+  return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
+}
+

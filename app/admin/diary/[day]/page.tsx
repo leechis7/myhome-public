@@ -16,6 +16,7 @@ import { MOODS, dayLabel, parseDay, type Mood } from "@/lib/my-space/diary-calen
 import { formatDate } from "@/lib/posts";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
 import DiaryDraftButton from "@/components/admin/DiaryDraftButton";
+import DiaryVoiceButton from "@/components/admin/DiaryVoiceButton";
 import { memosOfDay } from "@/lib/my-space/memos";
 import { diaryAiOn, siteAi } from "@/lib/site/settings";
 
@@ -127,7 +128,11 @@ export default async function DiaryDayPage({
             </div>
           </fieldset>
           {draftOn ? (
-            <DiaryDraftButton day={day} memoCount={memoCount} fieldId="diary-content" />
+            <div className="flex flex-wrap items-center gap-3">
+              <DiaryDraftButton day={day} memoCount={memoCount} fieldId="diary-content" />
+              {/* 일기를 말로(MYH-270) */}
+              <DiaryVoiceButton day={day} fieldId="diary-content" />
+            </div>
           ) : ai ? (
             <p className="text-xs text-muted">
               그날 메모로 일기 초안을 만들 수 있습니다 —{" "}

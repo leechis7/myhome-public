@@ -50,7 +50,11 @@ export async function askAi(prompt: string, access: AiAccess, options: AskOption
  * 대화(MYH-248). 대화를 통째로 차례대로 엔진에 넘기고, 처음 받은 답과 답한
  * 엔진을 돌려준다. 다 실패하면 마지막 까닭을 던진다.
  */
-export async function chatAi(messages: ChatTurn[], access: AiAccess, options: { timeoutMs: number }) {
+export async function chatAi(
+  messages: ChatTurn[],
+  access: AiAccess,
+  options: { timeoutMs: number; system?: string },
+) {
   let last: unknown = new GeminiError("error");
   for (const one of access) {
     try {

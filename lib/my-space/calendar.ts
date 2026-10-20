@@ -11,6 +11,8 @@ import { envSetting, saveConfig, storedSetting } from "@/lib/site/settings";
 
 /** 구글에서 새로 받아 오는 간격 */
 const FRESH_MS = 5 * 60 * 1000;
+/** 새로 고침으로 바로 받아 오더라도 이만큼은 쉰다. 자꾸 누르면 구글이 막는다(MYH-262) */
+export const REFRESH_GAP_MS = 30 * 1000;
 
 /** 캘린더 하나. 이름은 일정 옆에 붙는 표시(개인 · 회사 같은 것), 비울 수 있다 */
 export type CalendarSource = { name: string; url: string };
@@ -79,6 +81,23 @@ export async function saveCalendars(list: CalendarSource[]) {
 
 /** 받은 글을 잠깐 담아 둔다(서버 안에만). 주소마다 하나 */
 const cache = new Map<string, { at: number; text: string }>();
+
+/**
+ * 담아 둔 것을 버려 다음에 구글에서 바로 받아 오게 한다(MYH-262). 일정 화면의
+ * 「새로 고침」 단추와 브라우저 새로고침이 부른다. 받은 지 REFRESH_GAP_MS 안 된
+ * 것은 그대로 둔다
+ */
+export function forgetCalendars(now = Date.now()) {
+  for (const [url, hit] of cache) {
+    if (now - hit.at >= REFRESH_GAP_MS) cache.delete(url);
+  }
+}
+
+/** 지금 보이는 일정을 구글에서 받아 온 때(가장 오래된 것). 담아 둔 것이 없으면 null */
+export function calendarsFetchedAt() {
+  const times = [...cache.values()].map((h) => h.at);
+  return times.length ? new Date(Math.min(...times)) : null;
+}
 
 async function fetchIcs(url: string) {
   const hit = cache.get(url);

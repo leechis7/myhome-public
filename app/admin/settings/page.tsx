@@ -13,6 +13,8 @@ import PostPromptSettings from "@/components/admin/settings/PostPromptSettings";
 import DiaryPromptSettings from "@/components/admin/settings/DiaryPromptSettings";
 import DiaryAiSettings from "@/components/admin/settings/DiaryAiSettings";
 import ReminderSettings from "@/components/admin/settings/ReminderSettings";
+import AssistantSettings from "@/components/admin/settings/AssistantSettings";
+import MeetingAiSettings from "@/components/admin/settings/MeetingAiSettings";
 import MorePromptSettings from "@/components/admin/settings/MorePromptSettings";
 import { isAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
@@ -161,6 +163,8 @@ export default async function AdminIntegrationsPage({
             />
           </div>
           <DiaryAiSettings notice={outNotice("diary-ai")} />
+          <AssistantSettings notice={outNotice("ai-assistant")} />
+          <MeetingAiSettings notice={outNotice("meeting-ai")} />
         </Integration>
 
         {/* AI 엔진에게 보내는 글들. 엔진은 위 「AI 사용」 칸에 */}

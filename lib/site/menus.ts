@@ -52,6 +52,8 @@ export const DEFAULT_MENUS: readonly DefaultMenu[] = [
       { label: "일정", href: "/admin/calendar", audience: "admin" },
       { label: "할 일", href: "/admin/todos", audience: "admin" },
       { label: "메모", href: "/admin/memos", audience: "admin" },
+      // AI 화면: 대화 · 회의 · 음성(MYH-274). 기준선 뒤에 0007_meetings 가 넣는다
+      { label: "AI", href: "/admin/ai", audience: "admin" },
       { label: "비밀글", href: "/admin/secrets", audience: "admin" },
       { label: "일기장", href: "/admin/diary", audience: "admin" },
       { label: "내 서비스", href: "/admin/links", audience: "admin" },

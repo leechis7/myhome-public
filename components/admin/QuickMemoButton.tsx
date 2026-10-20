@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { quickMemoAction, type QuickMemoState } from "@/app/admin/memos/actions";
 import { quickTodoAction } from "@/app/admin/todos/actions";
@@ -49,6 +50,7 @@ export default function QuickMemoButton({
   /** AI 탭에서 고를 엔진들. 맨 앞이 처음 값(환경설정의 1순위, MYH-248) */
   engines?: { key: string; label: string }[];
 }) {
+  const path = usePathname();
   const [open, setOpen] = useState(false);
   /** 한 번이라도 열었나. 그 뒤로는 닫아도 창을 숨기기만 한다 */
   const [shown, setShown] = useState(false);
@@ -133,6 +135,8 @@ export default function QuickMemoButton({
     return () => clearTimeout(t);
   }, [done]);
 
+  // AI 화면(대화 탭)에는 같은 대화창이 이미 있고, 단추가 보내기 단추를 가린다
+  if (path === "/admin/ai") return null;
   return (
     <div ref={root} className="fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2 print:hidden">
       {shown ? (
