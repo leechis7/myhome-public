@@ -38,7 +38,7 @@ test.describe("AI", () => {
     await expect(page.getByRole("button", { name: "보내기" })).toBeInViewport();
     // 페이지는 스크롤하지 않는다 - 대화 칸만
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow)).toBe("hidden");
-    // 떠 있는 「+」 단추는 이 화면에 없다(보내기를 가린다)
+    // 떠 있는 「+」 단추는 AI 화면에서는 숨긴다 - 대화 입력줄의 「보내기」 와 겹쳐서(MYH-275)
     await expect(page.getByRole("button", { name: "빠른 메모" })).toHaveCount(0);
   });
 });

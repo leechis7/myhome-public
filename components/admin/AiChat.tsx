@@ -117,7 +117,10 @@ export default function AiChat({
     end.current?.scrollIntoView({ block: "end" });
   }, [turns, pending]);
 
-  useEffect(() => box.current?.focus(), []);
+  // 휴대폰(터치)에서는 자동 포커스하지 않는다 - 들어가자마자 자판이 올라오지 않게(MYH-275)
+  useEffect(() => {
+    if (!window.matchMedia?.("(pointer: coarse)").matches) box.current?.focus();
+  }, []);
 
   /** 고르거나 붙여 넣거나 끌어 놓은 파일 가운데 그림만 줄여서 붙인다 */
   const attach = async (files: File[]) => {

@@ -108,16 +108,14 @@ test.describe("메모", () => {
     await page.getByRole("button", { name: "빠른 메모" }).click();
     await expect(page.getByRole("tab", { name: "📝 메모" })).toHaveAttribute("aria-selected", "true");
 
-    // AI 탭(MYH-248): 대화 칸이 열린다. 실제로 묻는 것은 밖의 AI 에 기대므로 보지 않는다
-    await page.getByRole("tab", { name: "🤖 AI" }).click();
-    await expect(page.getByRole("log", { name: "AI 대화" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "보내기" })).toBeDisabled();
-    // 전체 화면으로 키웠다가 Esc 로 돌아온다
-    await page.getByRole("button", { name: "전체 화면" }).click();
-    await expect(page.getByRole("button", { name: "전체 화면 끝내기" })).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("button", { name: "전체 화면" })).toBeVisible();
-    // 창 밖을 누르면 닫힌다
+    // AI 는 팝업이 아니라 「🤖 AI」 로 AI 화면으로 보낸다(MYH-275)
+    const quickForm = page.getByRole("form", { name: "빠른 메모" });
+    await quickForm.getByRole("link", { name: /AI/ }).click();
+    await expect(page).toHaveURL(/\/admin\/ai$/);
+    // 창 밖을 누르면 닫힌다(돌아와서 확인)
+    await page.goto("/notes");
+    await page.getByRole("button", { name: "빠른 메모" }).click();
+    await expect(page.getByRole("form", { name: "빠른 메모" })).toBeVisible();
     await page.mouse.click(5, 5);
     await expect(page.getByRole("form", { name: "빠른 메모" })).toBeHidden();
 

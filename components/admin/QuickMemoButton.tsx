@@ -5,32 +5,10 @@ import { usePathname } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { quickMemoAction, type QuickMemoState } from "@/app/admin/memos/actions";
 import { quickTodoAction } from "@/app/admin/todos/actions";
-import AiChat from "@/components/admin/AiChat";
 
-type Tab = "memo" | "todo" | "ai";
+type Tab = "memo" | "todo";
 
-const TABS: Record<Tab, string> = { memo: "📝 메모", todo: "✅ 할 일", ai: "🤖 AI" };
-const SIZE_KEY = "myhome:ai-size";
-
-/** AI 탭 창의 폭 · 대화 칸 높이(px). 없으면 처음 크기 */
-type Size = { w: number; h: number };
-
-function loadSize(): Size | null {
-  try {
-    const v = JSON.parse(localStorage.getItem(SIZE_KEY) ?? "null");
-    return v && typeof v.w === "number" && typeof v.h === "number" ? v : null;
-  } catch {
-    return null;
-  }
-}
-
-/** 화면 안에 들게. maxH 는 창 위가 화면 위에 닿기 전까지 */
-function clampSize({ w, h }: Size, maxH: number): Size {
-  return {
-    w: Math.round(Math.min(Math.max(w, 320), window.innerWidth - 40)),
-    h: Math.round(Math.min(Math.max(h, 160), maxH)),
-  };
-}
+const TABS: Record<Tab, string> = { memo: "📝 메모", todo: "✅ 할 일" };
 
 /**
  * 어느 화면에서나 바로 메모 · 할 일을 적는 떠 있는 단추(MYH-223). 관리자에게만
@@ -38,26 +16,17 @@ function clampSize({ w, h }: Size, maxH: number): Size {
  *
  * 단추는 하나, 창 위의 탭으로 메모와 할 일을 가른다 — 둘이면 구석이 붐빈다.
  * 열면 늘 메모 탭부터다. Ctrl(⌘)+Enter 로 저장, Esc 나 창 밖을 누르면 닫는다.
- * 닫아도 창을 지우지 않고 숨긴다 - 적던 글 · 기다리던 AI 답이 그대로 남는다.
- * AI 탭은 오픈클로 · Gemini 와 대화한다(MYH-248, components/admin/AiChat.tsx).
- * AI 탭 창은 왼쪽 위 손잡이로 크기를 바꾼다(창이 오른쪽 아래에 붙어 있어서).
- * 정한 크기는 이 브라우저에 기억하고, 손잡이를 두 번 누르면 처음 크기로.
- * 오른쪽 위 ⛶ 로 전체 화면(Esc 나 다시 누르면 돌아온다).
+ * 닫아도 창을 지우지 않고 숨긴다 - 적던 글이 그대로 남는다.
+ * AI 는 팝업에 두지 않고 「🤖 AI」 가 AI 화면(/admin/ai)으로 바로 보낸다(MYH-275).
+ * AI 화면 자체에서는 이 단추를 숨긴다 - 대화 입력줄의 「보내기」 와 겹친다(MYH-275).
  */
-export default function QuickMemoButton({
-  engines = [],
-}: {
-  /** AI 탭에서 고를 엔진들. 맨 앞이 처음 값(환경설정의 1순위, MYH-248) */
-  engines?: { key: string; label: string }[];
-}) {
-  const path = usePathname();
+export default function QuickMemoButton() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   /** 한 번이라도 열었나. 그 뒤로는 닫아도 창을 숨기기만 한다 */
   const [shown, setShown] = useState(false);
   const [done, setDone] = useState<Tab | null>(null);
   const [tab, setTab] = useState<Tab>("memo");
-  /** AI 탭 전체 화면 */
-  const [full, setFull] = useState(false);
   const toggle = () => {
     if (open) {
       setOpen(false);
@@ -65,12 +34,10 @@ export default function QuickMemoButton({
     }
     // 열면 늘 메모부터
     setTab("memo");
-    setFull(false);
     setShown(true);
     setOpen(true);
   };
   const root = useRef<HTMLDivElement>(null);
-  const wide = full && tab === "ai";
   const [state, action, pending] = useActionState<QuickMemoState, FormData>(
     async (prev, formData) => {
       const result =
@@ -84,36 +51,6 @@ export default function QuickMemoButton({
     {},
   );
   const box = useRef<HTMLTextAreaElement>(null);
-  const panel = useRef<HTMLFormElement>(null);
-  const [size, setSize] = useState<Size | null>(loadSize);
-  const saveSize = (next: Size | null) => {
-    try {
-      if (next) localStorage.setItem(SIZE_KEY, JSON.stringify(next));
-      else localStorage.removeItem(SIZE_KEY);
-    } catch {
-      // 기억하지 못해도 된다
-    }
-  };
-  /** 손잡이를 끈다. 왼쪽 · 위로 끌수록 커진다 */
-  const startResize = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const log = panel.current?.querySelector<HTMLElement>('[role="log"]');
-    if (!panel.current || !log) return;
-    e.preventDefault();
-    const from = { x: e.clientX, y: e.clientY, w: panel.current.offsetWidth, h: log.offsetHeight };
-    const maxH = from.h + panel.current.getBoundingClientRect().top - 16;
-    let last: Size = { w: from.w, h: from.h };
-    const move = (ev: PointerEvent) => {
-      last = clampSize({ w: from.w + from.x - ev.clientX, h: from.h + from.y - ev.clientY }, maxH);
-      setSize(last);
-    };
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      saveSize(last);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-  };
 
   useEffect(() => {
     if (open) box.current?.focus();
@@ -135,58 +72,23 @@ export default function QuickMemoButton({
     return () => clearTimeout(t);
   }, [done]);
 
-  // AI 화면(대화 탭)에는 같은 대화창이 이미 있고, 단추가 보내기 단추를 가린다
-  if (path === "/admin/ai") return null;
+  // AI 화면(/admin/ai)에서는 떠 있는 「+」 를 숨긴다 - 대화 입력줄의 「보내기」 와 겹친다(MYH-275)
+  if (pathname === "/admin/ai") return null;
+
   return (
     <div ref={root} className="fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2 print:hidden">
       {shown ? (
         <form
-          ref={panel}
           action={action}
           aria-label="빠른 메모"
           hidden={!open}
-          style={tab === "ai" && size && !wide ? { width: `min(${size.w}px, calc(100vw - 2.5rem))` } : undefined}
-          className={`${
-            wide
-              ? "fixed inset-3 z-50 sm:inset-6"
-              : `relative ${tab === "ai" ? "w-[min(40rem,calc(100vw-2.5rem))]" : "w-[min(22rem,calc(100vw-2.5rem))]"}`
-          } rounded-xl border border-border bg-background p-3 shadow-lg`}
+          className="relative w-[min(22rem,calc(100vw-2.5rem))] rounded-xl border border-border bg-background p-3 shadow-lg"
           onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              if (wide) setFull(false);
-              else setOpen(false);
-            }
-            if (tab !== "ai" && e.key === "Enter" && (e.ctrlKey || e.metaKey)) e.currentTarget.requestSubmit();
+            if (e.key === "Escape") setOpen(false);
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) e.currentTarget.requestSubmit();
           }}
         >
-          {tab === "ai" ? (
-            <button
-              type="button"
-              onClick={() => setFull((v) => !v)}
-              aria-label={wide ? "전체 화면 끝내기" : "전체 화면"}
-              aria-pressed={wide}
-              title={wide ? "원래 크기로 (Esc)" : "전체 화면"}
-              className="absolute top-1.5 right-1.5 grid size-6 place-items-center rounded border border-border text-xs leading-none text-muted hover:bg-foreground/5 hover:text-foreground"
-            >
-              {wide ? "🗗" : "⛶"}
-            </button>
-          ) : null}
-          {tab === "ai" && !wide ? (
-            <button
-              type="button"
-              aria-label="창 크기 바꾸기"
-              title="끌어서 크기 바꾸기 · 두 번 누르면 처음 크기"
-              onPointerDown={startResize}
-              onDoubleClick={() => {
-                setSize(null);
-                saveSize(null);
-              }}
-              className="absolute top-1.5 left-1.5 grid size-6 cursor-nwse-resize touch-none place-items-center rounded border border-border text-xs leading-none text-muted hover:bg-foreground/5 hover:text-foreground"
-            >
-              ⤡
-            </button>
-          ) : null}
-          <div role="tablist" aria-label="무엇을 적나" className={`mb-2 flex gap-1 text-sm ${tab === "ai" ? (wide ? "pr-7" : "px-7") : ""}`}>
+          <div role="tablist" aria-label="무엇을 적나" className="mb-2 flex gap-1 text-sm">
             {(Object.keys(TABS) as Tab[]).map((t) => (
               <button
                 key={t}
@@ -201,11 +103,15 @@ export default function QuickMemoButton({
                 {TABS[t]}
               </button>
             ))}
+            {/* AI 는 팝업 대신 AI 화면으로(MYH-275) */}
+            <Link
+              href="/admin/ai"
+              className="ml-auto rounded-md px-2.5 py-1 text-muted transition-colors hover:text-foreground"
+            >
+              🤖 AI →
+            </Link>
           </div>
-          {tab === "ai" ? (
-            // 전체 화면이면 대화 칸을 화면 높이만큼(AiChat 이 화면 안으로 줄인다)
-            <AiChat height={wide ? 100_000 : size?.h} engines={engines} />
-          ) : tab === "memo" ? (
+          {tab === "memo" ? (
             <textarea
               ref={box}
               name="content"
@@ -262,12 +168,11 @@ export default function QuickMemoButton({
               </div>
             </div>
           )}
-          {tab !== "ai" && state.error ? (
+          {state.error ? (
             <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
               {state.error}
             </p>
           ) : null}
-          {tab === "ai" ? null : (
           <div className="mt-2 flex items-center justify-between gap-2">
             <Link
               href={tab === "todo" ? "/admin/todos" : "/admin/memos"}
@@ -283,7 +188,6 @@ export default function QuickMemoButton({
               {pending ? "저장 중…" : tab === "todo" ? "더하기" : "메모하기"}
             </button>
           </div>
-          )}
         </form>
       ) : null}
       {done ? (
@@ -295,7 +199,7 @@ export default function QuickMemoButton({
         type="button"
         onClick={toggle}
         aria-label={open ? "빠른 메모 닫기" : "빠른 메모"}
-        title="메모 · 할 일 · AI"
+        title="메모 · 할 일"
         aria-expanded={open}
         className="grid size-12 place-items-center rounded-full bg-foreground text-xl text-background shadow-lg transition-transform hover:scale-105"
       >
