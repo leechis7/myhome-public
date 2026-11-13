@@ -50,6 +50,62 @@ body {
   font-family: var(--font-sans);
 }
 
+/* 누르는 동안 눌렸다는 표시(MYH-280). 모바일에는 마우스 올림 효과가 없어 눌렀는지
+   알기 어렵다. base 층이라 화면마다 준 유틸리티가 이긴다. 링크는 글 줄 안에
+   있어 크기는 두고 흐리게만 한다. 손가락은 떼면 바로 풀려 가려 보이지 않아,
+   PressFeedback 이 data-pressed · data-released 를 붙여 뗀 뒤에도 잠깐 남긴다 */
+@keyframes press-release {
+  0%,
+  40% {
+    opacity: 0.6;
+    scale: 0.97;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes press-release-still {
+  0%,
+  40% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@layer base {
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  summary:active,
+  [data-pressed] {
+    opacity: 0.6;
+    scale: 0.97;
+  }
+  a:active,
+  a[data-pressed] {
+    opacity: 0.6;
+    scale: none;
+  }
+  [data-released] {
+    animation: press-release 450ms ease-out;
+  }
+  a[data-released] {
+    animation-name: press-release-still;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button:not(:disabled):active,
+    [role="button"]:not([aria-disabled="true"]):active,
+    summary:active,
+    [data-pressed] {
+      scale: none;
+    }
+    [data-released] {
+      animation-name: press-release-still;
+    }
+  }
+}
+
 /* 코드 하이라이팅 (rehype-highlight가 붙이는 hljs-* 클래스).
    테마 CSS 파일을 가져오는 대신 라이트/다크에 맞춘 색을 직접 정의한다. */
 :root {

@@ -31,3 +31,11 @@ LIMIT 1;
 --> statement-breakpoint
 -- 어디서 온 회의인가(MYH-271): live 는 화면에서 녹음, file 은 올린 녹음 파일
 ALTER TABLE "meetings" ADD COLUMN IF NOT EXISTS "source" text DEFAULT 'live' NOT NULL;
+--> statement-breakpoint
+-- 제목을 사람이 정했나(MYH-278). 아니면 요약할 때 AI 가 제목을 짓는다. 이미 있는 회의는
+-- 사람이 정한 것으로 둔다(손댄 제목을 덮지 않게) - 컬럼을 더할 때만 true 로 채우고 처음 값은 false
+ALTER TABLE "meetings" ADD COLUMN IF NOT EXISTS "title_by_user" boolean DEFAULT true NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "meetings" ALTER COLUMN "title_by_user" SET DEFAULT false;
+--> statement-breakpoint
+COMMENT ON COLUMN meetings.title_by_user IS '사람이 제목을 정했나(MYH-278). false 면 요약할 때 AI 가 제목을 짓는다';

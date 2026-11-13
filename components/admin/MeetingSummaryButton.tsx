@@ -2,12 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { handOffMeetingAction, summarizeMeetingAction } from "@/app/admin/ai/meetings/actions";
+import {
+  handOffMeetingAction,
+  retitleMeetingAction,
+  summarizeMeetingAction,
+} from "@/app/admin/ai/meetings/actions";
 
-const ACTIONS = { summary: summarizeMeetingAction, handoff: handOffMeetingAction };
+const ACTIONS = { summary: summarizeMeetingAction, handoff: handOffMeetingAction, title: retitleMeetingAction };
 
 /**
- * 회의 화면의 단추: 요약 (다시) 만들기(MYH-266) · 오픈클로에 맡기기(MYH-268).
+ * 회의 화면의 단추: 요약 (다시) 만들기(MYH-266) · 오픈클로에 맡기기(MYH-268) ·
+ * 제목 다시 만들기(MYH-278).
  * 몇십 초 ~ 몇 분 걸린다
  */
 export default function MeetingSummaryButton({
@@ -36,7 +41,11 @@ export default function MeetingSummaryButton({
         }
         className="rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50"
       >
-        {kind === "handoff"
+        {kind === "title"
+          ? pending
+            ? "제목 짓는 중…"
+            : "✨ 제목 다시 만들기"
+          : kind === "handoff"
           ? pending
             ? "오픈클로가 처리하는 중…(몇 분 걸릴 수 있어요)"
             : again

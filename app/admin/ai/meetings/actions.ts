@@ -11,6 +11,7 @@ import {
   meetingCommand,
   readWakeWords,
   summarizeMeeting,
+  titleMeeting,
 } from "@/lib/ai/meeting-summary";
 import { transcribeAudio } from "@/lib/ai/transcribe";
 import { splitTranscript, transcribeFile } from "@/lib/ai/transcribe-file";
@@ -24,6 +25,7 @@ import {
   saveMeetingSummary,
   removeMeeting,
   renameMeeting,
+  setAiMeetingTitle,
 } from "@/lib/my-space/meetings";
 import { requireAdmin } from "@/lib/security/auth";
 import { hasSecretKey } from "@/lib/security/secret-crypto";
@@ -120,12 +122,15 @@ async function summarize(id: number): Promise<{ ok?: true; error?: string }> {
   const access = await siteAi();
   if (!access) return { error: "쓸 AI 엔진이 없습니다. 환경설정 › AI 사용 에서 켜 주세요." };
   try {
-    const summary = await summarizeMeeting(
+    const { title, summary } = await summarizeMeeting(
       transcript,
       { day: dayFmt.format(meeting.startedAt), title: meeting.title },
       access,
     );
     await saveMeetingSummary(id, summary);
+    // 제목도 AI 가 짓는다(MYH-278). 사람이 고친 제목은 setAiMeetingTitle 이 건너뛴다
+    if (title) await setAiMeetingTitle(id, title);
+    revalidatePath(BACK);
     revalidatePath(`${BACK}/${id}`);
     return { ok: true };
   } catch (e) {
@@ -140,6 +145,36 @@ async function summarize(id: number): Promise<{ ok?: true; error?: string }> {
 export async function summarizeMeetingAction(id: number): Promise<{ ok?: true; error?: string }> {
   await requireAdmin();
   return summarize(id);
+}
+
+const TITLE_MISS = {
+  quota: "AI 사용 한도를 넘었습니다. 잠시 뒤 다시 눌러 주세요.",
+  slow: "제목을 짓는 데 너무 오래 걸렸습니다.",
+  error: "제목을 짓지 못했습니다.",
+} as const;
+
+/**
+ * 「제목 다시 만들기」(MYH-278). 요약이 있으면 요약으로, 없으면 대본으로 짓는다.
+ * 사람이 고친 제목도 바꾼다 - 누른 것이 AI 에 맡기겠다는 뜻이다
+ */
+export async function retitleMeetingAction(id: number): Promise<{ ok?: true; error?: string }> {
+  await requireAdmin();
+  const meeting = Number.isInteger(id) ? await getMeeting(id) : null;
+  if (!meeting) return { error: "없는 회의입니다." };
+  const text = meeting.summary?.trim() || meeting.chunks.map((c) => c.text).join("\n");
+  if (!text.trim()) return { error: "받아쓴 말이 없어 제목을 지을 수 없습니다." };
+  const access = await siteAi();
+  if (!access) return { error: "쓸 AI 엔진이 없습니다. 환경설정 › AI 사용 에서 켜 주세요." };
+  try {
+    const title = await titleMeeting(text, dayFmt.format(meeting.startedAt), access);
+    if (!title) return { error: TITLE_MISS.error };
+    await setAiMeetingTitle(id, title, true);
+    revalidatePath(BACK);
+    revalidatePath(`${BACK}/${id}`);
+    return { ok: true };
+  } catch (e) {
+    return { error: TITLE_MISS[missOf(e)] };
+  }
 }
 
 /** 회의를 끝내고 요약까지 만든다. 요약이 안 돼도 회의는 끝난다 */

@@ -5,6 +5,8 @@ import {
   handoffPrompt,
   meetingPrompt,
   readWakeWords,
+  splitMeetingTitle,
+  titlePrompt,
 } from "@/lib/ai/meeting-summary";
 
 describe("회의 요약 프롬프트 (MYH-266)", () => {
@@ -20,6 +22,45 @@ describe("회의 요약 프롬프트 (MYH-266)", () => {
     const p = meetingPrompt(long, "d", "t");
     expect(p).toContain("…(가운데 줄임)…");
     expect(p.length).toBeLessThan(62_000);
+  });
+
+  it("맨 앞에 제목 한 줄을 쓰라고 한다 (MYH-278)", () => {
+    expect(meetingPrompt("x", "d", "t")).toContain("「# 4분기 견적 일정 정리」");
+  });
+});
+
+describe("AI 가 지은 회의 제목 (MYH-278)", () => {
+  it("맨 앞 「# 제목」 줄을 떼어 제목으로, 나머지를 요약으로", () => {
+    const { title, summary } = splitMeetingTitle("# 4분기 견적 일정 정리\n\n## 요약\n견적은 금요일까지.");
+    expect(title).toBe("4분기 견적 일정 정리");
+    expect(summary).toBe("## 요약\n견적은 금요일까지.");
+  });
+
+  it("제목 줄이 없으면 제목은 null, 요약은 그대로", () => {
+    expect(splitMeetingTitle("## 요약\n견적")).toEqual({ title: null, summary: "## 요약\n견적" });
+  });
+
+  it("「제목:」 · 따옴표를 벗기고 길면 자른다", () => {
+    expect(splitMeetingTitle("# 제목: 「주간 회의 정리」\n## 요약").title).toBe("주간 회의 정리");
+    expect(splitMeetingTitle(`# ${"가".repeat(100)}\n## 요약`).title).toHaveLength(60);
+  });
+
+  it("「# 제목」 머리 다음 줄에 쓴 제목도 알아본다", () => {
+    expect(splitMeetingTitle("# 제목\n서버 이전 계획\n## 요약\n다음 주")).toEqual({
+      title: "서버 이전 계획",
+      summary: "## 요약\n다음 주",
+    });
+  });
+
+  it("빈 제목은 null", () => {
+    expect(splitMeetingTitle("# 「」\n## 요약").title).toBeNull();
+  });
+
+  it("「제목 다시 만들기」 는 제목 한 줄만 쓰라고 한다", () => {
+    const p = titlePrompt("## 요약\n견적", "2026년 10월 20일 화요일");
+    expect(p).toContain("제목 한 줄만");
+    expect(p).toContain("2026년 10월 20일 화요일");
+    expect(p.endsWith("## 요약\n견적")).toBe(true);
   });
 });
 

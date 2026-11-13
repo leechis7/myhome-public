@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Analytics from "@/components/Analytics";
 import FontSwap from "@/components/FontSwap";
 import Header from "@/components/Header";
+import PressFeedback from "@/components/PressFeedback";
 import Footer from "@/components/Footer";
 import QuickMemo from "@/components/QuickMemo";
 import { site } from "@/lib/site";
@@ -126,6 +127,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         {/* 폰트 CSS 를 다 받은 뒤 화면에 붙인다 */}
         <FontSwap />
+        <PressFeedback />
         <Header />
         <main className="flex-1 py-14">{children}</main>
         <Footer />

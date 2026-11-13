@@ -963,6 +963,8 @@ export const meetings = pgTable(
     id: serial("id").primaryKey(),
     /** 암호문 */
     title: text("title").notNull(),
+    /** 사람이 제목을 정했나. 아니면 요약할 때 AI 가 짓는다(MYH-278) */
+    titleByUser: boolean("title_by_user").notNull().default(false),
     /** 암호문. 회의 끝에 AI 가 쓴 요약(MYH-266) */
     summary: text("summary"),
     /** 암호문. 오픈클로에 맡긴 결과(MYH-268) */

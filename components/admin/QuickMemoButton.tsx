@@ -103,9 +103,11 @@ export default function QuickMemoButton() {
                 {TABS[t]}
               </button>
             ))}
-            {/* AI 는 팝업 대신 AI 화면으로(MYH-275) */}
+            {/* AI 는 팝업 대신 AI 화면으로(MYH-275). 옮기면서 창도 닫는다 -
+                상주하는 단추라 안 닫으면 다른 화면까지 열린 채 따라온다(MYH-277) */}
             <Link
               href="/admin/ai"
+              onClick={() => setOpen(false)}
               className="ml-auto rounded-md px-2.5 py-1 text-muted transition-colors hover:text-foreground"
             >
               🤖 AI →
@@ -176,6 +178,7 @@ export default function QuickMemoButton() {
           <div className="mt-2 flex items-center justify-between gap-2">
             <Link
               href={tab === "todo" ? "/admin/todos" : "/admin/memos"}
+              onClick={() => setOpen(false)}
               className="text-xs text-muted hover:text-foreground"
             >
               {tab === "todo" ? "할 일 보기 →" : "메모 보기 →"}

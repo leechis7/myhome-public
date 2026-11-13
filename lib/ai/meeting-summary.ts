@@ -14,10 +14,15 @@ function clip(text: string) {
   return `${text.slice(0, half)}\n…(가운데 줄임)…\n${text.slice(-half)}`;
 }
 
+/** AI 가 지은 회의 제목의 길이 한도(MYH-278) */
+const MAX_TITLE = 60;
+
 export function meetingPrompt(transcript: string, day: string, title: string) {
   return `다음은 「${title}」 회의(${day}, 한국)를 받아쓴 대본이다. 받아쓰기라 틀린 글자가 있을 수 있다.
-한국어 마크다운으로 아래 세 절만 쓴다. 대본에 없는 것은 지어내지 않는다.
+한국어 마크다운으로 맨 앞에 제목 한 줄, 그다음 아래 세 절만 쓴다. 대본에 없는 것은 지어내지 않는다.
 
+첫 줄은 「# 」 뒤에 바로 제목을 쓴다(예: 「# 4분기 견적 일정 정리」). 무엇을 다룬 회의인지 알 수 있게
+30자 안팎, 「회의」 · 날짜는 넣지 않는다.
 ## 요약
 세 줄 안팎.
 ## 결정한 것
@@ -35,12 +40,47 @@ export function meetingPrompt(transcript: string, day: string, title: string) {
 ${clip(transcript)}`;
 }
 
+/**
+ * 요약 맨 앞의 「# 제목」 한 줄을 떼어 낸다(MYH-278). 없으면 title 은 null, 요약은 그대로.
+ * 따옴표 · 「」 · 「제목:」 을 벗기고 길면 자른다
+ */
+export function splitMeetingTitle(reply: string): { title: string | null; summary: string } {
+  // 「# 제목」 을 머리로 쓰고 다음 줄에 제목을 적는 수도 있다 - 그 줄을 제목으로
+  const match = reply.match(/^\s*#\s+제목\s*\n+(?!#)(.+)\n?/) ?? reply.match(/^\s*#\s+(?!#)(.+)\n?/);
+  if (!match) return { title: null, summary: reply.trim() };
+  const title = match[1]
+    .trim()
+    .replace(/^제목\s*[:：]\s*/, "")
+    .replace(/^["'「『](.*)["'」』]$/, "$1")
+    .trim()
+    .slice(0, MAX_TITLE)
+    .trim();
+  return { title: title || null, summary: reply.slice(match[0].length).trim() };
+}
+
+/** 제목만 다시 짓는다(MYH-278). 요약이 있으면 요약으로, 없으면 대본으로 */
+export function titlePrompt(text: string, day: string) {
+  return `다음은 ${day}(한국) 회의의 기록이다. 받아쓰기라 틀린 글자가 있을 수 있다.
+이 회의의 제목 한 줄만 「# 」 뒤에 써라(예: 「# 4분기 견적 일정 정리」). 다른 말은 쓰지 않는다.
+무엇을 다룬 회의인지 알 수 있게 30자 안팎, 「회의」 · 날짜는 넣지 않는다.
+
+기록:
+${clip(text)}`;
+}
+
+export async function titleMeeting(text: string, day: string, access: AiAccess) {
+  const reply = await askAi(titlePrompt(text, day), access, { timeoutMs: 60_000 });
+  const { title, summary } = splitMeetingTitle(reply);
+  // 「# 」 없이 제목만 쓰는 수도 있다 - 한 줄이면 그것을 제목으로
+  return title ?? (summary && !summary.includes("\n") ? splitMeetingTitle(`# ${summary}`).title : null);
+}
+
 export async function summarizeMeeting(
   transcript: string,
   { day, title }: { day: string; title: string },
   access: AiAccess,
 ) {
-  return (await askAi(meetingPrompt(transcript, day, title), access, { timeoutMs: 120_000 })).trim();
+  return splitMeetingTitle(await askAi(meetingPrompt(transcript, day, title), access, { timeoutMs: 120_000 }));
 }
 
 /** 호출어(MYH-267)의 처음 값 */

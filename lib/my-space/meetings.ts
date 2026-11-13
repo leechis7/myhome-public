@@ -76,11 +76,23 @@ export async function saveMeetingHandoff(id: number, reply: string) {
     .where(eq(meetings.id, id));
 }
 
+/** 사람이 제목을 고친다. 그 뒤로는 AI 가 제목을 짓지 않는다(MYH-278) */
 export async function renameMeeting(id: number, title: string) {
   await getDb()
     .update(meetings)
-    .set({ title: encryptText(title.trim().slice(0, 200)) })
+    .set({ title: encryptText(title.trim().slice(0, 200)), titleByUser: true })
     .where(eq(meetings.id, id));
+}
+
+/**
+ * AI 가 지은 제목(MYH-278). 사람이 정한 제목이면 그대로 둔다. force(「제목 다시 만들기」)면
+ * 사람이 정한 제목도 바꾸고 다시 AI 제목으로 돌린다
+ */
+export async function setAiMeetingTitle(id: number, title: string, force = false) {
+  await getDb()
+    .update(meetings)
+    .set({ title: encryptText(title.trim().slice(0, 200)), titleByUser: false })
+    .where(force ? eq(meetings.id, id) : and(eq(meetings.id, id), eq(meetings.titleByUser, false)));
 }
 
 export async function removeMeeting(id: number) {

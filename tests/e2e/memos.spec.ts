@@ -112,8 +112,12 @@ test.describe("메모", () => {
     const quickForm = page.getByRole("form", { name: "빠른 메모" });
     await quickForm.getByRole("link", { name: /AI/ }).click();
     await expect(page).toHaveURL(/\/admin\/ai$/);
-    // 창 밖을 누르면 닫힌다(돌아와서 확인)
+    // 그렇게 화면을 옮기면 열려 있던 창은 닫혀야 한다 - 열린 채 다른 화면까지
+    // 따라다니면 안 된다(MYH-277)
     await page.goto("/notes");
+    await expect(page.getByRole("form", { name: "빠른 메모" })).toBeHidden();
+
+    // 창 밖을 누르면 닫힌다(돌아와서 확인)
     await page.getByRole("button", { name: "빠른 메모" }).click();
     await expect(page.getByRole("form", { name: "빠른 메모" })).toBeVisible();
     await page.mouse.click(5, 5);

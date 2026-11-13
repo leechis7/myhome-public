@@ -46,17 +46,20 @@ export default async function MeetingPage({ params }: PageProps<"/admin/ai/meeti
       </Link>
       <form action={renameMeetingAction} className="mt-3 flex flex-wrap items-center gap-2">
         <input type="hidden" name="id" value={meeting.id} />
+        {/* key: AI 가 제목을 새로 지으면 칸도 새 제목으로. 좁은 화면에서는 한 줄을 다 쓰고 단추는 아래로(MYH-279) */}
         <input
+          key={meeting.title}
           name="title"
           defaultValue={meeting.title}
           aria-label="회의 제목"
           required
           maxLength={200}
-          className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 text-2xl font-semibold tracking-tight outline-none hover:border-border focus:border-foreground/40"
+          className="min-w-0 flex-1 basis-full rounded-lg border border-transparent bg-transparent px-1 text-2xl font-semibold tracking-tight outline-none hover:border-border focus:border-foreground/40 sm:basis-0"
         />
         <button type="submit" className={button}>
           제목 저장
         </button>
+        {meeting.chunks.length > 0 ? <MeetingSummaryButton id={meeting.id} again kind="title" /> : null}
       </form>
       <p className="mt-1 text-sm text-muted tabular-nums">
         {formatDateTime(meeting.startedAt)}
