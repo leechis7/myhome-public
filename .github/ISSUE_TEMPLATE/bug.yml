@@ -1,18 +1,18 @@
-name: 버그 알리기 (Bug report)
-description: 잘못 도는 것을 알려 주세요. 보안 문제는 Security 탭으로.
+name: 버그 신고 (Bug report)
+description: 잘못 동작하는 부분을 알려 주세요. 보안 문제는 Security 탭으로 제보해 주세요.
 labels: [bug]
 body:
   - type: textarea
     id: what
     attributes:
-      label: 무엇이 잘못되었나요
-      description: 기대한 것과 실제로 일어난 것
+      label: 문제 내용
+      description: 예상한 동작과 실제 동작
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: 다시 일으키는 순서
+      label: 재현 절차
       placeholder: |
         1. /admin 에서 …
         2. … 를 누른다
@@ -21,8 +21,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: 판
-      description: 화면 아래 또는 `docker compose images` 에 보이는 판
+      label: 버전
+      description: 화면 하단 또는 `docker compose images` 에 표시되는 버전
       placeholder: v1.0.0
     validations:
       required: true
@@ -32,7 +32,7 @@ body:
       label: 설치 방식
       options:
         - install.sh
-        - compose.yaml 을 손으로
+        - compose.yaml 로 수동 설치
         - 소스로 빌드
     validations:
       required: true
@@ -40,5 +40,5 @@ body:
     id: logs
     attributes:
       label: 로그
-      description: "`docker compose logs app --tail 100` — 비밀값 · 개인 정보는 지우고 붙여 주세요"
+      description: "`docker compose logs app --tail 100` — 비밀값 · 개인 정보는 삭제하고 붙여 넣어 주세요"
       render: text

@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import Analytics from "@/components/Analytics";
 import FontSwap from "@/components/FontSwap";
 import Header from "@/components/Header";
+import NavigationSpinner from "@/components/NavigationSpinner";
 import PressFeedback from "@/components/PressFeedback";
 import Footer from "@/components/Footer";
 import QuickMemo from "@/components/QuickMemo";
@@ -132,6 +134,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="flex-1 py-14">{children}</main>
         <Footer />
         <QuickMemo />
+        {/* useSearchParams 를 쓰므로 Suspense 로 감싼다 - 정적 화면이 통째로 클라이언트 렌더링으로 바뀌지 않게 */}
+        <Suspense fallback={null}>
+          <NavigationSpinner />
+        </Suspense>
       </body>
     </html>
   );
