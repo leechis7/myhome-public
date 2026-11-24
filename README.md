@@ -296,7 +296,7 @@ cd ~ && sudo rm -rf ~/myhome       # .env · compose.yaml (설치 폴더에 둔 
 | AI 프롬프트 | `POST_AI_PROMPT` | 글 요약 · 태그 제안 프롬프트(블로그의 「AI 로 채우기」 · 짧은 글의 「태그 제안」). `{종류}` · `{제목}` · `{태그}` · `{글}` 자리가 채워진다. 줄바꿈은 `\n`. 비우면 기본값 |
 | AI 프롬프트 | `TODO_AI_PROMPT` | 할 일 · 메모 판정 프롬프트(텔레그램 · 할 일 화면 · 떠 있는 창). `{오늘}` · `{지금}` · `{종류}` · `{글}` 자리가 채워진다. 줄바꿈은 `\n`. 비우면 기본값 |
 | AI 프롬프트 | `BOOK_SUMMARY_PROMPT` | 책 소개 요약 프롬프트. `{제목}` · `{지은이}` · `{소개글}` 자리에 해당 책의 정보가 들어간다. 줄바꿈은 `\n`. 비우면 기본값 |
-| 홈페이지 API | `MYHOME_API_TOKEN_SHA256` | 홈페이지 API(`/api/v1/todos` · `memos` · `events` · `drafts`) 토큰의 sha256. 일반적으로 화면에서 발급한다(한 번만 표시). 비우면 API 가 모두 차단된다 |
+| 홈페이지 API | `MYHOME_API_TOKEN_SHA256` | 홈페이지 API(`/api/v1/todos` · `memos` · `events` · `drafts` · `meetings`) 토큰의 sha256. 일반적으로 화면에서 발급한다(한 번만 표시). 비우면 API 가 모두 차단된다 |
 | 통계 · 감시 | `UMAMI_WEBSITE_ID` | [umami](https://umami.is/) 방문 통계. 비우면 추적 스크립트가 출력되지 않는다 |
 | 통계 · 감시 | `MONITORING_DASHBOARD` | 관리 › 감시 화면에 삽입할 Grafana 대시보드 경로. 비우면 메뉴에서 제외된다 |
 
@@ -343,7 +343,7 @@ AI 는 필수가 아니다. 없으면 책 소개는 앞부분을 잘라 저장�
 
 **반대 방향 - AI 가 홈페이지를 조작.** 환경설정 › **홈페이지 API** 에서 토큰을 발급하면
 `/api/v1/todos` · `memos` · `events` · `drafts` 로 할 일 · 메모를 추가하고 조회할 수 있다(글은
-초안만). OpenClaw 에는 [`integrations/openclaw/myhome`](integrations/openclaw/myhome) 스킬을
+초안만). `/api/v1/meetings` · `/api/v1/meetings/{id}` 로 회의 요약 · 대본을 조회할 수 있다(조회 전용). OpenClaw 에는 [`integrations/openclaw/myhome`](integrations/openclaw/myhome) 스킬을
 `~/.openclaw/workspace/skills/myhome` 에 설치하고, 토큰을 `~/.config/myhome/api-token`(권한 600)에
 저장한다. 그러면 「이번 주 할 일 정리해서 홈페이지에 넣어줘」 같은 요청이 가능해진다.
 

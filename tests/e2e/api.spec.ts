@@ -76,6 +76,18 @@ test.describe("홈페이지 API", () => {
         ).status(),
       ).toBe(200);
 
+      // 회의는 읽기만(MYH-282). 목록 형식과 없는 회의를 본다
+      expect((await request.get("/api/v1/meetings")).status()).toBe(401);
+      const meetings = await request.get("/api/v1/meetings?limit=5", { headers: auth });
+      expect(meetings.status()).toBe(200);
+      expect(Array.isArray((await meetings.json()).meetings)).toBe(true);
+      expect(
+        (await request.get("/api/v1/meetings/999999999", { headers: auth })).status(),
+      ).toBe(404);
+      expect(
+        (await request.post("/api/v1/meetings", { headers: auth, data: {} })).status(),
+      ).toBe(405);
+
       // 화면에 「API」 로 들어와 있다 - 지운다
       await page.goto("/admin/todos");
       const row = page

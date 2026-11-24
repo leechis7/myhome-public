@@ -7,7 +7,7 @@ import AttachmentList from "@/components/blog/AttachmentList";
 import JsonLd from "@/components/JsonLd";
 import AdjacentPosts from "@/components/blog/AdjacentPosts";
 import RelatedPosts from "@/components/blog/RelatedPosts";
-import SeriesBox from "@/components/blog/SeriesBox";
+import SeriesBox, { SeriesNav } from "@/components/blog/SeriesBox";
 import Comments from "@/components/blog/Comments";
 import TableOfContents from "@/components/blog/TableOfContents";
 import ViewCounter from "@/components/blog/ViewCounter";
@@ -138,11 +138,6 @@ export default async function PostPage({
           </h1>
           <AdminLinkButton href={`/admin/posts/${post.id}`} label="고치기" />
         </div>
-        {series && position && position.total > 1 ? (
-          <p className="mt-2 text-sm text-muted">
-            {`연재 · ${series.name} (${position.number}/${position.total})`}
-          </p>
-        ) : null}
         {/* 문서 버전은 제목 바로 아래. 몇 판을 읽고 있는지가 제목만큼 중요한
             글이 있다. 개정일도 여기서 같이 밝힌다. */}
         {post.version ? (
@@ -170,6 +165,15 @@ export default async function PostPage({
           </ul>
         ) : null}
 
+        {/* 연재는 본문 앞에서 밝힌다 - 몇 번째 편인지 먼저 알고 읽게(MYH-283) */}
+        {series && position ? (
+          <SeriesBox
+            name={series.name}
+            episodes={series.episodes}
+            current={post.id}
+          />
+        ) : null}
+
         <TableOfContents headings={headings} />
 
         <div className="mt-10">
@@ -182,11 +186,7 @@ export default async function PostPage({
       <ViewCounter postId={post.id} />
 
       {series && position ? (
-        <SeriesBox
-          name={series.name}
-          episodes={series.episodes}
-          current={post.id}
-        />
+        <SeriesNav episodes={series.episodes} current={post.id} />
       ) : null}
 
       <RelatedPosts rows={related} />

@@ -108,6 +108,7 @@ export async function listMeetings() {
       startedAt: meetings.startedAt,
       endedAt: meetings.endedAt,
       source: meetings.source,
+      hasSummary: sql<boolean>`${meetings.summary} is not null`,
       chunks: sql<number>`(select count(*)::int from ${meetingChunks} where ${meetingChunks.meetingId} = ${meetings.id})`,
     })
     .from(meetings)

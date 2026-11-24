@@ -17,6 +17,7 @@ export default async function ApiSettings({ notice }: { notice?: string }) {
         <li>GET · POST /api/v1/todos — 할 일 목록 · 넣기(text 만 주면 날짜 · 시각을 읽음)</li>
         <li>GET · POST /api/v1/memos — 메모 목록 · 넣기</li>
         <li>GET /api/v1/events — 일정 읽기(?from=날짜&days=7)</li>
+        <li>GET /api/v1/meetings · /api/v1/meetings/번호 — 회의 목록 · 요약 · 대본 읽기</li>
         <li>POST /api/v1/drafts — 글 초안(임시저장만, 공개는 사람이)</li>
       </ul>
       <p className="mt-2 text-xs text-muted">지우기 · 공개는 할 수 없습니다. 받은 요청은 앱 기록에 한 줄씩 남습니다.</p>

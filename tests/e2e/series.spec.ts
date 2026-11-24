@@ -67,15 +67,21 @@ test.describe("연재", () => {
     const context = await browser.newContext();
     const visitor = await context.newPage();
     await visitor.goto(`/blog/${b}`);
-    await expect(visitor.getByText(`연재 · ${name} (2/2)`)).toBeVisible();
+    // 연재 상자는 본문 앞에 있다(MYH-283)
     const box = visitor.getByRole("navigation", { name: `연재 ${name}` });
+    await expect(box).toContainText(`연재 · ${name} (2/2)`);
     await expect(box.getByRole("listitem")).toHaveCount(2);
     await expect(box.getByText(draft)).toHaveCount(0);
     await expect(box.locator('[aria-current="page"]')).toContainText(second);
     await expect(box.getByRole("link", { name: "다음 편 →" })).toHaveCount(0);
-    await box.getByRole("link", { name: "← 이전 편" }).click();
+    // 본문 끝에는 이전 편 · 다음 편만
+    const steps = visitor.getByRole("navigation", { name: "이전 편 · 다음 편" });
+    await expect(steps.getByRole("link", { name: "다음 편 →" })).toHaveCount(0);
+    await steps.getByRole("link", { name: "← 이전 편" }).click();
     await expect(visitor).toHaveURL(new RegExp(`/blog/${a}$`));
-    await expect(visitor.getByText(`연재 · ${name} (1/2)`)).toBeVisible();
+    await expect(box).toContainText(`연재 · ${name} (1/2)`);
+    await box.getByRole("link", { name: "다음 편 →" }).click();
+    await expect(visitor).toHaveURL(new RegExp(`/blog/${b}$`));
     await context.close();
 
     // 연재를 빼면 상자가 없다
